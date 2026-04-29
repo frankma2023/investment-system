@@ -12,6 +12,7 @@ from flask import Flask, request, jsonify, g
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from detectors.distribution_day import detect as detect_distribution_days
+from detectors.follow_through_day import detect as detect_follow_through_days
 
 # ── Config ───────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -124,8 +125,11 @@ def enrich_klines(rows):
 # ═══════════════════════════════════════════════
 
 def load_config(signal_type):
-    """Load YAML config file as a flat dict. Returns defaults if file not found."""
-    path = os.path.join(CONFIG_DIR, f'{signal_type}.yaml')
+    """Load YAML config file as a flat dict. Searches config/ and config/market/ first."""
+    # Try config/market/ first (new convention), then config/ root (fallback)
+    path = os.path.join(CONFIG_DIR, 'market', f'{signal_type}.yaml')
+    if not os.path.exists(path):
+        path = os.path.join(CONFIG_DIR, f'{signal_type}.yaml')
     if not os.path.exists(path):
         return {}
     with open(path) as f:
@@ -161,8 +165,9 @@ def _parse_yaml_val(s):
     except: return s
 
 def save_config(signal_type, raw_yaml):
-    """Save raw YAML string to config file."""
-    path = os.path.join(CONFIG_DIR, f'{signal_type}.yaml')
+    """Save raw YAML string to config file (uses market/ subdirectory)."""
+    path = os.path.join(CONFIG_DIR, 'market', f'{signal_type}.yaml')
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w') as f:
         f.write(raw_yaml)
 
@@ -230,15 +235,25 @@ def api_backtest():
     klines_in_range = [k for k in klines if k['date'] >= start and k['date'] <= end]
 
     # Route to detector
-    signals = detect_distribution_days(klines_in_range, params)
-    rally_attempts = []
-    failed_ftds = []
+    if signal_type == 'follow_through_day':
+        dist_signals = detect_distribution_days(klines_in_range, params) if params.get('use_distribution_signals', True) else []
+        # FTD engine needs full klines for N-day new-low check; filter returned signals to range
+        rally_attempts, signals, failed_ftds = detect_follow_through_days(klines, params, dist_signals)
+        # Filter: only keep signals/rallies within the requested date range
+        signals = [s for s in signals if start <= s.get('date','') <= end]
+        failed_ftds = [s for s in failed_ftds if start <= s.get('date','') <= end]
+        rally_attempts = [r for r in rally_attempts if start <= r.get('date','') <= end]
+    else:
+        # Default: distribution_day (also works for future signals)
+        signals = detect_distribution_days(klines_in_range, params)
+        rally_attempts = []
+        failed_ftds = []
 
     # Stats
     total = len(klines_in_range)
     signal_count = len(signals)
     type_counts = {}
-    for s in signals: type_counts[s['signal_type']] = type_counts.get(s['signal_type'], 0) + 1
+    for s in signals: type_counts[s.get('signal_type', s.get('ftd_type', 'standard'))] = type_counts.get(s.get('signal_type', s.get('ftd_type', 'standard')), 0) + 1
     weighted = sum(s.get('weight', 1) for s in signals)
 
     return jsonify({
@@ -253,10 +268,12 @@ def api_backtest():
             'heavy_count': type_counts.get('heavy', 0),
             'special_count': type_counts.get('special', 0),
             'reversal_count': type_counts.get('reversal', 0),
-            'ftd_normal': type_counts.get('ftd_normal', 0),
-            'ftd_volume': type_counts.get('ftd_volume', 0),
-            'ftd_mega': type_counts.get('ftd_mega', 0),
+            'ftd_normal': type_counts.get('normal', 0),
+            'ftd_volume': type_counts.get('volume', 0),
+            'ftd_mega': type_counts.get('mega', 0),
             'weighted_count': weighted,
+            'rally_count': len(rally_attempts),
+            'failed_ftd_count': len(failed_ftds),
         }
     })
 

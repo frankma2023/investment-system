@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>项目进展 · 欧奈尔投资系统</title>
+  <link rel="stylesheet" href="shared/css/theme.css">
+  <link rel="stylesheet" href="shared/css/base.css">
+  <link rel="stylesheet" href="shared/css/xhs-cards.css">
+  <link rel="stylesheet" href="shared/css/components.css">
+  <script src="shared/js/theme.js"></script>
+  <style>
+    body { max-width:1100px; margin:0 auto; padding:20px; }
+    .stats-row { display:flex; gap:12px; margin:16px 0 24px; flex-wrap:wrap; }
+    .stat-card { flex:1 1 140px; background:var(--card-bg); border-radius:14px; padding:16px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+    .stat-card .num { font-family:var(--font-display); font-size:1.6rem; font-weight:900; }
+    .stat-card .lbl { font-size:0.65rem; color:var(--text-tertiary); margin-top:4px; }
+    .module { margin-bottom:28px; }
+    .module h2 { font-family:var(--font-display); font-size:1rem; font-weight:800; margin:0 0 8px; display:flex; align-items:center; gap:8px; }
+    .module h2 .tag { font-size:0.6rem; font-weight:600; padding:2px 8px; border-radius:10px; }
+    .tag-done { background:#E8F5E9; color:#2E7D32; }
+    .tag-wip  { background:#FFF3E0; color:#E65100; }
+    .tag-todo { background:var(--bg-tertiary); color:var(--text-tertiary); }
+    table { width:100%; border-collapse:collapse; font-size:0.78rem; }
+    th, td { padding:6px 10px; text-align:left; border-bottom:1px solid var(--border-color); }
+    th { font-weight:700; color:var(--text-secondary); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px; }
+    td:first-child, th:first-child { width:40%; }
+    td:nth-child(2), th:nth-child(2) { width:12%; }
+    td:nth-child(3), th:nth-child(3) { width:13%; }
+    td:nth-child(4), th:nth-child(4) { width:35%; }
+    .bar-wrap { background:var(--bg-tertiary); border-radius:6px; height:8px; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:6px; background:var(--accent-primary); }
+    .status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; }
+    .s-done { background:#4CAF50; }
+    .s-wip  { background:#FF9800; }
+    .s-todo { background:#BDBDBD; }
+    .s-blocked { background:#F44336; }
+    .progress-cell { min-width:80px; }
+    .progress-cell .pct { font-size:0.65rem; color:var(--text-tertiary); margin-top:3px; display:block; }
+    .updated { text-align:center; font-size:0.65rem; color:var(--text-tertiary); margin-top:32px; }
+  </style>
+</head>
+<body>
+  <header class="panel-header">
+    <h1>📋 欧奈尔投资系统 · 项目进展</h1>
+    <p>每完成一个原子功能更新一次 · 最后更新：2026-05-05</p>
+  </header>
+
+  <!-- ===== 总览统计 ===== -->
+  <div class="stats-row">
+    <div class="stat-card"><div class="num" style="color:#4CAF50">2</div><div class="lbl">✅ 已完成</div></div>
+    <div class="stat-card"><div class="num" style="color:#FF9800">1</div><div class="lbl">🔴 进行中</div></div>
+    <div class="stat-card"><div class="num">5</div><div class="lbl">⏳ 等待开始</div></div>
+    <div class="stat-card"><div class="num">7</div><div class="lbl">⬜ 规划中</div></div>
+    <div class="stat-card"><div class="num">1</div><div class="lbl">🚫 受阻</div></div>
+  </div>
+
+  <!-- ===== 0. 基础设施 ===== -->
+  <div class="module">
+    <h2>🏗️ 0. 基础设施 <span class="tag tag-done">核心已完成</span></h2>
+    <table>
+      <tr><th>原子功能</th><th>状态</th><th>产出</th><th>备注</th></tr>
+      <tr>
+        <td>项目目录结构 + Git 仓库</td>
+        <td><span class="status-dot s-done"></span>✅</td>
+        <td>~/investment-system/</td>
+        <td>Git: frankma2023/investment-system，17 个文件</td>
+      </tr>
+      <tr>
+        <td>理杏仁 API 脚本（指数 K 线）</td>
+        <td><span class="status-dot s-done"></span>✅</td>
+        <td>~/source/lixr_api/</td>
+        <td>index_daily_kline 已有 2016~2026 全量数据</td>
+      </tr>
+      <tr>
+        <td>数据库架构文档</td>
+        <td><span class="status-dot s-done"></span>✅</td>
+        <td>docs/technical/DATABASE_SCHEMA.md</td>
+        <td>39 张表，6 大分类</td>
+      </tr>
+      <tr>
+        <td>财务数据深度文档</td>
+        <td><span class="status-dot s-done"></span>✅</td>
+        <td>docs/technical/FINANCIAL_DATA_SCHEMA.md</td>
+        <td>EAV + Wide 双模式，metric_code 完整解码</td>
+      </tr>
+      <tr>
+        <td>看板样式技能</td>
+        <td><span class="status-dot s-done"></span>✅</td>
+        <td>backtest-dashboard-v1 / investment-dashboard-xiaohongshu</td>
+        <td>CSS 共享层，所有看板统一引用</td>
+      </tr>
+      <tr>
+        <td>YAML 配置体系</td>
+        <td><span class="status-dot s-done"></span>✅</td>
+        <td>config/market/distribution_day.yaml</td>
+        <td>不硬编码，前端 /api/config 读写</td>
+      </tr>
+      <tr>
+        <td>系统全局配置</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td>config/system.yaml</td>
+        <td>待创建：Token、日志、DB 路径</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ===== 1. 大盘扫描 ===== -->
+  <div class="module">
+    <h2>🔍 1. 大盘扫描 (M1) <span class="tag tag-wip">核心轴</span></h2>
+    <table>
+      <tr><th>原子功能</th><th>状态</th><th>进度</th><th>备注</th></tr>
+      <tr>
+        <td>1.1 抛盘日引擎</td>
+        <td><span class="status-dot s-done"></span>✅</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:100%"></div></div><span class="pct">100%</span></td>
+        <td>4 卡片参数（标准/假阳线/反转/重×2），YAML 配置</td>
+      </tr>
+      <tr>
+        <td>1.2 抛盘日回测看板</td>
+        <td><span class="status-dot s-done"></span>✅</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:100%"></div></div><span class="pct">100%</span></td>
+        <td>K 线标记 + 表格 + 保存 + 对比，v20260505 稳定</td>
+      </tr>
+      <tr style="background:var(--bg-secondary);">
+        <td><strong>1.3 追盘日引擎</strong></td>
+        <td><span class="status-dot s-wip"></span>🔴</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:5%"></div></div><span class="pct">5%</span></td>
+        <td>← <strong>当前阶段</strong>。V4 引擎已删除，等待产品说明书重建</td>
+      </tr>
+      <tr>
+        <td>1.4 追盘日回测看板</td>
+        <td><span class="status-dot s-blocked"></span>🚫</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>依赖 1.3 完成</td>
+      </tr>
+      <tr>
+        <td>1.5 吸筹日引擎</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>补全大盘三信号</td>
+      </tr>
+      <tr>
+        <td>1.6 吸筹日回测看板</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>依赖 1.5</td>
+      </tr>
+      <tr>
+        <td>1.7 大盘扫描状态机</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>串起抛盘→反弹→追盘→吸筹的时序关系</td>
+      </tr>
+      <tr>
+        <td>1.8 大盘健康度看板</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>聚合 M1 全部信号</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ===== 2. 行业 RS ===== -->
+  <div class="module">
+    <h2>📊 2. 行业 RS 强度 (M2)</h2>
+    <table>
+      <tr><th>原子功能</th><th>状态</th><th>进度</th><th>备注</th></tr>
+      <tr>
+        <td>2.1 行业 RS 扫描引擎</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>由成分股 RS 聚合，区分绝对强势/爆发/共振三池</td>
+      </tr>
+      <tr>
+        <td>2.2 最强指数与指数背离</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>全市场/规模/行业三级背离 + 最强指数判定</td>
+      </tr>
+      <tr>
+        <td>2.3 行业 RS 看板</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>依赖 2.1 + 2.2</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ===== 3. 个股扫描 ===== -->
+  <div class="module">
+    <h2>🏢 3. 个股扫描 (M3)</h2>
+    <table>
+      <tr><th>原子功能</th><th>状态</th><th>进度</th><th>备注</th></tr>
+      <tr>
+        <td>3.1 CAN SLIM 7 维评分引擎</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>依赖 M1 大盘状态（M 维度）+ 财务表 + 基金持股表</td>
+      </tr>
+      <tr>
+        <td>3.2 个股 RS 强度引擎</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>20日/120日/250日 RS + 双强股定义</td>
+      </tr>
+      <tr>
+        <td>3.3 个股财务数据看板</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>季度+年度 19 字段，中文字段名，可点击生成折线图</td>
+      </tr>
+      <tr>
+        <td>3.4 个股 RS 看板</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>依赖 3.2</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ===== 4. 形态与信号 ===== -->
+  <div class="module">
+    <h2>📐 4. 形态与信号识别 (M4/M5) <span class="tag tag-todo">最复杂模块</span></h2>
+    <table>
+      <tr><th>原子功能</th><th>状态</th><th>进度</th><th>备注</th></tr>
+      <tr>
+        <td>4.1 基部识别引擎（杯柄/双底/VCP等）</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>参数爆炸，需 5~10 轮回测调参</td>
+      </tr>
+      <tr>
+        <td>4.2 标准突破识别引擎</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>依赖 4.1 基部定位</td>
+      </tr>
+      <tr>
+        <td>4.3 口袋支点识别引擎</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>4 种子类型，每种独立参数</td>
+      </tr>
+      <tr>
+        <td>4.4 卖出形态识别引擎</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>止损/止盈/七周规则/顶部形态/突破失败</td>
+      </tr>
+      <tr>
+        <td>4.5 形态回测框架</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>通用引擎：滑动窗口 + 标签构造 + AUC/F1/夏普</td>
+      </tr>
+      <tr>
+        <td>4.6 形态回测看板群</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>基部/突破/口袋支点/卖出/顶部，每个独立看板</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ===== 5. 持仓管理 ===== -->
+  <div class="module">
+    <h2>💼 5. 持仓与仓位管理 (M6)</h2>
+    <table>
+      <tr><th>原子功能</th><th>状态</th><th>进度</th><th>备注</th></tr>
+      <tr>
+        <td>5.1 持仓录入/卖出功能</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>日期+代码+价格+数量，存入 portfolio 表</td>
+      </tr>
+      <tr>
+        <td>5.2 持仓信号自动扫描</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>依赖 M4 全部引擎</td>
+      </tr>
+      <tr>
+        <td>5.3 仓位管理建议引擎</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>依赖 M1 大盘状态 + M4 个股信号</td>
+      </tr>
+      <tr>
+        <td>5.4 持仓管理看板</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td class="progress-cell"><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="pct">0%</span></td>
+        <td>聚合 5.1~5.3</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ===== 6. 文档体系 ===== -->
+  <div class="module">
+    <h2>📚 6. 文档体系</h2>
+    <table>
+      <tr><th>文档</th><th>状态</th><th>位置</th><th>备注</th></tr>
+      <tr>
+        <td>数据库架构文档</td>
+        <td><span class="status-dot s-done"></span>✅</td>
+        <td>docs/technical/DATABASE_SCHEMA.md</td>
+        <td>39 张表</td>
+      </tr>
+      <tr>
+        <td>财务数据深度解析</td>
+        <td><span class="status-dot s-done"></span>✅</td>
+        <td>docs/technical/FINANCIAL_DATA_SCHEMA.md</td>
+        <td>EAV + Wide</td>
+      </tr>
+      <tr>
+        <td>抛盘日 V3 产品说明书</td>
+        <td><span class="status-dot s-done"></span>✅</td>
+        <td>docs/product/抛盘日_V3.md</td>
+        <td>4 卡片参数定义</td>
+      </tr>
+      <tr>
+        <td>追盘日产品说明书</td>
+        <td><span class="status-dot s-wip"></span>🔴</td>
+        <td>docs/product/追盘日.md</td>
+        <td>← 等待你提交</td>
+      </tr>
+      <tr>
+        <td>项目交接文档</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td>docs/project/交接文档.md</td>
+        <td>每次阶段结束更新</td>
+      </tr>
+      <tr>
+        <td>经验教训文档</td>
+        <td><span class="status-dot s-todo"></span>⬜</td>
+        <td>docs/project/经验教训.md</td>
+        <td>追盘日反复的教训已可写入</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="updated">🔄 此看板每完成一个原子功能更新一次 · 状态图例：✅完成 🔴进行中 ⬜待开始 🚫受阻</div>
+</body>
+</html>
