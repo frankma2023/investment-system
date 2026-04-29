@@ -39,7 +39,7 @@ def close_db(exception):
 
 def init_schema():
     db = sqlite3.connect(DB_PATH)
-    schema_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
+    schema_path = os.path.join(PROJECT_DIR, 'schema.sql')
     with open(schema_path) as f:
         db.executescript(f.read())
     db.commit()
