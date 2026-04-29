@@ -1,0 +1,39 @@
+/* ============================================================
+   COMPONENTS.CSS — 小红书 v2 · 贴纸表格/配置/按钮
+   ============================================================ */
+.config-panel{background:var(--card-bg);border-radius:var(--radius-xl);padding:var(--space-lg);box-shadow:var(--shadow-sticker);max-height:600px;overflow-y:auto}
+.config-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-md);padding-bottom:var(--space-sm);border-bottom:1px solid var(--divider)}
+.config-panel-title{font-family:var(--font-display);font-size:0.78rem;font-weight:700;color:var(--text-secondary)}
+.config-reset-btn{background:transparent;border:1px solid var(--divider-strong);color:var(--text-tertiary);font-family:var(--font-display);font-size:0.65rem;font-weight:600;padding:4px 14px;border-radius:var(--radius-full);cursor:pointer;transition:all 0.2s}
+.config-reset-btn:hover{border-color:var(--xhs-red);color:var(--xhs-red);background:var(--xhs-red-bg)}
+
+.slider-group{display:flex;align-items:center;gap:var(--space-sm);padding:7px 0;border-bottom:1px solid var(--table-border)}
+.slider-group:last-child{border-bottom:none}
+.slider-label{flex: 0 0 85px;font-size:0.66rem;font-weight:600;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slider-group input[type="range"]{-webkit-appearance:none;appearance:none;flex:1;height:6px;border-radius:3px;background:var(--slider-track);outline:none;cursor:pointer}
+.slider-group input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--slider-thumb);cursor:pointer;border:3px solid #fff;box-shadow:0 1px 4px rgba(254,44,85,0.2)}
+.slider-value{flex:0 0 50px;text-align:right;font-family:var(--font-display);font-size:0.68rem;font-weight:700;color:var(--xhs-red)}
+.slider-fill{background:linear-gradient(to right,var(--slider-fill)0%,var(--slider-fill)var(--fill-percent,50%),var(--slider-track)var(--fill-percent,50%),var(--slider-track)100%)!important}
+
+.table-wrapper{overflow-x:auto;border-radius:var(--radius-xl);background:var(--card-bg);box-shadow:var(--shadow-sticker)}
+.data-table{width:100%;border-collapse:collapse;font-size:0.75rem;white-space:nowrap}
+.data-table thead{position:sticky;top:0;z-index:2}
+.data-table th{background:var(--table-header-bg);color:var(--text-tertiary);font-weight:700;font-size:0.66rem;padding:10px 14px;text-align:right;border-bottom:2px solid var(--divider);cursor:pointer;user-select:none}
+.data-table th:first-child{text-align:left;position:sticky;left:0;z-index:3;background:var(--table-header-bg);border-radius:var(--radius-xl) 0 0 0}
+.data-table th:last-child{border-radius:0 var(--radius-xl) 0 0}
+.data-table th:hover{color:var(--xhs-red)}
+.data-table th .sort-icon{margin-left:3px;font-size:0.5rem;opacity:0.3}
+.data-table th.sorted .sort-icon{opacity:1;color:var(--xhs-red)}
+.data-table td{padding:9px 14px;text-align:right;border-bottom:1px solid var(--table-border);color:var(--text-secondary)}
+.data-table td:first-child{text-align:left;font-weight:700;color:var(--text-primary);position:sticky;left:0;z-index:1;background:var(--card-bg)}
+.data-table tbody tr:hover td{background:var(--table-row-hover)}
+.data-table tbody tr:nth-child(even) td{background:var(--table-stripe)}
+.data-table td.up{color:var(--color-up);font-weight:700}
+.data-table td.down{color:var(--color-down);font-weight:700}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 20px;border-radius:var(--radius-full);font-family:var(--font-display);font-size:0.8rem;font-weight:700;cursor:pointer;border:none;transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1)}
+.btn-primary{background:var(--xhs-red);color:#fff;box-shadow:var(--shadow-button)}
+.btn-primary:hover{background:var(--xhs-red-light);box-shadow:var(--shadow-button-hover);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--divider-strong)}
+.btn-ghost:hover{border-color:var(--xhs-red);color:var(--xhs-red);background:var(--xhs-red-bg)}
+.btn-sm{padding:5px 14px;font-size:0.72rem}

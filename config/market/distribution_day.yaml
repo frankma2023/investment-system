@@ -1,0 +1,30 @@
+# Distribution Day V3 — 可配置参数
+# 卡片1: 标准抛盘 / 卡片2: 假阳线 / 卡片3: 盘中反转 / 卡片4: 重抛盘×2
+
+default_index: "000985"
+default_date_range:
+  start: "2024-01-01"
+  end: "2024-12-31"
+
+cards:
+  card1:
+    enabled: true
+    decline: -0.10    # 跌幅 <= this (%)
+    vol: 1.00         # 量比 >= this
+  card2:
+    enabled: true
+    chg_min: -0.30    # 涨幅下限 (%)
+    chg_max: 0.20     # 涨幅上限 (%)
+    surge: 0.50       # 冲高幅度 >= this (%)
+    vol: 1.10
+    shadow: 1.5       # 上影 >= 实体 × this
+  card3:
+    enabled: true
+    surge: 0.50
+    vol: 1.10
+    shadow: 1.5
+    midpt: 50         # 收盘 <= 中价 this% 
+  card4:
+    enabled: true
+    decline: -1.50    # 跌幅 <= this (×2 weight)
+    vol: 0.98         # 量比 >= this
