@@ -2,56 +2,35 @@
 # 所有阈值可调，通过回测看板实时生效
 
 rally:
-  # 反弹尝试日 (Day 1) 识别
-  new_low_days: 20                              # 创阶段新低：当日最低 < 最近N日最低
-  close_strength: either                        # 收盘强势：either(满足一个即可) | both(两个都要)
-  protection_days: 5                            # Day1保护窗口：D1~D5内收盘<Day1最低→反弹失败
+  new_low_days: 20
+  close_strength: either
+  protection_days: 5
 
 ftd:
-  # 追盘日判定 (D+4 ~ D+10)
-  window_start: 4                               # 最早 D+4
-  window_end: 10                                # 最晚 D+10
-  min_gain_pct: 0.0                             # 最小涨幅%（0=只要收涨即可）
-  min_vol_ratio_prev: 1.0                       # 成交量 > 前一日 × N
-  vol_ratio_ma10_enabled: false                 # 是否启用 MA10 量比（默认关闭）
-  vol_ratio_ma10: 0.0                           # 成交量 > 10日均量 × N（0=关闭）
-  close_position_min: 50                        # 收盘位置 ≥ N%（收在上半部）
+  window_start: 5
+  window_end: 10
+  min_gain_pct: 0
+  min_vol_ratio_prev: 0.96
+  vol_ratio_ma10_enabled: false
+  vol_ratio_ma10: 0
+  close_position_min: 50
 
 rally_failure:
-  # 反弹尝试失败（两个条件，触发任一即失败）
-  reset_window_start: 2                          # 第N天起，出现更低低点+收盘强势 → 重置为新的Day1
-  reset_window_end: 10                           # 第N天后不再检查重置（与FTD窗口一致）
-  no_ftd_days: 10                                # 第N天内无FTD → 反弹尝试失败，计数器归零
+  reset_window_start: 2
+  reset_window_end: 10
+  no_ftd_days: 10
 
 failure:
-  # 追盘日失效条件（按优先级：破位 > 无力上涨 > 回撤过深 > 抛盘覆盖）
-  breakdown_days: 5                              # 破位失效：FTD后N天内收盘 < FTD最低价
-  weak_continuation_days: 10                     # 无力上涨：FTD后N天最大涨幅 < min_gain
-  weak_continuation_min_gain: 2.0                # 最小涨幅%
-  retracement_enabled: true                       # 回撤失效总开关（关闭后跳过回撤检查）
-  min_retracement_pct: 2.0                        # 最小回撤幅度%（绝对值门槛，<此值不检查）
-  retracement_days: 15                           # 回撤过深：FTD后N天内回撤 > 最大涨幅 × ratio
-  retracement_ratio: 0.618                       # 回撤比例（61.8%，黄金分割）
-  distribution_cover_days: 20                    # 抛盘日覆盖：FTD后N天内抛盘日 ≥ count_threshold
-  distribution_cover_count: 3                    # 抛盘日数量阈值
+  breakdown_days: 5
+  weak_continuation_days: 5
+  weak_continuation_min_gain: 1
+  retracement_enabled: true
+  min_retracement_pct: 2.0
+  retracement_days: 15
+  retracement_ratio: 0.618
+  distribution_cover_days: 20
+  distribution_cover_count: 3
 
 manual_annotations:
-  # 用户验证的追盘日正样本（供参考+交叉验证）
   - rally_date: "2024-09-18"
     ftd_date: "2024-09-24"
-  - rally_date: "2022-10-31"
-    ftd_date: "2022-11-04"
-  - rally_date: "2022-04-27"
-    ftd_date: "2022-05-10"
-  - rally_date: "2020-03-24"
-    ftd_date: "2020-04-07"
-  - rally_date: "2019-01-04"
-    ftd_date: "2019-01-15"
-  - rally_date: "2019-08-06"
-    ftd_date: "2019-08-15"
-  - rally_date: "2016-05-26"
-    ftd_date: "2016-05-31"
-  - rally_date: "2025-04-09"
-    ftd_date: "2025-04-21"
-  - rally_date: "2025-11-24"
-    ftd_date: "2025-12-05"

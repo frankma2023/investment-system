@@ -1,28 +1,30 @@
-# Distribution Day V3
+# Distribution Day V3 — 可配置参数
+# 卡片1: 标准抛盘 / 卡片2: 假阳线 / 卡片3: 盘中反转 / 卡片4: 重抛盘×2
+
 default_index: "000985"
 default_date_range:
   start: "2024-01-01"
-  end: "2026-12-31"
+  end: "2024-12-31"
 
 cards:
   card1:
-    enabled: True
+    enabled: true
     decline: -0.1
-    vol: 1.00
+    vol: 1.1
   card2:
-    enabled: True
+    enabled: true
     chg_min: -0.3
     chg_max: 0.2
     surge: 0.5
-    vol: 1.0
+    vol: 1
     shadow: 1.5
   card3:
-    enabled: True
+    enabled: true
     surge: 0.5
-    vol: 1.0
+    vol: 1
     shadow: 1.5
     midpt: 50
   card4:
-    enabled: True
+    enabled: true
     decline: -1.5
     vol: 0.98
