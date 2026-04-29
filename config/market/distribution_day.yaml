@@ -6,23 +6,23 @@ default_date_range:
 
 cards:
   card1:
-    enabled: true
+    enabled: True
     decline: -0.1
     vol: 1.00
   card2:
-    enabled: true
+    enabled: True
     chg_min: -0.3
     chg_max: 0.2
     surge: 0.5
     vol: 1.0
     shadow: 1.5
   card3:
-    enabled: true
-    surge: 0.50
-    vol: 1.00
+    enabled: True
+    surge: 0.5
+    vol: 1.0
     shadow: 1.5
     midpt: 50
   card4:
-    enabled: true
-    decline: -1.50
+    enabled: True
+    decline: -1.5
     vol: 0.98

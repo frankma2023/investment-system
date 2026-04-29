@@ -19,6 +19,7 @@ let savedRunIds = [];
 document.addEventListener('DOMContentLoaded', async () => {
   await loadIndices();
   setDefaultDates();
+  await loadConfigFromAPI();
   bindEvents();
   initChart();
 });
@@ -43,7 +44,7 @@ function setDefaultDates() {
 
 function bindEvents() {
   document.getElementById('btn-run').addEventListener('click', runBacktest);
-  document.getElementById('btn-save').addEventListener('click', saveBacktest);
+  document.getElementById('btn-save').addEventListener('click', saveConfig);
   document.getElementById('btn-compare').addEventListener('click', toggleCompare);
   document.getElementById('index-select').addEventListener('change', runBacktest);
   document.getElementById('date-start').addEventListener('change', runBacktest);
@@ -210,3 +211,137 @@ window.syncSliderInt = function(id) {
 
 // Auto-run on page load
 setTimeout(runBacktest, 500);
+
+/* ── Load Config from API (populates sliders from distribution_day.yaml) ── */
+async function loadConfigFromAPI() {
+  try {
+    const resp = await fetch(`${API_BASE}/api/config?signal_type=distribution_day`);
+    if (!resp.ok) return;
+    const config = await resp.json();
+    if (!config.cards) return;
+
+    const c = config.cards;
+    // Card 1
+    if (c.card1) {
+      setSliderVal('c1-decline', c.card1.decline);
+      setSliderVal('c1-vol', c.card1.vol);
+      setToggleState('card1', c.card1.enabled);
+    }
+    // Card 2
+    if (c.card2) {
+      setSliderVal('c2-chg-min', c.card2.chg_min);
+      setSliderVal('c2-chg-max', c.card2.chg_max);
+      setSliderVal('c2-surge', c.card2.surge);
+      setSliderVal('c2-vol', c.card2.vol);
+      setSliderVal('c2-shadow', c.card2.shadow);
+      setToggleState('card2', c.card2.enabled);
+    }
+    // Card 3
+    if (c.card3) {
+      setSliderVal('c3-surge', c.card3.surge);
+      setSliderVal('c3-vol', c.card3.vol);
+      setSliderVal('c3-shadow', c.card3.shadow);
+      setSliderVal('c3-midpt', c.card3.midpt);
+      setToggleState('card3', c.card3.enabled);
+    }
+    // Card 4
+    if (c.card4) {
+      setSliderVal('c4-decline', c.card4.decline);
+      setSliderVal('c4-vol', c.card4.vol);
+      setToggleState('card4', c.card4.enabled);
+    }
+    console.log('[loadConfigFromAPI] Config loaded from API, sliders populated');
+  } catch (e) {
+    console.warn('[loadConfigFromAPI] Failed, using defaults:', e);
+  }
+}
+
+function setSliderVal(id, val) {
+  const el = document.getElementById(id);
+  if (!el || val === undefined) return;
+  el.value = val;
+  if (id.includes('midpt')) {
+    window.syncSliderInt(id);
+  } else {
+    window.syncSlider(id);
+  }
+}
+
+function setToggleState(cardId, enabled) {
+  const btn = document.getElementById(cardId + '-toggle');
+  const body = document.getElementById(cardId + '-body');
+  if (!btn) return;
+  if (enabled) {
+    btn.classList.add('on'); btn.classList.remove('off');
+    if (body) body.style.display = '';
+  } else {
+    btn.classList.remove('on'); btn.classList.add('off');
+    if (body) body.style.display = 'none';
+  }
+}
+
+/* ── Save Config ── */
+async function saveConfig() {
+  const btn = document.getElementById('btn-save');
+  btn.textContent = '⏳ 保存中...';
+  btn.disabled = true;
+
+  const params = getParams();
+
+  const yaml = [
+    '# Distribution Day V3 — 可配置参数',
+    '# 卡片1: 标准抛盘 / 卡片2: 假阳线 / 卡片3: 盘中反转 / 卡片4: 重抛盘×2',
+    '',
+    'default_index: "000985"',
+    'default_date_range:',
+    '  start: "2024-01-01"',
+    '  end: "2024-12-31"',
+    '',
+    'cards:',
+    '  card1:',
+    `    enabled: ${params.cards.card1.enabled}`,
+    `    decline: ${params.cards.card1.decline}`,
+    `    vol: ${params.cards.card1.vol}`,
+    '  card2:',
+    `    enabled: ${params.cards.card2.enabled}`,
+    `    chg_min: ${params.cards.card2.chg_min}`,
+    `    chg_max: ${params.cards.card2.chg_max}`,
+    `    surge: ${params.cards.card2.surge}`,
+    `    vol: ${params.cards.card2.vol}`,
+    `    shadow: ${params.cards.card2.shadow}`,
+    '  card3:',
+    `    enabled: ${params.cards.card3.enabled}`,
+    `    surge: ${params.cards.card3.surge}`,
+    `    vol: ${params.cards.card3.vol}`,
+    `    shadow: ${params.cards.card3.shadow}`,
+    `    midpt: ${params.cards.card3.midpt}`,
+    '  card4:',
+    `    enabled: ${params.cards.card4.enabled}`,
+    `    decline: ${params.cards.card4.decline}`,
+    `    vol: ${params.cards.card4.vol}`,
+    '',
+  ].join('\n');
+
+  console.log('[saveConfig] Posting to API...');
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/config?signal_type=distribution_day`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: yaml,
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      btn.textContent = '✅ 已保存';
+      btn.classList.add('saved');
+      setTimeout(() => { btn.textContent = '💾 保存配置'; btn.classList.remove('saved'); btn.disabled = false; }, 2000);
+    } else {
+      throw new Error(data.error || 'unknown');
+    }
+  } catch (e) {
+    console.error('Save config failed:', e);
+    btn.textContent = '❌ 保存失败';
+    btn.disabled = false;
+    setTimeout(() => { btn.textContent = '💾 保存配置'; }, 2000);
+  }
+}

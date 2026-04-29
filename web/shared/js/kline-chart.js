@@ -25,11 +25,12 @@ function initKlineChart(containerId) {
 
 function renderKlineChart(chart, klines, signals, opts = {}) {
   const { showMA = [5,10,20,50], showVolume = true, signalConfig = {},
-          rallyAttempts = [], failedSignals = [] } = opts;
+          rallyAttempts = [], failedSignals = [], failedRallyAttempts = [] } = opts;
   const sigColors = signalConfig.colors || {};
   const sigLabels = signalConfig.labels || {};
   const sigSizes  = signalConfig.sizeBoost || {};
-  const defaultColor = sigColors.standard || '#7B1FA2';
+  const sigSymbol = signalConfig.symbol || 'pin';
+  const defaultColor = sigColors.standard || sigColors.normal || '#7B1FA2';
 
   // ── Data arrays ──
   const dates   = klines.map(k => k.date);
@@ -69,6 +70,18 @@ function renderKlineChart(chart, klines, signals, opts = {}) {
     z: 2,
   };
 
+  // ── Failed Rally Attempt markers — gray triangles ──
+  const failedRallyDates = new Set(failedRallyAttempts.map(r => r.date));
+  const failedRallyMarks = {
+    name: '反弹尝试失败', type: 'scatter',
+    symbol: 'triangle', symbolRotate: 180, symbolSize: 10,
+    data: klines.map((k, i) => {
+      if (!failedRallyDates.has(k.date)) return null;
+      return { value: [i, k.high * 1.03], itemStyle: { color: 'rgba(180,180,180,0.5)', borderColor: '#999', borderWidth: 0.6, borderType: 'dashed' } };
+    }).filter(d => d !== null),
+    z: 1,
+  };
+
   // ── Failed FTD lookup ──
   const failedDates = new Set(failedSignals.map(s => s.date));
   const failedInfo  = {};
@@ -84,7 +97,7 @@ function renderKlineChart(chart, klines, signals, opts = {}) {
         const isFailed = failedDates.has(k.date);
         if (!isSignal && !isFailed) return null;
         const s = isSignal ? signalInfo[k.date] : failedInfo[k.date];
-        const st = s.signal_type || 'standard';
+        const st = s.signal_type || s.ftd_type || 'standard';
         const color = sigColors[st] || defaultColor;
         const size  = sigSizes[st] || sigSizes.default || 18;
         return {
@@ -100,7 +113,7 @@ function renderKlineChart(chart, klines, signals, opts = {}) {
         };
       })
       .filter(d => d !== null),
-    symbol: 'pin',
+    symbol: sigSymbol,
     symbolRotate: 180,
     z: 10,
   };
@@ -146,8 +159,14 @@ function renderKlineChart(chart, klines, signals, opts = {}) {
     });
 
     if (s) {
-      const label = sigLabels[s.signal_type] || signalConfig.name || '';
-      html += `<tr><td colspan="2" style="padding-top:3px;color:${defaultColor};font-weight:800;font-size:8px;line-height:1.3">${label}</td></tr>`;
+      const st = s.signal_type || s.ftd_type || 'standard';
+      const label = sigLabels[st] || signalConfig.name || '';
+      let extraInfo = '';
+      if (s.rally_date) {
+        extraInfo = ` · Day1: ${s.rally_date} · D+${s.days_from_d1}`;
+        if (s.failed) extraInfo += ` · ${s.failure_reason || '已失效'}`;
+      }
+      html += `<tr><td colspan="2" style="padding-top:3px;color:${defaultColor};font-weight:800;font-size:8px;line-height:1.3">${label}${extraInfo}</td></tr>`;
     }
 
     html += '</table></div>';
@@ -203,6 +222,7 @@ function renderKlineChart(chart, klines, signals, opts = {}) {
       ...maSeries,
       ...(sigMarks.data.length > 0 ? [sigMarks] : []),
       ...(rallyMarks.data.length > 0 ? [rallyMarks] : []),
+      ...(failedRallyMarks.data.length > 0 ? [failedRallyMarks] : []),
       { name: '成交量', type: 'bar', xAxisIndex: 1, yAxisIndex: 1,
         data: volumes.map((v, i) => ({ value: v, itemStyle: { color: volColors[i], borderColor: volBorders[i], borderRadius: [0,8,8,0] } })),
       },
