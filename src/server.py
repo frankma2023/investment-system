@@ -17,9 +17,9 @@ from detectors.follow_through_day import detect as detect_follow_through_days
 # ── Config ───────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(BASE_DIR)  # ~/investment-system/
-CONFIG_DIR = os.path.join(PROJECT_DIR, 'config')
-DB_PATH = os.path.join(BASE_DIR, 'data', 'lixinger.db')
-sys.path.insert(0, os.path.join(BASE_DIR, 'data'))
+CONFIG_DIR = os.path.join(PROJECT_DIR, 'config', 'market')
+DB_PATH = os.path.join(PROJECT_DIR, 'data', 'lixinger.db')
+DATA_DIR = os.path.join(PROJECT_DIR, 'data')
 
 app = Flask(__name__)
 
@@ -40,7 +40,7 @@ def close_db(exception):
 
 def init_schema():
     db = sqlite3.connect(DB_PATH)
-    schema_path = os.path.join(PROJECT_DIR, 'schema.sql')
+    schema_path = os.path.join(PROJECT_DIR, 'data', 'schema.sql')
     with open(schema_path) as f:
         db.executescript(f.read())
     db.commit()
