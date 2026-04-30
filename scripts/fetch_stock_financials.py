@@ -344,7 +344,7 @@ def save_annual_one(conn, raw_data: List[Dict]) -> int:
              asset_liability_ratio, interest_bearing_debt_ratio,
              current_ratio, quick_ratio,
              receivables_turnover, inventory_turnover)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", rows)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", rows)
         conn.commit()
     return len(rows)
 

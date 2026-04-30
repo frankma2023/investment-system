@@ -16,7 +16,7 @@ scripts/fetch_index_daily_kline.py — 增量拉取A股主要指数日K线
 - 层级二（风格）：000016, 000300, 000905, 399006, 000688, 000852
 - 层级三（行业）：000949, 000813, H30463, 930606, ... (共30个)
 
-指数K线保存到 daily_kline 表（字段与股票K线完全复用）。
+指数K线保存到 index_daily_kline 表（独立于股票 daily_kline）。
 """
 
 import sys
@@ -77,10 +77,10 @@ INDICES_TIER3 = {  # 行业指数
 # ── API ───────────────────────────────────────────────
 API_PATH = "/index/candlestick"
 
-UPSERT_SQL = """INSERT OR REPLACE INTO daily_kline
-    (stock_code, date, open, close, high, low,
-     volume, amount, change_pct, turnover_rate)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+UPSERT_SQL = """INSERT OR REPLACE INTO index_daily_kline
+    (stock_code, date, kline_type, open, close, high, low,
+     volume, amount, change)
+    VALUES (?, ?, 'normal', ?, ?, ?, ?, ?, ?, ?)"""
 
 
 # ════════════════════════════════════════════════════════
@@ -148,7 +148,6 @@ def save_klines(conn, stock_code: str, klines: list) -> int:
             k.get("volume"),
             k.get("amount"),
             k.get("change"),
-            k.get("to_r", 0),  # 指数通常无换手率
         ))
     conn.executemany(UPSERT_SQL, rows)
     conn.commit()
@@ -185,7 +184,7 @@ def main():
 
     for idx_code, idx_name in indices.items():
         # 查询该指数已存的最新日期
-        latest = get_latest_date(conn, "daily_kline", stock_code=idx_code)
+        latest = get_latest_date(conn, "index_daily_kline", stock_code=idx_code)
 
         if user_start:
             # 用户指定了起始日期 → 强制从指定日期开始

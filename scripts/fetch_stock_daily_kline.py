@@ -3,8 +3,10 @@
 scripts/fetch_stock_daily_kline.py — 增量拉取A股所有股票日K线
 
 用法：
-    python scripts/fetch_stock_daily_kline.py          # 增量更新（默认）
-    python scripts/fetch_stock_daily_kline.py --full   # 全量拉取所有历史数据
+    python scripts/fetch_stock_daily_kline.py                          # 增量更新（默认）
+    python scripts/fetch_stock_daily_kline.py --full                   # 全量拉取所有历史数据
+    python scripts/fetch_stock_daily_kline.py --start 2024-01-01       # 从指定日期起增量
+    python scripts/fetch_stock_daily_kline.py --start 2024-01-01 --end 2024-12-31  # 指定区间
 
 原理：
     利用理杏仁 API 的 date 参数（单日返回全市场 K 线），按日批量拉取。
@@ -70,11 +72,25 @@ def generate_weekdays(start: str, end: str) -> list:
     return days
 
 
+def parse_date_arg(argv: list, flag: str) -> str | None:
+    """从命令行参数提取日期值，例如 --start 2024-01-01"""
+    try:
+        idx = argv.index(flag)
+        return argv[idx + 1]
+    except (ValueError, IndexError):
+        return None
+
+
 def main():
     conn = get_db()
     full_mode = "--full" in sys.argv
+    arg_start = parse_date_arg(sys.argv, "--start")
+    arg_end = parse_date_arg(sys.argv, "--end")
 
-    if full_mode:
+    if arg_start:
+        start_date = arg_start
+        log.info(f"📅 指定起始日: {start_date}")
+    elif full_mode:
         start_date = "2000-01-01"
         log.info("🔁 全量模式：从 2000-01-01 开始拉取")
     else:
@@ -83,7 +99,7 @@ def main():
         start_date = start.strftime("%Y-%m-%d")
         log.info(f"📅 增量模式：最新数据日期 {latest}，从 {start_date} 开始")
 
-    end_date = datetime.now().strftime("%Y-%m-%d")
+    end_date = arg_end or datetime.now().strftime("%Y-%m-%d")
     weekdays = generate_weekdays(start_date, end_date)
 
     if not weekdays:
