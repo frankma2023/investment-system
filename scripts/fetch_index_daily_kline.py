@@ -3,9 +3,13 @@
 scripts/fetch_index_daily_kline.py — 增量拉取A股主要指数日K线
 
 用法：
-    python scripts/fetch_index_daily_kline.py          # 增量更新（默认）
-    python scripts/fetch_index_daily_kline.py --all    # 拉取全部3层指数
-    python scripts/fetch_index_daily_kline.py --tier-1 # 仅拉取全市场指数
+    python scripts/fetch_index_daily_kline.py                        # 增量更新（默认）
+    python scripts/fetch_index_daily_kline.py --all                  # 拉取全部3层指数
+    python scripts/fetch_index_daily_kline.py --tier-1               # 仅拉取全市场指数
+    python scripts/fetch_index_daily_kline.py --start 2015-01-01     # 指定起始日期
+    python scripts/fetch_index_daily_kline.py --start 2010-01-01 --end 2020-12-31
+
+注意：理杏仁API限制单次请求不超过10年。超过10年的区间会自动分批拉取。
 
 指数定义：参见 docs/指数定义.md
 - 层级一（全市场）：000985, 000001, 399001
@@ -92,6 +96,42 @@ def fetch_index_kline(stock_code: str, start_date: str, end_date: str) -> list:
     return api_post(API_PATH, payload)
 
 
+def fetch_index_kline_batched(stock_code: str, start_date: str, end_date: str,
+                              max_years: int = 9) -> list:
+    """分批拉取K线，每批不超过 max_years 年（理杏仁限制 ≤10年）"""
+    start = datetime.strptime(start_date, "%Y-%m-%d")
+    end = datetime.strptime(end_date, "%Y-%m-%d")
+    span = (end - start).days
+
+    if span <= max_years * 365:
+        # 单批即可
+        return fetch_index_kline(stock_code, start_date, end_date)
+
+    # 需要分批
+    chunk_delta = timedelta(days=max_years * 365)
+    all_klines = []
+    chunk_start = start
+
+    while chunk_start < end:
+        chunk_end = min(chunk_start + chunk_delta, end)
+        s = chunk_start.strftime("%Y-%m-%d")
+        e = chunk_end.strftime("%Y-%m-%d")
+        log.info(f"    分批: {s} → {e}")
+        chunk = fetch_index_kline(stock_code, s, e)
+        all_klines.extend(chunk)
+        chunk_start = chunk_end + timedelta(days=1)
+
+    # 去重（按 date 字段）
+    seen = set()
+    deduped = []
+    for k in all_klines:
+        d = k["date"][:10]
+        if d not in seen:
+            seen.add(d)
+            deduped.append(k)
+    return deduped
+
+
 def save_klines(conn, stock_code: str, klines: list) -> int:
     """写入指数K线"""
     if not klines:
@@ -118,6 +158,16 @@ def save_klines(conn, stock_code: str, klines: list) -> int:
 def main():
     conn = get_db()
 
+    # ── 解析参数 ──────────────────────────────────────────
+    # --start / --end: 指定日期区间
+    user_start = None
+    user_end = None
+    for i, arg in enumerate(sys.argv):
+        if arg == "--start" and i + 1 < len(sys.argv):
+            user_start = sys.argv[i + 1]
+        if arg == "--end" and i + 1 < len(sys.argv):
+            user_end = sys.argv[i + 1]
+
     # 确定拉取哪些指数
     if "--tier-1" in sys.argv:
         indices = INDICES_TIER1
@@ -130,25 +180,30 @@ def main():
         indices = {**INDICES_TIER1, **INDICES_TIER2}
         log.info("🎯 拉取层级一 + 层级二（默认）")
 
-    end_date = datetime.now().strftime("%Y-%m-%d")
+    default_end = datetime.now().strftime("%Y-%m-%d")
     total_saved = 0
 
     for idx_code, idx_name in indices.items():
         # 查询该指数已存的最新日期
         latest = get_latest_date(conn, "daily_kline", stock_code=idx_code)
 
-        if latest:
+        if user_start:
+            # 用户指定了起始日期 → 强制从指定日期开始
+            start_date = user_start
+        elif latest:
             start = datetime.strptime(latest, "%Y-%m-%d") + timedelta(days=1)
             start_date = start.strftime("%Y-%m-%d")
-            if start_date > end_date:
+            if start_date > default_end:
                 log.info(f"  {idx_code} {idx_name} ✅ 已最新")
                 continue
         else:
             # 新建：从 2000 年开始
             start_date = "2000-01-01"
 
+        end_date = user_end if user_end else default_end
+
         try:
-            klines = fetch_index_kline(idx_code, start_date, end_date)
+            klines = fetch_index_kline_batched(idx_code, start_date, end_date)
             n = save_klines(conn, idx_code, klines)
             total_saved += n
             log.info(f"  {idx_code} {idx_name}: +{n} 条 {start_date}~{end_date}")
