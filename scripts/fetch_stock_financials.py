@@ -278,15 +278,9 @@ def save_quarterly(conn, raw_data: List[Dict]) -> int:
 # 年度数据拉取（逐只！参见踩坑指南坑1）
 # ════════════════════════════════════════════════════════
 
-ANNUAL_LIMITER = RateLimiter(max_requests=30, window=2.0)
-
-
 def fetch_annual_one(code: str, date_str: str) -> List[Dict]:
-    """逐只拉取年度财报"""
-    ANNUAL_LIMITER.wait()
-    from common import get_token
+    """逐只拉取年度财报（api_post 内置限流，无需额外 limiter）"""
     payload = {
-        "token": get_token(),
         "stockCodes": [code],
         "date": date_str,
         "metricsList": [m[0] for m in ANNUAL_METRICS],
@@ -363,7 +357,7 @@ def recent_report_dates(years_back: int = 2) -> List[str]:
     for y in range(current_year - years_back, current_year + 1):
         for q in [1, 2, 3, 4]:
             month = q * 3
-            day = 31 if q != 2 else 30
+            day = 31 if month in (3, 12) else 30
             d = f"{y}-{month:02d}-{day:02d}"
             # 不取未来日期（当前季度可能未结束）
             if y < current_year or (y == current_year and q <= current_quarter):
@@ -408,12 +402,13 @@ def main():
                         pass
         if years:
             annual_dates = [f"{y}-12-31" for y in years]
+            quarterly_dates = [f"{y}-{m}" for y in years for m in ["03-31", "06-30", "09-30", "12-31"]]
         else:
             annual_dates = recent_annual_dates(5)
+            quarterly_dates = recent_report_dates(2)
     else:
         annual_dates = recent_annual_dates(5)
-
-    quarterly_dates = recent_report_dates(2)
+        quarterly_dates = recent_report_dates(2)
 
     # ── 季度数据 ──
     if do_quarterly:
@@ -436,8 +431,7 @@ def main():
                     n = save_quarterly(conn, raw)
                     total_q_saved += n
                     date_saved += n
-                    if raw:
-                        log.info(f"    [{i+len(batch)}/{len(all_codes)}] +{n} 条")
+                    log.info(f"    [{i+len(batch)}/{len(all_codes)}] +{n} 条")
                 except Exception as e:
                     log.error(f"    [{i+len(batch)}/{len(all_codes)}] ❌ {e}")
                     time.sleep(5)
