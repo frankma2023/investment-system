@@ -1,78 +1,59 @@
 #!/usr/bin/env python3
 """
-scripts/fetch_index_daily_kline.py — 增量拉取A股主要指数日K线
+scripts/fetch_index_daily_kline.py — 增量拉取指数日K线（配置驱动）
 
 用法：
-    python scripts/fetch_index_daily_kline.py                        # 增量更新（默认）
-    python scripts/fetch_index_daily_kline.py --all                  # 拉取全部3层指数
-    python scripts/fetch_index_daily_kline.py --tier-1               # 仅拉取全市场指数
+    python scripts/fetch_index_daily_kline.py                        # 默认：全市场 + L1 + L2（~85个指数）
+    python scripts/fetch_index_daily_kline.py --all                  # 全部分类（~407个指数）
+    python scripts/fetch_index_daily_kline.py --category market      # 仅全市场指数
+    python scripts/fetch_index_daily_kline.py --category market,sector_l1  # 指定多个分类
     python scripts/fetch_index_daily_kline.py --start 2015-01-01     # 指定起始日期
     python scripts/fetch_index_daily_kline.py --start 2010-01-01 --end 2020-12-31
 
+分类说明（定义于 config/index_rs.yaml）：
+    market      — 全市场指数（29个）
+    sector_l1   — L1 一级行业（11个）
+    sector_l2   — L2 二级行业（45个）
+    thematic    — L3 行业主题（229个）
+    strategy    — 策略指数（93个）
+
 注意：理杏仁API限制单次请求不超过10年。超过10年的区间会自动分批拉取。
-
-指数定义：参见 docs/指数定义.md
-- 层级一（全市场）：000985, 000001, 399001
-- 层级二（风格）：000016, 000300, 000905, 399006, 000688, 000852
-- 层级三（行业）：000949, 000813, H30463, 930606, ... (共30个)
-
 指数K线保存到 index_daily_kline 表（独立于股票 daily_kline）。
 """
 
+import os
 import sys
+import yaml
 from datetime import datetime, timedelta
 from common import api_post, get_db, get_latest_date, log
 
-# ── 指数定义 ──────────────────────────────────────────
-# 参见 docs/指数定义.md
+# ── 指数配置加载 ──────────────────────────────────────
 
-INDICES_TIER1 = {  # 全市场指数
-    "000985": "中证全指",
-    "000001": "上证指数",
-    "399001": "深证成指",
-}
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "index_rs.yaml")
 
-INDICES_TIER2 = {  # 风格指数
-    "000016": "上证50",
-    "000300": "沪深300",
-    "000905": "中证500",
-    "399006": "创业板指",
-    "000688": "科创50",
-    "000852": "中证1000",
-}
 
-INDICES_TIER3 = {  # 行业指数
-    "000949": "中证农业",
-    "000813": "中证细分化工",
-    "H30463": "沪港深医药",
-    "930606": "中证钢铁",
-    "930708": "中证有色",
-    "931494": "中证消费电子",
-    "930653": "中证食品饮料",
-    "930697": "中证家用电器",
-    "000932": "中证消费800",
-    "000806": "中证消费服务",
-    "000995": "中证全指公用",
-    "000945": "中证内地运输",
-    "931775": "中证房地产",
-    "399986": "中证银行",
-    "931479": "中证证券保险",
-    "930651": "中证计算机",
-    "H30318": "中证科技传媒通信",
-    "931160": "中证通信设备",
-    "931066": "中证军工龙头",
-    "931752": "中证工程机械主题",
-    "931008": "中证汽车指数",
-    "399995": "中证基建工程",
-    "931009": "中证建筑材料",
-    "931994": "中证电网设备主题",
-    "399998": "中证煤炭",
-    "H11057": "中证石化产业",
-    "000126": "中证消费50",
-    "931663": "中证消费龙头",
-    "930633": "中证旅游",
-    "930614": "中证环保50",
-}
+def load_index_config(path: str = None) -> dict:
+    """从 index_rs.yaml 加载指数配置，返回 {code: name, ...} 的扁平字典"""
+    path = path or CONFIG_PATH
+    with open(path, "r") as f:
+        data = yaml.safe_load(f)
+    categories = data.get("categories", {})
+    result = {}
+    for cat_name, indices in categories.items():
+        for item in indices:
+            result[item["code"]] = item["name"]
+    return result
+
+
+def load_index_config_by_category(path: str = None) -> dict:
+    """从 index_rs.yaml 加载指数配置，按分类分组返回 {category: {code: name, ...}}"""
+    path = path or CONFIG_PATH
+    with open(path, "r") as f:
+        data = yaml.safe_load(f)
+    result = {}
+    for cat_name, indices in data.get("categories", {}).items():
+        result[cat_name] = {item["code"]: item["name"] for item in indices}
+    return result
 
 # ── API ───────────────────────────────────────────────
 API_PATH = "/index/candlestick"
@@ -158,7 +139,6 @@ def main():
     conn = get_db()
 
     # ── 解析参数 ──────────────────────────────────────────
-    # --start / --end: 指定日期区间
     user_start = None
     user_end = None
     for i, arg in enumerate(sys.argv):
@@ -167,17 +147,45 @@ def main():
         if arg == "--end" and i + 1 < len(sys.argv):
             user_end = sys.argv[i + 1]
 
-    # 确定拉取哪些指数
-    if "--tier-1" in sys.argv:
-        indices = INDICES_TIER1
-        log.info("🎯 仅拉取层级一（全市场指数）")
-    elif "--all" in sys.argv:
-        indices = {**INDICES_TIER1, **INDICES_TIER2, **INDICES_TIER3}
-        log.info("🎯 拉取全部三层指数")
+    # 加载指数配置（按分类）
+    cats = load_index_config_by_category()
+
+    # ── 确定拉取哪些分类 ──────────────────────────────────
+    VALID_CATS = {"market", "sector_l1", "sector_l2", "thematic", "strategy"}
+
+    if "--all" in sys.argv:
+        selected_cats = list(cats.keys())  # 全部分类
+        log.info("🎯 拉取全部 5 个分类（共 %d 个指数）", sum(len(cats[c]) for c in cats))
+    elif any(a.startswith("--category") for a in sys.argv):
+        # --category market,sector_l1
+        selected_cats = []
+        for a in sys.argv:
+            if a.startswith("--category="):
+                selected_cats.extend(c.strip() for c in a.split("=", 1)[1].split(","))
+            elif a == "--category":
+                idx = sys.argv.index(a)
+                if idx + 1 < len(sys.argv):
+                    selected_cats.extend(c.strip() for c in sys.argv[idx + 1].split(","))
+        # 过滤非法分类
+        selected_cats = [c for c in selected_cats if c in VALID_CATS]
+        if not selected_cats:
+            log.error(f"无效分类，支持: {', '.join(sorted(VALID_CATS))}")
+            return
+        log.info("🎯 指定分类: %s", ", ".join(selected_cats))
+    elif any(a.startswith("--tier-1") for a in sys.argv):
+        # 向后兼容：旧 --tier-1 = 全市场指数
+        selected_cats = ["market"]
+        log.info("🎯 仅拉取全市场指数（--tier-1 兼容）")
     else:
-        # 默认：层级一 + 层级二（常用指数）
-        indices = {**INDICES_TIER1, **INDICES_TIER2}
-        log.info("🎯 拉取层级一 + 层级二（默认）")
+        # 默认：全市场 + L1 + L2（≈ 旧版 tier-1 + tier-2）
+        selected_cats = ["market", "sector_l1", "sector_l2"]
+        log.info("🎯 默认：全市场 + L1一级 + L2二级（共 %d 个指数）",
+                 sum(len(cats[c]) for c in selected_cats))
+
+    # 合并选中分类的指数为统一字典
+    indices = {}
+    for cat in selected_cats:
+        indices.update(cats.get(cat, {}))
 
     default_end = datetime.now().strftime("%Y-%m-%d")
     total_saved = 0
@@ -187,7 +195,6 @@ def main():
         latest = get_latest_date(conn, "index_daily_kline", stock_code=idx_code)
 
         if user_start:
-            # 用户指定了起始日期 → 强制从指定日期开始
             start_date = user_start
         elif latest:
             start = datetime.strptime(latest, "%Y-%m-%d") + timedelta(days=1)
@@ -196,7 +203,6 @@ def main():
                 log.info(f"  {idx_code} {idx_name} ✅ 已最新")
                 continue
         else:
-            # 新建：从 2000 年开始
             start_date = "2000-01-01"
 
         end_date = user_end if user_end else default_end
