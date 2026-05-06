@@ -41,7 +41,7 @@ def close_db(exception):
 def init_schema():
     db = sqlite3.connect(DB_PATH)
     schema_path = os.path.join(PROJECT_DIR, 'data', 'schema.sql')
-    with open(schema_path) as f:
+    with open(schema_path, encoding='utf-8') as f:
         db.executescript(f.read())
     db.commit()
     db.close()
@@ -132,7 +132,7 @@ def load_config(signal_type):
         path = os.path.join(CONFIG_DIR, f'{signal_type}.yaml')
     if not os.path.exists(path):
         return {}
-    with open(path) as f:
+    with open(path, encoding='utf-8') as f:
         content = f.read()
     # Parse simple YAML (no nested structures beyond 1 level)
     config = {}
@@ -168,7 +168,7 @@ def save_config(signal_type, raw_yaml):
     """Save raw YAML string to config file (uses market/ subdirectory)."""
     path = os.path.join(CONFIG_DIR, 'market', f'{signal_type}.yaml')
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf-8') as f:
         f.write(raw_yaml)
 
 # ═══════════════════════════════════════════════
@@ -399,6 +399,8 @@ def add_cors(response):
     return response
 
 if __name__ == '__main__':
+    import sys, io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
     init_schema()
     print("🦊 O'Neil Backtest API Server starting on http://localhost:8788")
     print(f"   Config dir: {CONFIG_DIR}")

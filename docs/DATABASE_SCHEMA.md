@@ -1,6 +1,8 @@
-﻿# 数据库表结构
+# 数据库表结构
 
-> 引擎：SQLite，WAL 模式，PRAGMA synchronous=NORMAL
+> 引擎：SQLite，WAL 模式，PRAGMA synchronous=NORMAL  
+> 数据库文件：`data/lixinger.db`  
+> 更新时间：2026-05-04
 
 ---
 
@@ -20,9 +22,9 @@
 | mutual_market_flag | INTEGER | 是否陆股通标的，0/1 |
 | updated_at | TEXT | 更新时间 |
 
-**数据量**：~5595 条
-**数据来源**：理杏仁 API #1 股票信息
-**写入脚本**：`scheduler/download_stock_basic.py`
+**数据量**：~5595 条  
+**数据来源**：理杏仁 API #1 股票信息  
+**写入脚本**：`src/data/lixr_api/api_stock_company.py`  
 **读取场景**：获取股票名称、上市天数筛选、排除ST
 
 ---
@@ -43,17 +45,42 @@
 | turnover_rate | REAL | 换手率 |
 | complex_factor | REAL | 复权因子 |
 
-**数据量**：~304万条
-**索引**：`idx_daily_kline_date(date)`, `idx_daily_kline_stock(stock_code)`
-**数据来源**：理杏仁 API #4 K线数据
-**写入脚本**：
-- 首次全量：`scheduler/download_kline_500d.py`
-- 每日增量：`scheduler/update_kline_daily.py`
+**数据量**：~1794万条  
+**索引**：`idx_daily_kline_date(date)`, `idx_daily_kline_stock(stock_code)`  
+**数据来源**：理杏仁 API #4 K线数据  
+**写入脚本**：`scripts/fetch_stock_daily_kline.py`  
 **读取场景**：RS计算、技术指标计算、内部共振验证
 
 ---
 
-## 3. stock_industry — 所属行业（多源）
+## 3. weekly_kline — 个股周K线
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| stock_code | TEXT | **PK(1)**，股票代码 |
+| week_start_date | TEXT | **PK(2)**，该周第一个交易日 YYYY-MM-DD |
+| week_end_date | TEXT | 该周最后一个交易日 |
+| year_week | TEXT | 年周标识 YYYY-WW |
+| open | REAL | 周开盘价 |
+| close | REAL | 周收盘价 |
+| high | REAL | 周最高价 |
+| low | REAL | 周最低价 |
+| volume | INTEGER | 周成交量（日成交求和） |
+| amount | REAL | 周成交额（日成交求和） |
+| change_pct | REAL | 周涨跌幅 |
+| turnover_rate | REAL | 周换手率（日换手求和） |
+| trade_days | INTEGER | 该周交易日数量 |
+| adj_open/adj_high/adj_low/adj_close | REAL | 复权价格 |
+
+**数据量**：~222万条  
+**索引**：`idx_weekly_kline_date(week_end_date)`, `idx_weekly_kline_stock(stock_code)`  
+**数据来源**：由 `daily_kline` 聚合生成  
+**写入脚本**：`src/data/lixr_api/db_manager.py` → `upsert_weekly_kline()`  
+**读取场景**：周线级别技术指标、中期趋势分析
+
+---
+
+## 4. stock_industry — 所属行业（多源）
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -63,14 +90,14 @@
 | source | TEXT | **PK(3)**，来源：`sw`/`sw_2021`/`cni`/... |
 | updated_at | TEXT | 更新时间 |
 
-**数据量**：~17141 条
-**数据来源**：理杏仁 API #14 所属行业
-**写入脚本**：`scheduler/download_industries_indices.py`
+**数据量**：~17141 条  
+**数据来源**：理杏仁 API #14 所属行业  
+**写入脚本**：`src/data/lixr_api/api_stock_industries.py`  
 **读取场景**：获取股票行业分类
 
 ---
 
-## 4. stock_index — 所属指数
+## 5. stock_index — 所属指数
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -80,14 +107,14 @@
 | source | TEXT | 来源：`csi`/`cni`/`hsi`/`usi`/`lxri` |
 | updated_at | TEXT | 更新时间 |
 
-**数据量**：~19865 条
-**数据来源**：理杏仁 API #13 所属指数
-**写入脚本**：`scheduler/download_industries_indices.py`
+**数据量**：~19865 条  
+**数据来源**：理杏仁 API #13 所属指数  
+**写入脚本**：`src/data/lixr_api/api_stock_indices.py`  
 **读取场景**：确认股票所属指数
 
 ---
 
-## 5. stock_sw_industry — 申万一级行业映射
+## 6. stock_sw_industry — 申万一级行业映射
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -96,9 +123,9 @@
 | industry_code | TEXT | 申万一级行业指数代码，如 `931494` |
 | updated_at | TEXT | 更新时间 |
 
-**数据量**：~5500 条
-**数据来源**：理杏仁 API #14 所属行业（筛选 source=sw）
-**写入脚本**：`scheduler/download_sw_industry.py`
+**数据量**：~5500 条  
+**数据来源**：理杏仁 API #14 所属行业（筛选 source=sw）  
+**写入脚本**：`src/data/lixr_api/api_stock_industries.py`  
 **读取场景**：
 - `IndustryMapper.load_from_db()` 读取，结合 `rs_config.yaml` 的 `industry_index_map` 生成股票→中证行业指数映射
 - 个股RS计算时用于匹配行业基准
@@ -106,7 +133,7 @@
 
 ---
 
-## 6. fundamental_indicator — 基本面指标（key-value）
+## 7. fundamental_indicator — 基本面指标（key-value）
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -115,15 +142,56 @@
 | metric_code | TEXT | **PK(3)**，如 `pe_ttm`/`pb`/`mc`/`pe_ttm.y3.cvpos` |
 | value | REAL | 指标值 |
 
-**数据量**：~15 条（仅测试数据）
-**索引**：`idx_fundamental_stock_date(stock_code, date)`, `idx_fundamental_metric(metric_code)`
-**数据来源**：理杏仁 API #26 基本面数据
-**写入脚本**：`DBManager.upsert_fundamental()`
+**数据量**：~1.25亿条  
+**索引**：`idx_fundamental_stock_date(stock_code, date)`, `idx_fundamental_metric(metric_code)`  
+**数据来源**：理杏仁 API #26 基本面数据  
+**写入脚本**：
+- 非金融股：`scripts/fetch_fundamental_nonfinancial.py`
+- 金融股等：`src/data/lixr_api/api_stock_fundamental.py` + `DBManager.upsert_fundamental()`
 **设计说明**：key-value 结构，指标由 API 的 `metricsList` 参数动态决定
+**metric_code 完整清单（33个）**：
+
+| 分类 | 指标代码 | 说明 |
+|------|---------|------|
+| 估值 | `pe_ttm` | PE-TTM |
+| 估值 | `d_pe_ttm` | PE-TTM（扣非） |
+| 估值 | `pb` | PB |
+| 估值 | `pb_wo_gw` | PB（不含商誉） |
+| 估值 | `ps_ttm` | PS-TTM |
+| 估值 | `dyr` | 股息率 |
+| 估值进阶 | `pcf_ttm` | PCF-TTM |
+| 估值进阶 | `ev_ebit_r` | EV/EBIT |
+| 估值进阶 | `ev_ebitda_r` | EV/EBITDA |
+| 估值进阶 | `ey` | 收益率（E/P） |
+| 价量 | `sp` | 股价 |
+| 价量 | `spc` | 涨跌幅 |
+| 价量 | `spa` | 振幅 |
+| 价量 | `tv` | 成交量 |
+| 价量 | `ta` | 成交额 |
+| 价量 | `to_r` | 换手率 |
+| 股东/市值 | `shn` | 股东人数 |
+| 股东/市值 | `mc` | 总市值 |
+| 股东/市值 | `mc_om` | 流通市值 |
+| 股东/市值 | `cmc` | A股市值 |
+| 股东/市值 | `ecmc` | 自由流通市值 |
+| 股东/市值 | `ecmc_psh` | 人均自由流通市值 |
+| 融资融券 | `fpa` | 融资买入额 |
+| 融资融券 | `fra` | 融资偿还额 |
+| 融资融券 | `fnpa` | 融资净买入额 |
+| 融资融券 | `fb` | 融资余额 |
+| 融资融券 | `ssa` | 融券卖出量 |
+| 融资融券 | `sra` | 融券偿还量 |
+| 融资融券 | `snsa` | 融券净卖出量 |
+| 融资融券 | `sb` | 融券余量 |
+| 陆股通 | `ha_sh` | 陆股通持股量 |
+| 陆股通 | `ha_shm` | 陆股通持股市值 |
+| 陆股通 | `mm_nba` | 陆股通净买入 |
+
+> ⚠️ 并非所有指标对所有股票都有值（如融资融券仅对两融标的、陆股通仅对互联互通标的）。API 单次 36 指标上限，33 个一次性拉取
 
 ---
 
-## 7. financial_statement — 财报数据（key-value）
+## 8. financial_statement — 财报数据（key-value）
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -133,10 +201,10 @@
 | metric_code | TEXT | **PK(3)**，如 `q.ps.toi.t`/`q.bs.ta.t`/`q.m.roe.t` |
 | value | REAL | 指标值 |
 
-**数据量**：~10 条（仅测试数据）
-**索引**：`idx_financial_stock_date(stock_code, report_date)`, `idx_financial_metric(metric_code)`
-**数据来源**：理杏仁 API #27 财报数据
-**写入脚本**：`DBManager.upsert_financial()`
+**数据量**：~28378 条  
+**索引**：`idx_financial_stock_date(stock_code, report_date)`, `idx_financial_metric(metric_code)`  
+**数据来源**：理杏仁 API #27 财报数据  
+**写入脚本**：`src/data/lixr_api/api_stock_fs.py` → `DBManager.upsert_financial()`  
 **metric_code 编码规则**：`[粒度].[报表].[字段].[计算类型]`
 - 粒度：q(季度), hy(半年), y(年)
 - 报表：bs(资产负债表), ps(利润表), cf(现金流量表), m(财务指标)
@@ -144,7 +212,78 @@
 
 ---
 
-## 8. shareholders_num — 股东人数
+## 9. stock_financials_quarterly — 季度财务（宽表）
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| stock_code | TEXT | **PK(1)**，股票代码 |
+| report_date | TEXT | **PK(2)**，报告期 YYYY-MM-DD |
+| announce_date | TEXT | 公告日期 |
+| revenue_single | REAL | 当季营业收入 |
+| revenue_yoy | REAL | 当季营收同比(%) |
+| revenue_qoq | REAL | 当季营收环比(%) |
+| net_profit_single | REAL | 当季归母净利润 |
+| net_profit_margin | REAL | 归母净利润率(%) |
+| net_profit_yoy | REAL | 归母净利润同比(%) |
+| net_profit_qoq | REAL | 归母净利润环比(%) |
+| net_profit_adj_single | REAL | 当季扣非净利润 |
+| net_profit_adj_margin | REAL | 扣非净利润率(%) |
+| net_profit_adj_yoy | REAL | 扣非净利润同比(%) |
+| net_profit_adj_qoq | REAL | 扣非净利润环比(%) |
+| gross_margin_single | REAL | 当季毛利率(%) |
+| roe_single | REAL | 当季ROE |
+| free_cash_flow | REAL | 当季自由现金流 |
+| asset_liability_ratio | REAL | 当季资产负债率(%) |
+| interest_bearing_debt_ratio | REAL | 当季有息负债率(%) |
+| current_ratio | REAL | 当季流动比率 |
+| quick_ratio | REAL | 当季速动比率 |
+| receivables_turnover | REAL | 当季应收账款周转率 |
+| inventory_turnover | REAL | 当季存货周转率 |
+| updated_at | TEXT | 更新时间 |
+
+**数据量**：~16.2万条  
+**索引**：`idx_fq_date(report_date)`  
+**数据来源**：理杏仁 API #27 财报数据（按季拆分）  
+**写入脚本**：`scripts/fetch_stock_financials.py`  
+**读取场景**：CANSLIM C维度季度盈利判断、财务筛选
+
+---
+
+## 10. stock_financials_annual — 年度财务（宽表）
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| stock_code | TEXT | **PK(1)**，股票代码 |
+| report_date | TEXT | **PK(2)**，报告期 YYYY-12-31 |
+| announce_date | TEXT | 公告日期 |
+| revenue | REAL | 营业总收入 |
+| revenue_yoy | REAL | 营收同比(%) |
+| net_profit | REAL | 归母净利润 |
+| net_profit_yoy | REAL | 归母净利润同比(%) |
+| net_profit_adj | REAL | 扣非净利润 |
+| gross_margin | REAL | 毛利率(%) |
+| roe | REAL | 归母ROE(%) |
+| roe_adj | REAL | 扣非归母ROE(%) |
+| operating_cash_flow | REAL | 经营活动现金流净额 |
+| free_cash_flow | REAL | 自由现金流 |
+| free_cash_flow_yoy | REAL | 自由现金流同比(%) |
+| asset_liability_ratio | REAL | 资产负债率(%) |
+| interest_bearing_debt_ratio | REAL | 有息负债率(%) |
+| current_ratio | REAL | 流动比率 |
+| quick_ratio | REAL | 速动比率 |
+| receivables_turnover | REAL | 应收账款周转率 |
+| inventory_turnover | REAL | 存货周转率 |
+| updated_at | TEXT | 更新时间 |
+
+**数据量**：~5.7万条  
+**索引**：`idx_fa_date(report_date)`  
+**数据来源**：理杏仁 API #27 财报数据（按年拆分）  
+**写入脚本**：`scripts/fetch_stock_financials.py`  
+**读取场景**：CANSLIM A维度年度盈利判断、ROE筛选
+
+---
+
+## 11. shareholders_num — 股东人数
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -154,13 +293,50 @@
 | change_rate | REAL | 变化比例 |
 | price_change | REAL | 股价涨跌幅 |
 
-**数据量**：~4 条（仅测试数据）
-**数据来源**：理杏仁 API #5 股东人数
-**写入脚本**：`DBManager.upsert_shareholders_num()`
+**数据量**：~4 条（仅测试数据）  
+**数据来源**：理杏仁 API #5 股东人数  
+**写入脚本**：`src/data/lixr_api/api_stock_shareholders_num.py`
 
 ---
 
-## 9. index_daily_kline — 指数日K线
+## 12. shareholders_num_v2 — 股东人数V2
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| stock_code | TEXT | **PK(1)**，股票代码 |
+| date | TEXT | **PK(2)**，日期 |
+| shnc_rln | INTEGER | 最新股东人数 |
+| shnc_d10~d90 | REAL | 10/20/30/60/90日变化率 |
+| shnc_qln | REAL | 上期股东人数 |
+| shnc_q1~q3 | REAL | 1/2/3季度变化 |
+| shnc_y1~y2 | REAL | 1/2年变化 |
+
+**数据量**：~5168 条  
+**数据来源**：理杏仁 API #5 股东人数V2  
+**写入脚本**：`src/data/lixr_api/api_stock_shareholders_v2.py`
+
+---
+
+## 13. stock_margin — 融资融券数据
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| stock_code | TEXT | **PK(1)**，股票代码 |
+| date | TEXT | **PK(2)**，日期 |
+| mtaslb | REAL | 融资融券余额 |
+| mtaslb_fb | REAL | 融资余额 |
+| mtaslb_sb | REAL | 融券余额 |
+| mtaslb_mc_r | REAL | 融资买入额 |
+| npa_o_f_d1~d240 | REAL | 1/5/10/20/60/120/240日净买入额 |
+| fb_mc_rc_d1~d240 | REAL | 1/5/10/20/60/120/240日融资偿还率 |
+
+**数据量**：~5023 条  
+**数据来源**：理杏仁 API #20 融资融券  
+**写入脚本**：`src/data/lixr_api/api_stock_margin.py`
+
+---
+
+## 14. index_daily_kline — 指数日K线
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -175,16 +351,14 @@
 | amount | REAL | 成交额 |
 | change | REAL | 涨跌幅(%) |
 
-**数据量**：~61183 条（31个指数 × 1000天 × 2种点位）
-**数据来源**：理杏仁指数K线API
-**写入脚本**：
-- 首次全量：`scheduler/download_index_kline.py`（1000交易日）
-- 每日更新：`scheduler/update_index_kline_daily.py`（与 download_index_kline.py 代码相同）
+**数据量**：~142万条（408个指数 × ~1740天 × 2种点位）  
+**数据来源**：理杏仁指数K线API  
+**写入脚本**：`scripts/fetch_index_daily_kline.py`（通过 `config/index_rs.yaml` 配置 408 个指数）  
 **读取场景**：RS计算的行业/市场基准、行业技术指标(MA200/涨跌幅/成交量)
 
 ---
 
-## 10. index_constituents — 指数成分股
+## 15. index_constituents — 指数成分股
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -193,10 +367,10 @@
 | date | TEXT | **PK(3)**，成分股生效日期 |
 | updated_at | TEXT | 更新时间 |
 
-**数据量**：~13624 条
-**索引**：`idx_idx_const_idx(index_code)`, `idx_idx_const_stock(stock_code)`, `idx_idx_const_date(date)`
-**数据来源**：理杏仁指数成分股API
-**写入脚本**：`scheduler/download_index_constituents.py`
+**数据量**：~62.3万条（409个指数 × 13个月份）  
+**索引**：`idx_idx_const_idx(index_code)`, `idx_idx_const_stock(stock_code)`, `idx_idx_const_date(date)`  
+**数据来源**：理杏仁指数成分股API  
+**写入脚本**：`scripts/fetch_index_constituents.py --constituents-only`  
 **读取场景**：
 - 行业RS v3.0：构建 `{stock_code: industry_index_code}` 映射
 - 内部共振验证：获取行业成分股列表
@@ -204,7 +378,7 @@
 
 ---
 
-## 11. index_constituent_weightings — 指数成分股权重
+## 16. index_constituent_weightings — 指数成分股权重
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -214,15 +388,15 @@
 | weighting | REAL | 权重比例 |
 | updated_at | TEXT | 更新时间 |
 
-**数据量**：~310 条
-**索引**：`idx_icw_index(index_code)`, `idx_icw_stock(stock_code)`
-**数据来源**：理杏仁成分股权重API
-**写入脚本**：`scheduler/download_constituent_weightings.py`
+**数据量**：~119万条  
+**索引**：`idx_icw_index(index_code)`, `idx_icw_stock(stock_code)`  
+**数据来源**：理杏仁成分股权重API  
+**写入脚本**：`scripts/fetch_index_constituents.py --weightings-only`  
 **读取场景**：`DataFetcher.load_constituents()` 优先使用权重排序取 top_n 成分股
 
 ---
 
-## 12. rs_daily — 个股RS每日计算结果
+## 17. rs_daily — 个股RS每日计算结果
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -242,9 +416,8 @@
 | short_days | INTEGER | 短期周期天数（配置值，默认20） |
 | updated_at | TEXT | 更新时间 |
 
-**数据量**：~173865 条
-**写入脚本**：`scheduler/daily_rs_calculation.py`
-**计算引擎**：`src/strategies/rs_engine.py` → `RSEngine.calculate_all()`
+**数据量**：~527万条  
+**写入脚本**：`src/server.py`（RS计算API）  
 **读取场景**：
 - 行业RS v3.0：`DataFetcher.load_constituent_rs_median()` 聚合为行业RS中位数
 - CSV 导出：`output/rs_daily_YYYYMMDD.csv` + `output/double_strong_YYYYMMDD.csv`
@@ -252,7 +425,7 @@
 
 ---
 
-## 13. sector_rs_daily — 行业板块RS每日结果
+## 18. sector_rs_daily — 行业板块RS每日结果
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -283,20 +456,64 @@
 | top_stocks | TEXT | Top5 通过个股的 JSON（code/weighting/signal） |
 | created_at | TEXT | 创建时间 |
 
-**数据量**：~960 条
-**UNIQUE**：`(date, sector_code)`
-**索引**：`idx_srs_date(date)`, `idx_srs_leading(date, is_leading)`, `idx_srs_momentum(date, is_momentum)`
-**写入脚本**：`scheduler/run_sector_rs.py`
-**计算引擎**：`src/strategies/sector_rs/` 模块
-- `data_fetcher.py` → 加载数据
-- `filter.py` → 三层筛选
-- `internal_check.py` → 内部共振验证
-- `output_writer.py` → CSV + DB
+**数据量**：~3330 条  
+**UNIQUE**：`(date, sector_code)`  
+**索引**：`idx_srs_date(date)`, `idx_srs_leading(date, is_leading)`, `idx_srs_momentum(date, is_momentum)`  
+**写入脚本**：`src/server.py`（行业板块RS API）  
 **读取场景**：CSV 导出 `output/sector_rs_report_YYYYMMDD.csv`、Web 看板
 
 ---
 
-## 14. market_direction_daily — 大盘方向每日分析
+## 19. sector_internal_strength — 行业内部强度明细
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| date | TEXT | **PK(1)**，日期 |
+| sector_code | TEXT | **PK(2)**，行业代码 |
+| sector_name | TEXT | 行业名称 |
+| constituent_count | INTEGER | 成分股数量 |
+| rs_mean_20 | REAL | 20日RS均值 |
+| rs_mean_120 | REAL | 120日RS均值 |
+| rs_mean_250 | REAL | 250日RS均值 |
+| rs_std_120 | REAL | 120日RS标准差 |
+| above_ma50_count | INTEGER | MA50上方个股数 |
+| above_ma200_count | INTEGER | MA200上方个股数 |
+| bull_alignment_count | INTEGER | 多头排列个股数 |
+| volume_surge_count | INTEGER | 放量个股数 |
+| breakout_count | INTEGER | 突破个股数 |
+| breakout_stocks | TEXT | 突破个股列表(JSON) |
+| fund_flow_intensity | REAL | 资金流强度 |
+| strong_ratio | REAL | 强势股占比 |
+| above_ma50_ratio | REAL | MA50上方占比 |
+| rs_dist_score | REAL | RS分布得分 |
+| trend_score | REAL | 趋势得分 |
+| money_flow_score | REAL | 资金流得分 |
+| resonance_score | REAL | 共振得分 |
+
+**UNIQUE**：`(date, sector_code)`  
+**写入脚本**：`src/server.py`（行业板块RS API）  
+**读取场景**：行业扫描
+
+---
+
+## 20. sector_rotation — 行业轮动记录
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| date | TEXT | **PK(1)**，日期 |
+| sector_code | TEXT | **PK(2)**，行业代码 |
+| sector_name | TEXT | 行业名称 |
+| momentum_delta_5d | REAL | 5日动量变化 |
+| rps_delta_5d | REAL | 5日RPS变化 |
+| rotation_signal | TEXT | 轮动信号 |
+
+**UNIQUE**：`(date, sector_code)`  
+**写入脚本**：`src/server.py`（行业板块RS API）  
+**读取场景**：行业扫描
+
+---
+
+## 21. market_direction_daily — 大盘方向每日分析
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -346,13 +563,12 @@
 | risks | TEXT | 风险(JSON) |
 | created_at | TEXT | 创建时间 |
 
-**写入脚本**：`scheduler/run_market_direction.py`
-**计算引擎**：`src/strategies/market_direction/`
+**写入脚本**：`~/source/backtest/server.py`（大盘方向分析模块）  
 **读取场景**：Web 看板（大盘扫描页）
 
 ---
 
-## 15. distribution_days_detail — 抛盘日明细
+## 22. distribution_days_detail — 抛盘日明细
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -372,12 +588,11 @@
 | is_high_position | INTEGER | 是否高位，0/1 |
 | created_at | TEXT | 创建时间 |
 
-**写入脚本**：`scheduler/run_market_direction.py`
+**写入脚本**：`~/source/backtest/server.py`（抛盘日检测模块）  
 **读取场景**：大盘方向分析
-
 ---
 
-## 16. follow_through_days — 追盘日
+## 23. follow_through_days — 追盘日
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -400,12 +615,11 @@
 | follow_up_20d_return | REAL | 后20日收益(%) |
 | created_at | TEXT | 创建时间 |
 
-**写入脚本**：`scheduler/run_market_direction.py`
+**写入脚本**：`~/source/backtest/server.py`（抛盘日检测模块）  
 **读取场景**：大盘方向分析
-
 ---
 
-## 17. accumulation_days_detail — 吸筹日明细
+## 24. accumulation_days_detail — 吸筹日明细
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -426,13 +640,170 @@
 | accumulation_type | TEXT | 吸筹日类型 |
 | created_at | TEXT | 创建时间 |
 
-**UNIQUE**：`(date, index_code)`
-**写入脚本**：`scheduler/run_market_direction.py`
+**UNIQUE**：`(date, index_code)`  
+**写入脚本**：`~/source/backtest/server.py`（抛盘日检测模块）  
 **读取场景**：大盘方向分析
+---
+
+## 25. distribution_day_features — 分布日特征工程
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| stock_code | TEXT | **PK(1)**，指数代码 |
+| date | TEXT | **PK(2)**，交易日期 |
+| open/high/low/close | REAL | OHLC |
+| volume | INTEGER | 成交量 |
+| amount | REAL | 成交额 |
+| change_pct | REAL | 涨跌幅(%) |
+| prev_close | REAL | 前日收盘 |
+| volume_ratio | REAL | 当日量/20日均量 |
+| volume_ratio_ma5 | REAL | 当日量/5日均量 |
+| volume_score | INTEGER | 成交量评分 |
+| decline_score | INTEGER | 跌幅评分 |
+| stagnation_flag | INTEGER | 停滞标志 |
+| is_stealth_dist | INTEGER | 是否隐性抛盘(假阳线) |
+| close_position | REAL | 收盘价位置(0-1) |
+| upper_shadow_pct | REAL | 上影线占比(%) |
+| lower_shadow_pct | REAL | 下影线占比(%) |
+| body_pct | REAL | 实体占比(%) |
+| position_score | INTEGER | 收盘位置评分 |
+| gap_down_flag | INTEGER | 跳空下跌标志 |
+| gap_filled_flag | INTEGER | 缺口回补标志 |
+| gap_score | INTEGER | 缺口评分 |
+| total_score | INTEGER | 总分 |
+| is_dist_day | INTEGER | 是否抛盘日，0/1 |
+| fwd_max_dd_5d/10d | REAL | 前向5/10日最大回撤(%) |
+| fwd_return_5d/10d | REAL | 前向5/10日收益(%) |
+| label_dd_gt_2pct | INTEGER | 标签：5日内是否跌>2% |
+| dist_count_20d/15d | INTEGER | 近20/15日抛盘日计数 |
+
+**数据量**：~12339 条  
+**索引**：`idx_ddf_code_date(stock_code, date)`, `idx_ddf_dist(is_dist_day)`, `idx_ddf_label(label_dd_gt_2pct)`, `idx_ddf_score(total_score)`  
+**数据来源**：指数日K线计算生成  
+**写入脚本**：`src/detectors/distribution_day.py`  
+**读取场景**：分布日回测、信号回溯分析
 
 ---
 
-## 18. buy_signals_daily — 每日买点信号
+## 26. daily_distribution_summary — 每日分布日汇总
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| date | TEXT | **PK**，日期 |
+| total_indices | INTEGER | 统计指数数（默认3） |
+| distribution_count | INTEGER | 总抛盘日数 |
+| standard_distribution_count | INTEGER | 标准抛盘日数 |
+| special_distribution_count | INTEGER | 特殊抛盘日数 |
+| reversal_distribution_count | INTEGER | 盘中反转抛盘日数 |
+| heavy_distribution_count | INTEGER | 重抛盘日数 |
+| confirmation_count | INTEGER | 确认日数 |
+| canceled_count | INTEGER | 被抵消抛盘日数 |
+| weighted_distribution_sum | INTEGER | 加权抛盘日和 |
+| market_status | TEXT | 市场状态 |
+| created_at | TIMESTAMP | 创建时间 |
+
+**数据量**：~67 条  
+**索引**：`idx_daily_summary_date(date)`, `idx_daily_summary_status(market_status)`  
+**写入脚本**：`src/detectors/distribution_day.py`  
+**读取场景**：大盘日级别快速查询
+
+---
+
+## 27. market_distribution_days — 市场分布日（简化版）
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| date | TEXT | **PK(1)**，日期 |
+| index_code | TEXT | **PK(2)**，指数代码 |
+| is_distribution | INTEGER | 是否抛盘日，0/1 |
+| dist_type | TEXT | 抛盘日类型 |
+| change_pct | REAL | 涨跌幅(%) |
+| volume_ratio | REAL | 量比 |
+| close_position | REAL | 收盘价位置 |
+| upper_shadow_ratio | REAL | 上影线比例 |
+| created_at | TEXT | 创建时间 |
+
+**数据量**：~436 条  
+**索引**：`idx_mdd_index_date(index_code, date)`  
+**写入脚本**：`src/detectors/distribution_day.py`  
+**读取场景**：大盘方向快速查询
+
+---
+
+## 28. market_scan_parameters — 抛盘日扫描参数集
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | **PK**，自增 |
+| parameter_set_name | TEXT | **UNIQUE**，参数集名称 |
+| description | TEXT | 参数集描述 |
+| std_decline_threshold | REAL | 跌幅阈值（%，默认 -0.1） |
+| std_volume_increase | BOOLEAN | 需要放量（默认 1） |
+| special_max_gain | REAL | 特殊抛盘日最大涨幅（默认 0.2） |
+| special_min_intraday_gain | REAL | 最小盘中涨幅（默认 0.5） |
+| special_volume_ratio | REAL | 成交量倍数（默认 1.3） |
+| special_upper_shadow_entity_ratio | REAL | 上影线/实体比例（默认 1.5） |
+| special_upper_shadow_amplitude_ratio | REAL | 上影线/振幅比例（默认 0.5） |
+| reversal_volume_ratio | REAL | 反转抛盘日量比（默认 1.2） |
+| reversal_min_intraday_gain | REAL | 最小盘中涨幅（默认 0.5） |
+| reversal_upper_shadow_entity_ratio | REAL | 上影线/实体比例（默认 1.5） |
+| reversal_close_position | REAL | 收盘价位置阈值（默认 0.5） |
+| heavy_decline_threshold | REAL | 重抛盘日跌幅阈值（默认 -1.5） |
+| heavy_volume_ratio | REAL | 重抛盘日量比（默认 1.2） |
+| confirmation_gain_threshold | REAL | 确认日涨幅阈值（默认 1.5） |
+| flat_day_threshold | REAL | 平盘日阈值（默认 0.05） |
+| rolling_window_days | INTEGER | 滚动窗口天数（默认 25） |
+| pressure_threshold | INTEGER | 承压阈值（默认 5） |
+| bear_threshold | INTEGER | 熊市阈值（默认 8） |
+| require_multiple_indices | BOOLEAN | 需要多指数确认（默认 0） |
+| min_indices_confirm | INTEGER | 最少确认指数数（默认 2） |
+| is_default | BOOLEAN | 是否默认参数集 |
+| created_at/updated_at | TIMESTAMP | 时间戳 |
+
+**数据量**：~1 条（1套默认参数）  
+**写入脚本**：`src/server.py`（管理API）  
+**读取场景**：分布日回测参数管理
+
+---
+
+## 29. market_scan_results — 抛盘日扫描结果
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | **PK**，自增 |
+| date | TEXT | 日期 |
+| index_code | TEXT | 指数代码 |
+| close/open/high/low | REAL | 价格数据 |
+| volume/amount | REAL | 成交量/额 |
+| prev_close/prev_volume | REAL | 前日数据 |
+| change_pct | REAL | 涨跌幅(%) |
+| volume_ratio | REAL | 量比 |
+| is_flat_day | BOOLEAN | 平盘日 |
+| is_standard_distribution | BOOLEAN | 标准抛盘日 |
+| is_special_distribution | BOOLEAN | 特殊抛盘日 |
+| is_intraday_reversal | BOOLEAN | 盘中反转抛盘日 |
+| is_heavy_distribution | BOOLEAN | 重抛盘日 |
+| distribution_type | TEXT | 抛盘日类型 |
+| distribution_weight | INTEGER | 权重(0/1/2) |
+| is_confirmation_day | BOOLEAN | 升势确认日 |
+| is_canceled | BOOLEAN | 是否被抵消 |
+| canceled_by_date | TEXT | 被哪个确认日抵消 |
+| distribution_count_25d | INTEGER | 25日内抛盘日累积 |
+| standard/special/reversal/heavy_count_25d | INTEGER | 各类型25日计数 |
+| canceled_count_25d | INTEGER | 25日内被抵消数 |
+| market_status | TEXT | normal/pressure/bear |
+| ma5/ma10/ma20/ma50/ma120/ma250 | REAL | 均线值 |
+| calculated_at/updated_at | TIMESTAMP | 时间戳 |
+
+**数据量**：~201 条  
+**UNIQUE**：`(date, index_code)`  
+**索引**：`idx_market_scan_date(date)`, `idx_market_scan_index(index_code)`, `idx_market_scan_status(market_status)`  
+**写入脚本**：`src/detectors/distribution_day.py`  
+**读取场景**：分布日看板、K线叠加显示
+
+---
+
+## 30. buy_signals_daily — 每日买点信号
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -452,91 +823,18 @@
 | details_json | TEXT | 信号详情(JSON) |
 | created_at | TEXT | 创建时间 |
 
-**写入脚本**：`canslim_pro/screener.py`
+**数据量**：~0 条  
+**写入脚本**：`src/server.py`（买点信号管理API）  
 **读取场景**：CANSLIM 看板
 
 ---
 
-## 19. sector_internal_strength — 行业内部强度明细
-
-| 字段名 | 类型 | 说明 |
-|--------|------|------|
-| date | TEXT | **PK(1)**，日期 |
-| sector_code | TEXT | **PK(2)**，行业代码 |
-| sector_name | TEXT | 行业名称 |
-| constituent_count | INTEGER | 成分股数量 |
-| rs_mean_20 | REAL | 20日RS均值 |
-| rs_mean_120 | REAL | 120日RS均值 |
-| rs_mean_250 | REAL | 250日RS均值 |
-| rs_std_120 | REAL | 120日RS标准差 |
-| above_ma50_count | INTEGER | MA50上方个股数 |
-| above_ma200_count | INTEGER | MA200上方个股数 |
-| bull_alignment_count | INTEGER | 多头排列个股数 |
-| volume_surge_count | INTEGER | 放量个股数 |
-| breakout_count | INTEGER | 突破个股数 |
-| breakout_stocks | TEXT | 突破个股列表(JSON) |
-| fund_flow_intensity | REAL | 资金流强度 |
-| strong_ratio | REAL | 强势股占比 |
-| above_ma50_ratio | REAL | MA50上方占比 |
-| rs_dist_score | REAL | RS分布得分 |
-| trend_score | REAL | 趋势得分 |
-| money_flow_score | REAL | 资金流得分 |
-| resonance_score | REAL | 共振得分 |
-
-**UNIQUE**：`(date, sector_code)`
-**写入脚本**：`scheduler/run_sector_rs.py`
-**读取场景**：行业扫描
-
----
-
-## 20. sector_rotation — 行业轮动记录
-
-| 字段名 | 类型 | 说明 |
-|--------|------|------|
-| date | TEXT | **PK(1)**，日期 |
-| sector_code | TEXT | **PK(2)**，行业代码 |
-| sector_name | TEXT | 行业名称 |
-| momentum_delta_5d | REAL | 5日动量变化 |
-| rps_delta_5d | REAL | 5日RPS变化 |
-| rotation_signal | TEXT | 轮动信号 |
-
-**UNIQUE**：`(date, sector_code)`
-**写入脚本**：`scheduler/run_sector_rs.py`
-**读取场景**：行业扫描
-
----
-
-## 21. stock_margin — 融资融券数据
+## 31. stock_candidates_daily — 个股扫描每日结果
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| stock_code | TEXT PK | 股票代码 |
-| date | TEXT PK | 日期 |
-| mtaslb | REAL | 融资融券余额 |
-| mtaslb_fb | REAL | 融资余额 |
-| mtaslb_sb | REAL | 融券余额 |
-| mtaslb_mc_r | REAL | 融资买入额 |
-| npa_o_f_d1~d240 | REAL | 1/5/10/20/60/120/240日净买入额 |
-| fb_mc_rc_d1~d240 | REAL | 1/5/10/20/60/120/240日融资偿还率 |
-
-## 22. shareholders_num_v2 — 股东人数V2
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| stock_code | TEXT PK | 股票代码 |
-| date | TEXT PK | 日期 |
-| shnc_rln | INTEGER | 最新股东人数 |
-| shnc_d10~d90 | REAL | 10/20/30/60/90日变化率 |
-| shnc_qln | REAL | 上期股东人数 |
-| shnc_q1~q3 | REAL | 1/2/3季度变化 |
-| shnc_y1~y2 | REAL | 1/2年变化 |
-
-## 23. stock_candidates_daily — 个股扫描每日结果
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| stock_code | TEXT PK | 股票代码 |
-| date | TEXT PK | 日期 |
+| stock_code | TEXT | **PK(1)**，股票代码 |
+| date | TEXT | **PK(2)**，日期 |
 | stock_name | TEXT | 股票名称 |
 | industry_name | TEXT | 行业 |
 | rs_score | REAL | RS维度评分 |
@@ -553,19 +851,233 @@
 | grade | TEXT | 等级(A/B/C/D) |
 | is_watchlist | INTEGER | 是否自选 |
 
-## 24. watchlist — 自选股
+**数据量**：~5220 条  
+**写入脚本**：`src/server.py`（扫描API）  
+**读取场景**：个股筛选看板
+
+---
+
+## 32. watchlist — 自选股
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| stock_code | TEXT PK | 股票代码 |
+| stock_code | TEXT | **PK**，股票代码 |
 | stock_name | TEXT | 股票名称 |
 | added_at | TEXT | 添加时间 |
 | removed_at | TEXT | 移除时间(NULL=有效) |
 | note | TEXT | 备注 |
 
+**数据量**：少量  
+**写入脚本**：`src/server.py`  
+**读取场景**：自选股管理
+
 ---
 
-## 25. canslim_quarterly_eps — CANSLIM季度EPS
+## 33. portfolio_holdings — 组合持仓
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | **PK**，自增 |
+| stock_code | TEXT | 股票代码 |
+| stock_name | TEXT | 股票名称 |
+| market | TEXT | 市场（默认 SH） |
+| batch_id | INTEGER | 批次ID |
+| buy_price | REAL | 买入价 |
+| qty | INTEGER | 数量 |
+| buy_date | TEXT | 买入日期 |
+| note | TEXT | 备注 |
+| created_at/updated_at | TEXT | 时间戳 |
+
+**UNIQUE**：`(stock_code, batch_id, buy_date, buy_price)`  
+**数据量**：~12 条  
+**写入脚本**：`src/server.py`（组合管理API）  
+**读取场景**：持仓跟踪、盈亏计算
+
+---
+
+## 34. portfolio_signals — 持仓信号
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | **PK**，自增 |
+| scan_date | TEXT | 扫描日期 |
+| stock_code | TEXT | 股票代码 |
+| stock_name | TEXT | 股票名称 |
+| batch_id | INTEGER | 批次ID |
+| buy_price | REAL | 买入价 |
+| buy_date | TEXT | 买入日期 |
+| qty | INTEGER | 数量 |
+| current_price | REAL | 当前价格 |
+| pnl_pct | REAL | 盈亏(%) |
+| hold_days | INTEGER | 持仓天数 |
+| signal_level | TEXT | 信号级别（默认 normal） |
+| signal_rule | TEXT | 信号规则 |
+| signal_detail | TEXT | 信号详情 |
+| status | TEXT | 状态（默认 active） |
+| created_at/updated_at | TEXT | 时间戳 |
+
+**UNIQUE**：`(scan_date, stock_code, batch_id)`  
+**数据量**：~44 条  
+**写入脚本**：`src/server.py`（组合扫描API）  
+**读取场景**：持仓信号跟踪
+
+---
+
+## 35. seven_week_state — 七周规则状态
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| stock_code | TEXT | **PK**，股票代码 |
+| stock_name | TEXT | 股票名称 |
+| first_batch_date | TEXT | 首批买入日期 |
+| has_broken_10d | INTEGER | 是否跌破10日线，0/1 |
+| signal_fired | INTEGER | 是否触发信号，0/1 |
+| updated_at | TEXT | 更新时间 |
+
+**数据量**：~7 条  
+**写入脚本**：`src/server.py`（持仓管理API）  
+**读取场景**：七周规则止损信号
+
+---
+
+## 36. sector_strength_results — 行业强度
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | **PK**，自增 |
+| analysis_date | TEXT | 分析日期 |
+| sector_code | TEXT | 行业代码 |
+| sector_name | TEXT | 行业名称 |
+| category | TEXT | 分类 |
+| return_20d | REAL | 20日收益(%) |
+| rank | INTEGER | 排名 |
+| created_at | TIMESTAMP | 创建时间 |
+
+**UNIQUE**：`(analysis_date, sector_code)`  
+**数据量**：~5 条  
+**写入脚本**：`src/server.py`（行业分析API）  
+**读取场景**：行业强度排名
+
+---
+
+## 37. industry_strength_results — 行业RS强度
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| date | TEXT | **PK(1)**，日期 |
+| industry_code | TEXT | **PK(2)**，行业代码 |
+| industry_name | TEXT | 行业名称 |
+| rs_20d | REAL | 20日RS |
+| rs_60d | REAL | 60日RS |
+| rs_120d | REAL | 120日RS |
+| composite_rs | REAL | 综合RS |
+| rank | INTEGER | 排名 |
+| category | TEXT | 分类 |
+| trend | TEXT | 趋势 |
+| signals | TEXT | 信号(JSON) |
+| created_at | TIMESTAMP | 创建时间 |
+
+**数据量**：~1 条  
+**写入脚本**：`src/server.py`（行业RS API）  
+**读取场景**：行业RS对比
+
+---
+
+## 38. index_divergence_results — 指数分化分析
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | **PK**，自增 |
+| analysis_date | TEXT | **UNIQUE**，分析日期 |
+| market_state | TEXT | 市场状态 |
+| action | TEXT | 操作建议 |
+| focus | TEXT | 关注方向 |
+| leading_style_code | TEXT | 领涨风格代码 |
+| leading_style_name | TEXT | 领涨风格名称 |
+| market_divergence_type | TEXT | 市场分化类型 |
+| style_divergence_type | TEXT | 风格分化类型 |
+| sector_divergence_type | TEXT | 行业分化类型 |
+| results_json | TEXT | 完整结果(JSON) |
+| created_at | TIMESTAMP | 创建时间 |
+
+**数据量**：~1 条  
+**写入脚本**：`src/server.py`（指数分析API）  
+**读取场景**：市场/风格/行业分化监控
+
+---
+
+## 39. backtest_runs — 回测运行记录
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | **PK**，自增 |
+| name | TEXT | 回测名称 |
+| signal_type | TEXT | 信号类型（默认 distribution_day） |
+| stock_code | TEXT | 指数代码（如 000985） |
+| start_date | TEXT | 开始日期 |
+| end_date | TEXT | 结束日期 |
+| params | TEXT | 参数(JSON) |
+| created_at | TEXT | 创建时间 |
+
+**索引**：`idx_br_stock(stock_code, signal_type)`  
+**数据量**：~0 条  
+**写入脚本**：`src/server.py`（回测API）  
+**读取场景**：分布日回测看板
+
+---
+
+## 40. backtest_signals — 回测信号明细
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | **PK**，自增 |
+| run_id | INTEGER | 回测运行ID → `backtest_runs.id` |
+| stock_code | TEXT | 指数代码 |
+| date | TEXT | 信号日期 |
+| signal_type | TEXT | standard/heavy/stealth/reversal |
+| score | REAL | 评分 |
+| open/high/low/close | REAL | 价格 |
+| change_pct | REAL | 涨跌幅(%) |
+| volume/amount | REAL/INTEGER | 量/额 |
+| vol_5d/10d/20d | REAL | 波动率 |
+| ma5/10/20/50/120/250 | REAL | 均线 |
+| volume_score/decline_score/position_score/gap_score/special_score | INTEGER | 分项评分 |
+| total_score | INTEGER | 总分 |
+| close_position | REAL | 收盘位置(0-1) |
+| upper_shadow_pct | REAL | 上影线(%) |
+| lower_shadow_pct | REAL | 下影线(%) |
+| volume_ratio | REAL | 量比 |
+| volume_ratio_ma5 | REAL | 5日均量比 |
+
+**索引**：`idx_bs_run(run_id)`, `idx_bs_date(date)`  
+**数据量**：~0 条  
+**写入脚本**：`src/server.py`（回测API）  
+**读取场景**：分布日回测看板信号列表
+
+---
+
+## 41. backtest_stats — 回测统计
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| run_id | INTEGER | **PK** → `backtest_runs.id` |
+| total_days | INTEGER | 总交易日数 |
+| signal_count | INTEGER | 信号总数 |
+| standard_count | INTEGER | 标准抛盘日数 |
+| heavy_count | INTEGER | 重抛盘日数 |
+| stealth_count | INTEGER | 假阳线数 |
+| reversal_count | INTEGER | 盘中反转数 |
+| weighted_count | INTEGER | 加权合计 |
+| avg_vol_10d | REAL | 平均10日波动率 |
+| avg_volume_ratio | REAL | 平均量比 |
+
+**数据量**：~0 条  
+**写入脚本**：`src/server.py`（回测API）  
+**读取场景**：回测统计汇总
+
+---
+
+## 42. canslim_quarterly_eps — CANSLIM季度EPS
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -578,12 +1090,13 @@
 | np_atoopc_yoy | REAL | 归母净利润同比增长率(%) |
 | updated_at | TEXT | 更新时间 |
 
-**写入脚本**：`scheduler/canslim_fetch_eps.py`
+**数据量**：~97713 条  
+**写入脚本**：`src/data/lixr_api/api_stock_fs.py`  
 **读取场景**：CANSLIM 看板（C季度盈利、A年度盈利判断）
 
 ---
 
-## 26. canslim_annual_eps — CANSLIM年度EPS
+## 43. canslim_annual_eps — CANSLIM年度EPS
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -596,12 +1109,13 @@
 | roe | REAL | 净资产收益率(%) |
 | updated_at | TEXT | 更新时间 |
 
-**写入脚本**：`scheduler/canslim_fetch_eps.py`、`scheduler/canslim_backfill_annual_eps.py`
+**数据量**：~17781 条  
+**写入脚本**：`src/data/lixr_api/api_stock_fs.py`  
 **读取场景**：CANSLIM 看板（A年度盈利判断）
 
 ---
 
-## 27. canslim_institutional — CANSLIM基金持股
+## 44. canslim_institutional — CANSLIM基金持股
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -613,12 +1127,13 @@
 | total_share_pct | REAL | 占总股本比例(%) |
 | updated_at | TEXT | 更新时间 |
 
-**写入脚本**：`scheduler/canslim_fetch_institutional.py`
+**数据量**：~7088 条  
+**写入脚本**：`src/data/lixr_api/api_stock_fund_shareholders.py`  
 **读取场景**：CANSLIM 看板（I机构认同判断）
 
 ---
 
-## 28. canslim_scores — CANSLIM七维度评分
+## 45. canslim_scores — CANSLIM七维度评分
 
 | 字段名 | 类型 | 说明 |
 |--------|------|------|
@@ -628,30 +1143,81 @@
 | stock_name | TEXT | 股票名称 |
 | total_score | INTEGER | 总分 |
 | pass_count | INTEGER | 通过维度数 |
-| C_score | INTEGER | C(季度盈利)得分 |
-| C_pass | INTEGER | C是否通过，0/1 |
-| C_detail | TEXT | C详情(JSON) |
-| A_score | INTEGER | A(年度盈利)得分 |
-| A_pass | INTEGER | A是否通过，0/1 |
-| A_detail | TEXT | A详情(JSON) |
-| N_score | INTEGER | N(新高新产品)得分 |
-| N_pass | INTEGER | N是否通过，0/1 |
-| N_detail | TEXT | N详情(JSON) |
-| S_score | INTEGER | S(供需)得分 |
-| S_pass | INTEGER | S是否通过，0/1 |
-| S_detail | TEXT | S详情(JSON) |
-| L_score | INTEGER | L(领涨)得分 |
-| L_pass | INTEGER | L是否通过，0/1 |
-| L_detail | TEXT | L详情(JSON) |
-| I_score | INTEGER | I(机构认同)得分 |
-| I_pass | INTEGER | I是否通过，0/1 |
-| I_detail | TEXT | I详情(JSON) |
-| M_score | INTEGER | M(大盘)得分 |
-| M_pass | INTEGER | M是否通过，0/1 |
-| M_detail | TEXT | M详情(JSON) |
+| C_score/A_score/N_score/S_score/L_score/I_score/M_score | INTEGER | 各维度得分 |
+| C_pass/A_pass/... | INTEGER | 各维度是否通过，0/1 |
+| C_detail/A_detail/... | TEXT | 各维度详情(JSON) |
 | has_base | INTEGER | 是否有基部，0/1 |
 | breakout | INTEGER | 是否突破，0/1 |
 | created_at | TEXT | 创建时间 |
 
-**写入脚本**：`canslim_pro/screener.py`
+**数据量**：~0 条  
+**写入脚本**：`src/server.py`（买点信号管理API）  
 **读取场景**：CANSLIM 看板
+
+---
+
+## 表索引
+
+| # | 表名 | 行数 | 说明 |
+|---|------|------|------|
+| 1 | stock_basic | ~5,595 | 股票基础信息 |
+| 2 | daily_kline | ~1794万 | 个股日K线 |
+| 3 | weekly_kline | ~222万 | 个股周K线 |
+| 4 | stock_industry | ~17,141 | 所属行业（多源） |
+| 5 | stock_index | ~19,865 | 所属指数 |
+| 6 | stock_sw_industry | ~5,500 | 申万一级行业映射 |
+| 7 | fundamental_indicator | ~1.25亿 | 基本面指标(key-value) |
+| 8 | financial_statement | ~28,378 | 财报数据(key-value) |
+| 9 | stock_financials_quarterly | ~16.2万 | 季度财务（宽表） |
+| 10 | stock_financials_annual | ~5.7万 | 年度财务（宽表） |
+| 11 | shareholders_num | ~4 | 股东人数（旧版） |
+| 12 | shareholders_num_v2 | ~5,168 | 股东人数V2 |
+| 13 | stock_margin | ~5,023 | 融资融券 |
+| 14 | index_daily_kline | ~142万 | 指数日K线 |
+| 15 | index_constituents | ~62.3万 | 指数成分股 |
+| 16 | index_constituent_weightings | ~119万 | 成分股权重 |
+| 17 | rs_daily | ~527万 | 个股RS每日结果 |
+| 18 | sector_rs_daily | ~3,330 | 行业板块RS |
+| 19 | sector_internal_strength | — | 行业内部强度 |
+| 20 | sector_rotation | — | 行业轮动记录 |
+| 21 | market_direction_daily | — | 大盘方向分析 |
+| 22 | distribution_days_detail | — | 抛盘日明细 |
+| 23 | follow_through_days | — | 追盘日 |
+| 24 | accumulation_days_detail | — | 吸筹日明细 |
+| 25 | distribution_day_features | ~12,339 | 分布日特征工程 |
+| 26 | daily_distribution_summary | ~67 | 每日分布日汇总 |
+| 27 | market_distribution_days | ~436 | 市场分布日(简化) |
+| 28 | market_scan_parameters | ~1 | 扫描参数集 |
+| 29 | market_scan_results | ~201 | 扫描结果 |
+| 30 | buy_signals_daily | ~0 | 买点信号 |
+| 31 | stock_candidates_daily | ~5,220 | 个股扫描结果 |
+| 32 | watchlist | 少量 | 自选股 |
+| 33 | portfolio_holdings | ~12 | 组合持仓 |
+| 34 | portfolio_signals | ~44 | 持仓信号 |
+| 35 | seven_week_state | ~7 | 七周规则状态 |
+| 36 | sector_strength_results | ~5 | 行业强度 |
+| 37 | industry_strength_results | ~1 | 行业RS强度 |
+| 38 | index_divergence_results | ~1 | 指数分化分析 |
+| 39 | backtest_runs | ~0 | 回测运行记录 |
+| 40 | backtest_signals | ~0 | 回测信号明细 |
+| 41 | backtest_stats | ~0 | 回测统计 |
+| 42 | canslim_quarterly_eps | ~97,713 | CANSLIM季度EPS |
+| 43 | canslim_annual_eps | ~17,781 | CANSLIM年度EPS |
+| 44 | canslim_institutional | ~7,088 | 基金持股 |
+| 45 | canslim_scores | ~0 | CANSLIM评分 |
+
+---
+
+## 数据库统计（2026-05-04）
+
+| 指标 | 数值 |
+|------|------|
+| 总表数 | 45 |
+| 最大表 | fundamental_indicator (~1.25亿行) |
+| K线数据 | daily_kline ~1794万 + weekly_kline ~222万 |
+| RS数据 | rs_daily ~527万 |
+| 指数K线 | index_daily_kline ~142万 |
+| 指数成分 | constituents ~62万 + weightings ~119万 |
+| 财务数据 | quarterly ~16万 + annual ~5.7万 + financial_statement ~2.8万 |
+| CANSLIM | quarterly_eps ~9.8万 + annual_eps ~1.8万 |
+| DB文件大小 | ~12GB |
