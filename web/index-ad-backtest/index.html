@@ -192,25 +192,37 @@ async function run() {
   var win = document.getElementById('window-days').value;
 
   try {
-    var resp = await fetch(API + '/api/index-ad?pool=' + pool + '&date=' + date + '&window=' + win);
+    var url = API + '/api/index-ad?pool=' + pool + '&date=' + date + '&window=' + win;
+    console.log('Fetching:', url);
+    var resp = await fetch(url);
     var data = await resp.json();
+    console.log('Response keys:', Object.keys(data));
     if (data.error) { alert(data.error); return; }
 
-    lastData = data.pools[pool]?.rankings || [];
-    document.getElementById('table-info').textContent = ' · ' + (data.pools[pool] ? data.pools[pool].rankings.length : 0) + ' 个指数 · ' + data.as_of_date;
+    var poolData = data.pools && data.pools[pool];
+    lastData = (poolData && poolData.rankings) || [];
+    console.log('Items:', lastData.length);
+    if (lastData.length > 0) {
+      console.log('First item keys:', Object.keys(lastData[0]));
+      console.log('First item:', JSON.stringify(lastData[0]).substring(0, 200));
+    }
+    document.getElementById('table-info').textContent = ' · ' + lastData.length + ' 个指数 · ' + (data.as_of_date || '');
     updateStats();
     renderTable();
-  } catch (e) { alert('❌ ' + e.message); }
+  } catch (e) {
+    console.error(e);
+    alert('❌ ' + e.message);
+  }
   finally { btn.disabled = false; btn.textContent = '🔍 计算'; }
 }
 
 function updateStats() {
-  var d = lastData;
+  var d = lastData || [];
   document.getElementById('stat-total').textContent = d.length;
-  document.getElementById('stat-inflow').textContent = d.filter(function(r){ return r.ad_score >= 0; }).length;
-  document.getElementById('stat-outflow').textContent = d.filter(function(r){ return r.ad_score < 0; }).length;
+  document.getElementById('stat-inflow').textContent = d.filter(function(r){ return (r.ad_score || 0) >= 0; }).length;
+  document.getElementById('stat-outflow').textContent = d.filter(function(r){ return (r.ad_score || 0) < 0; }).length;
   var top = d[0];
-  document.getElementById('stat-top').textContent = top ? (top.name || top.code) : '—';
+  document.getElementById('stat-top').textContent = top ? (top.name || top.code || '—') : '—';
 }
 
 function ratingClass(g) {
