@@ -758,6 +758,7 @@ def api_index_ad():
             'high': r['high'],
             'low': r['low'],
             'close': r['close'],
+            'volume': r['volume'],
             'amount': r['amount'],
             'change': r['change'],
         })
