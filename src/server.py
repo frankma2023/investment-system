@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from detectors.distribution_day import detect as detect_distribution_days
 from detectors.follow_through_day import detect as detect_follow_through_days
 from detectors.index_rs import detect as detect_index_rs
+from detectors.index_ad import detect as detect_index_ad
 
 # ── Config ───────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -700,6 +701,78 @@ def api_index_constituents():
         'count': len(constituents),
         'constituents': constituents,
     })
+
+# ═══════════════════════════════════════════════
+# API: GET /api/index-ad
+# ═══════════════════════════════════════════════
+
+@app.route('/api/index-ad')
+def api_index_ad():
+    as_of_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    pool_name = request.args.get('pool', None)
+    window_days = int(request.args.get('window', 65))
+
+    db = get_db()
+
+    # 加载指数分类池
+    all_pools = load_index_pools()
+    if not all_pools:
+        return jsonify({'error': 'index_style.yaml not found or empty'}), 500
+
+    if pool_name and pool_name in all_pools:
+        pools = {pool_name: all_pools[pool_name]}
+    else:
+        pools = all_pools
+
+    # 加载指数名称
+    index_names = load_index_names()
+
+    # 收集所有需要的指数代码
+    all_codes = set()
+    for codes in pools.values():
+        all_codes.update(codes)
+    code_list = list(all_codes)
+    if not code_list:
+        return jsonify({'error': 'no indices in pool'}), 400
+
+    # 批量查询K线（拉取足够历史以保证window_days+缓冲）
+    lookback = window_days + 30
+    placeholders = ','.join(['?' for _ in code_list])
+    rows = db.execute(f"""SELECT stock_code, date, open, high, low, close, volume, amount, change
+        FROM index_daily_kline WHERE kline_type='normal'
+        AND stock_code IN ({placeholders})
+        AND date >= date(?, '-{lookback} days')
+        ORDER BY stock_code, date""",
+        code_list + [as_of_date]).fetchall()
+
+    # 按指数代码分组
+    pool_klines = {}
+    for r in rows:
+        code = r['stock_code']
+        if code not in pool_klines:
+            pool_klines[code] = []
+        pool_klines[code].append({
+            'date': r['date'],
+            'open': r['open'],
+            'high': r['high'],
+            'low': r['low'],
+            'close': r['close'],
+            'amount': r['amount'],
+            'change': r['change'],
+        })
+
+    # 调用引擎
+    result = detect_index_ad(pool_klines, pools, as_of_date, window_days)
+
+    # 补充指数名称和评级含义
+    for pname, pdata in result['pools'].items():
+        for item in pdata.get('rankings', []):
+            item['name'] = index_names.get(item['code'], item['code'])
+            if item.get('rating'):
+                from detectors.index_ad import RATING_MEANINGS
+                item['meaning'] = RATING_MEANINGS.get(item['rating'], '')
+
+    return jsonify(result)
 
 # ═══════════════════════════════════════════════
 # CORS
