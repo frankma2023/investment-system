@@ -73,32 +73,18 @@ def backup_db(source: Path, dest_dir: Path, keep: int):
     backup_name = f"lixinger_{timestamp}.db"
     backup_path = dest_dir / backup_name
 
-    # ── SQLite backup API ──
-    # 先看下总页数
-    src_conn = sqlite3.connect(str(source))
-    page_count = src_conn.execute("PRAGMA page_count").fetchone()[0]
-    page_size = src_conn.execute("PRAGMA page_size").fetchone()[0]
-    total_mb = page_count * page_size / (1024 * 1024)
-    print(f"🔄 正在备份 ({total_mb:.0f} MB, {page_count} 页)...")
-
-    last_pct = [-1]  # 用列表避免闭包问题
-
-    def progress(status, remaining, total):
-        pct = int((total - remaining) / total * 100) if total > 0 else 0
-        if pct >= last_pct[0] + 10:  # 每10%报一次
-            last_pct[0] = pct
-            print(f"   {pct}%...", end='', flush=True)
+    # ── WAL Checkpoint → 直接文件复制 ──
+    size_mb = source.stat().st_size / (1024 * 1024)
+    print(f"🔄 正在备份 ({size_mb:.0f} MB)...")
 
     try:
+        # 1. checkpoint: 把WAL写入主文件，保证完整性
+        src_conn = sqlite3.connect(str(source))
         src_conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-        dst_conn = sqlite3.connect(str(backup_path))
-        dst_conn.execute(f"PRAGMA page_size = {page_size}")
-
-        src_conn.backup(dst_conn, pages=100, progress=progress)
-        print(" 100%")
-
-        dst_conn.close()
         src_conn.close()
+
+        # 2. checkpoint后可安全直接复制（比 backup() API 快很多）
+        shutil.copy2(str(source), str(backup_path))
 
         backup_size = backup_path.stat().st_size / (1024 * 1024)
         print(f"✅ 备份完成: {backup_path} ({backup_size:.0f} MB)")
