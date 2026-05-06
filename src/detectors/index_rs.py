@@ -94,6 +94,16 @@ def compute_rs_for_pool(pool_codes, pool_klines, as_of_date):
         if change_pct is None:
             change_pct = k.get('change', 0)
 
+        # 计算N日均线（用于L3条件判断）
+        ma_days_max = 60
+        close_above_ma = {}
+        for ma_d in [5, 10, 20, 30, 50, 60]:
+            if as_of_idx >= ma_d - 1:
+                ma_val = sum(klines[j]['close'] for j in range(as_of_idx - ma_d + 1, as_of_idx + 1)) / ma_d
+                close_above_ma[f'MA{ma_d}'] = k['close'] > ma_val
+            else:
+                close_above_ma[f'MA{ma_d}'] = False
+
         results.append({
             'code': code,
             'date': as_of_date_actual,
@@ -107,6 +117,7 @@ def compute_rs_for_pool(pool_codes, pool_klines, as_of_date):
             'RS_60': None,
             'RS_120': None,
             'RS_250': None,
+            'close_above_ma': close_above_ma,
         })
 
     # ── 计算百分位排名 ──────────────────────────────
@@ -182,7 +193,16 @@ def classify_tiers(pool_results, tier_params):
         if (rs60 >= t3.get('RS_60', 85) and
             rs120 >= t3.get('RS_120', 80) and
             rs20 < t3.get('RS_20_max', 90)):
-            tiers['L3'].append(item)
+            # MA 均线条件（可选）
+            ma_days = t3.get('ma_days', 0)
+            if ma_days > 0:
+                ma_key = f'MA{ma_days}'
+                if item.get('close_above_ma', {}).get(ma_key, False):
+                    item['ma_days'] = ma_days
+                    tiers['L3'].append(item)
+            else:
+                # ma_days=0 表示不检查均线
+                tiers['L3'].append(item)
             continue
 
     return tiers
@@ -214,7 +234,7 @@ def detect(pool_klines, pool_definitions, as_of_date, tier_params=None):
         tier_params = {
             'L1': {'RS_120': 90, 'RS_250': 85, 'RS_60': 80},
             'L2': {'RS_20': 95, 'RS_60': 85, 'RS_120': 70},
-            'L3': {'RS_60': 85, 'RS_120': 80, 'RS_20_max': 90},
+            'L3': {'RS_60': 85, 'RS_120': 80, 'RS_20_max': 90, 'ma_days': 20},
         }
 
     result = {
