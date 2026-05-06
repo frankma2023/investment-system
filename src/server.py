@@ -4,7 +4,12 @@ O'Neil 信号回测框架 — Flask API Server (Multi-signal)
 端口: 8788
 信号: distribution_day | (future: follow_through_day, accumulation, breakout, ...)
 """
-import json, sqlite3, math, os, sys
+import json, sqlite3, math, os, sys, re
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, g
 
@@ -13,11 +18,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from detectors.distribution_day import detect as detect_distribution_days
 from detectors.follow_through_day import detect as detect_follow_through_days
+from detectors.index_rs import detect as detect_index_rs
 
 # ── Config ───────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(BASE_DIR)  # ~/investment-system/
 CONFIG_DIR = os.path.join(PROJECT_DIR, 'config', 'market')
+INDEX_RS_CONFIG = os.path.join(PROJECT_DIR, 'config', 'index_rs.yaml')
 DB_PATH = os.path.join(PROJECT_DIR, 'data', 'lixinger.db')
 DATA_DIR = os.path.join(PROJECT_DIR, 'data')
 
@@ -388,6 +395,244 @@ def api_backtest_signals(run_id):
     return jsonify([dict(r) for r in rows])
 
 # ═══════════════════════════════════════════════
+# API: 指数拥挤度回测
+# ═══════════════════════════════════════════════
+
+@app.route('/api/crowding/config', methods=['GET', 'POST', 'OPTIONS'])
+def api_crowding_config():
+    if request.method == 'OPTIONS': return '', 204
+
+    config_path = os.path.join(PROJECT_DIR, 'config', 'index_crowding.yaml')
+
+    if request.method == 'POST':
+        raw = request.get_data(as_text=True)
+        if raw:
+            os.makedirs(os.path.dirname(config_path), exist_ok=True)
+            with open(config_path, 'w', encoding='utf-8') as f:
+                f.write(raw)
+            return jsonify({'ok': True})
+        return jsonify({'ok': False, 'error': 'empty body'}), 400
+
+    # GET
+    if os.path.exists(config_path):
+        with open(config_path, encoding='utf-8') as f:
+            return f.read(), 200, {'Content-Type': 'text/yaml; charset=utf-8'}
+    return jsonify({'weights': {}, 'levels': {}})
+
+
+@app.route('/api/crowding/backtest', methods=['POST', 'OPTIONS'])
+def api_crowding_backtest():
+    if request.method == 'OPTIONS': return '', 204
+
+    data = request.get_json() or {}
+    weights = data.get('weights', {})
+    levels_raw = data.get('levels', {})
+    index_codes = data.get('index_codes', [])
+    start_date = data.get('start_date', '2025-01-01')
+    end_date = data.get('end_date', '2026-05-05')
+
+    # 取前100个指数
+    if not index_codes:
+        index_codes = DEFAULT_INDEX_CODES[:100] if 'DEFAULT_INDEX_CODES' in dir() else []
+    else:
+        index_codes = index_codes[:100]
+
+    # 构建权重和等级
+    w = {
+        'turnover_ratio': weights.get('turnover_ratio', 0.25),
+        'turnover_rate': weights.get('turnover_rate', 0.10),
+        'margin_balance': weights.get('margin_balance', 0.15),
+        'margin_buy': weights.get('margin_buy', 0.10),
+        'pe_pct': weights.get('pe_pct', 0.15),
+        'pb_pct': weights.get('pb_pct', 0.05),
+        'dyr_pct': weights.get('dyr_pct', 0.05),
+        'fund_holding': weights.get('fund_holding', 0.15),
+    }
+    levels = [
+        (0, levels_raw.get('low_max', 30), '低拥挤'),
+        (levels_raw.get('low_max', 30), levels_raw.get('normal_max', 60), '正常'),
+        (levels_raw.get('normal_max', 60), levels_raw.get('elevated_max', 80), '偏高'),
+        (levels_raw.get('elevated_max', 80), 101, '高拥挤'),
+    ]
+
+    from scanners.index_crowding import compute_for_api
+    results = compute_for_api(index_codes, start_date, end_date, w, levels)
+
+    return jsonify({
+        'results': results,
+        'params': {'weights': w, 'levels': levels_raw},
+        'count': len(results),
+    })
+
+
+@app.route('/api/crowding/indices', methods=['GET'])
+def api_crowding_indices():
+    """返回指数池列表"""
+    yaml_path = os.path.join(PROJECT_DIR, 'config', 'index_rs.yaml')
+    if not os.path.exists(yaml_path):
+        return jsonify([])
+    try:
+        import yaml
+        with open(yaml_path, encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+        indices = []
+        for cat_name, idx_list in data.get('categories', {}).items():
+            for item in idx_list:
+                indices.append({
+                    'code': item['code'],
+                    'name': item['name'],
+                    'category': cat_name
+                })
+        return jsonify(indices)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ═══════════════════════════════════════════════
+# API: GET /api/index-rs
+# ═══════════════════════════════════════════════
+
+def load_index_pools():
+    """从 config/index_rs.yaml 加载指数分类池定义"""
+    if not os.path.exists(INDEX_RS_CONFIG):
+        return {}
+    if HAS_YAML:
+        with open(INDEX_RS_CONFIG, encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+        categories = data.get('categories', {})
+        pools = {}
+        for cat_name, indices in categories.items():
+            pools[cat_name] = [item['code'] for item in indices]
+        return pools
+    else:
+        # 回退到简易解析
+        return _parse_index_yaml_simple()
+
+
+def _parse_index_yaml_simple():
+    """简易YAML解析（无PyYAML时回退）"""
+    pools = {}
+    current_cat = None
+    with open(INDEX_RS_CONFIG, encoding='utf-8') as f:
+        for line in f:
+            stripped = line.strip()
+            if not stripped or stripped.startswith('#'):
+                continue
+            if ':' in stripped and not stripped.startswith('-') and 'code:' not in stripped.lower():
+                cat_name = stripped.split(':')[0].strip().split('#')[0].strip()
+                if cat_name in ('categories', 'meta'):
+                    continue
+                pools[cat_name] = []
+                current_cat = cat_name
+            elif current_cat and '- {code:' in stripped:
+                m = re.search(r"code:\s*['\"]?([^'\",}]+)", stripped)
+                if m:
+                    pools[current_cat].append(m.group(1).strip())
+    return pools
+
+
+INDEX_NAMES_MAP = {}
+
+def load_index_names():
+    """从 config/index_rs.yaml 加载指数代码→名称映射"""
+    global INDEX_NAMES_MAP
+    if INDEX_NAMES_MAP:
+        return INDEX_NAMES_MAP
+    if not os.path.exists(INDEX_RS_CONFIG):
+        return {}
+    if HAS_YAML:
+        with open(INDEX_RS_CONFIG, encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+        for cat_name, indices in data.get('categories', {}).items():
+            for item in indices:
+                INDEX_NAMES_MAP[item['code']] = item['name']
+    else:
+        with open(INDEX_RS_CONFIG, encoding='utf-8') as f:
+            for line in f:
+                m_code = re.search(r"code:\s*['\"]?([^'\",}]+)", line)
+                m_name = re.search(r"name:\s*['\"]?([^'\",}]+)", line)
+                if m_code and m_name:
+                    INDEX_NAMES_MAP[m_code.group(1).strip()] = m_name.group(1).strip()
+    return INDEX_NAMES_MAP
+
+
+@app.route('/api/index-rs')
+def api_index_rs():
+    as_of_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    pool_name = request.args.get('pool', None)  # None = 全部
+
+    db = get_db()
+
+    # 加载指数分类池
+    all_pools = load_index_pools()
+    if not all_pools:
+        return jsonify({'error': 'index_rs.yaml not found or empty'}), 500
+
+    # 如果指定了pool，只加载该pool
+    if pool_name and pool_name in all_pools:
+        pools = {pool_name: all_pools[pool_name]}
+    else:
+        pools = all_pools
+
+    # 加载指数名称映射
+    index_names = load_index_names()
+
+    # 收集所有需要的指数代码
+    all_codes = set()
+    for codes in pools.values():
+        all_codes.update(codes)
+
+    # 批量查询K线数据（拉取足够长的历史以保证250日计算）
+    code_list = list(all_codes)
+    if not code_list:
+        return jsonify({'error': 'no indices in pool'}), 400
+
+    # 用 IN 查询（SQLite 支持，参数占位符）
+    placeholders = ','.join(['?' for _ in code_list])
+    rows = db.execute(f"""SELECT stock_code, date, open, high, low, close, volume, amount, change
+        FROM index_daily_kline WHERE kline_type='normal'
+        AND stock_code IN ({placeholders})
+        AND date >= date(?,'-400 days')
+        ORDER BY stock_code, date""",
+        code_list + [as_of_date]).fetchall()
+
+    # 按指数代码分组
+    pool_klines = {}
+    for r in rows:
+        code = r['stock_code']
+        if code not in pool_klines:
+            pool_klines[code] = []
+        pool_klines[code].append({
+            'date': r['date'],
+            'open': r['open'],
+            'high': r['high'],
+            'low': r['low'],
+            'close': r['close'],
+            'volume': r['volume'],
+            'amount': r['amount'],
+            'change': r['change'],
+        })
+
+    # 加载层级阈值
+    tier_config = load_config('index_rs')
+    tier_params = tier_config.get('tiers', {}) if tier_config else {}
+
+    # 调用检测引擎
+    result = detect_index_rs(pool_klines, pools, as_of_date, tier_params if tier_params else None)
+
+    # 补充指数名称
+    for pname, pdata in result['pools'].items():
+        for item in pdata.get('rankings', []):
+            item['name'] = index_names.get(item['code'], item['code'])
+        for tier_name in ['L1', 'L2', 'L3']:
+            for item in pdata.get('tiers', {}).get(tier_name, []):
+                item['name'] = index_names.get(item['code'], item['code'])
+        for item in pdata.get('top10', []):
+            item['name'] = index_names.get(item['code'], item['code'])
+
+    return jsonify(result)
+
+# ═══════════════════════════════════════════════
 # CORS
 # ═══════════════════════════════════════════════
 
@@ -404,5 +649,5 @@ if __name__ == '__main__':
     init_schema()
     print("🦊 O'Neil Backtest API Server starting on http://localhost:8788")
     print(f"   Config dir: {CONFIG_DIR}")
-    print(f"   Detectors: distribution_day")
+    print(f"   Detectors: distribution_day, follow_through_day, index_rs")
     app.run(host='0.0.0.0', port=8788, debug=False)

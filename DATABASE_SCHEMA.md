@@ -2,7 +2,7 @@
 
 > 数据库: `data/lixinger.db`  
 > SQLite3 (WAL mode)  
-> 最后更新: 2026-05-04
+> 最后更新: 2026-05-06
 
 ---
 
@@ -11,6 +11,8 @@
 | 分类 | 表数 | 说明 |
 |------|------|------|
 | 行情数据 | 4 | 个股日K线、周K线、指数日K线、融资融券 |
+| 指数基本面 | 1 | 指数估值/量价/融资/分位点（拥挤度计算依赖） |
+| 指数拥挤度 | 1 | 五维度拥挤度指标 + 复合得分 |
 | 指数成分 | 2 | 成分股 + 权重（408个指数） |
 | 财务基本面 | 7 | 季报、年报、估值指标（含 CANSLIM 专用表） |
 | 股东数据 | 2 | 股东人数 v1/v2 |
@@ -82,6 +84,61 @@ change                   -- 涨跌幅(%)
 **范围**: 2000-01-04 ~ 2026-04-30  
 **覆盖**: 409 个指数（来自 `config/index_rs.yaml`，共 5 大类：market/sector_l1/sector_l2/sector_l3/style）  
 **更新脚本**: `scripts/fetch_index_kline.py`
+
+### index_fundamental_daily — 指数基本面日数据（拥挤度计算依赖）
+```
+stock_code, date  PRIMARY KEY
+mc           REAL    -- 总市值
+tv           REAL    -- 成交量
+ta           REAL    -- 成交额
+to_r         REAL    -- 换手率 (%)
+pe_ttm       REAL    -- PE-TTM 市值加权
+pe_ttm_pct   REAL    -- PE 10年分位点 (0~1)
+pb           REAL    -- PB 市值加权
+pb_pct       REAL    -- PB 10年分位点 (0~1)
+dyr          REAL    -- 股息率 (%)
+dyr_pct      REAL    -- 股息率 10年分位点 (0~1)
+fpa          REAL    -- 融资买入金额
+fb           REAL    -- 融资余额
+ecmc         REAL    -- 自由流通市值
+updated_at   TEXT    -- 更新时间
+```
+**数据量**: 795,912 行 | **范围**: 2016-01-01 ~ 2026-05-05
+**覆盖**: 407 个指数
+**更新脚本**: `scripts/fetch_index_fundamental.py`
+**用途**: 指数拥挤度计算（交易热度/资金流向/估值水位维度）
+
+### index_crowding_daily — 指数拥挤度日数据
+```
+stock_code, date  PRIMARY KEY
+-- 交易热度 (35%)
+turnover_ratio      REAL    -- 成交额占比（指数成交额/全市场成交额）
+turnover_ratio_pct  REAL    -- 成交额占比滚动分位点 (0~1)
+turnover_rate_pct   REAL    -- 换手率滚动分位点 (0~1)
+heat_score          REAL    -- 交易热度维度得分 (0~100)
+-- 资金流向 (25%)
+margin_balance_ratio REAL   -- 融资余额/自由流通市值
+margin_balance_pct  REAL    -- 融资余额占比分位点 (0~1)
+margin_buy_ratio    REAL    -- 融资买入额/成交额
+margin_buy_pct      REAL    -- 融资买入额占比分位点 (0~1)
+flow_score          REAL    -- 资金流向维度得分 (0~100)
+-- 估值水位 (25%)
+pe_pct              REAL    -- PE 十年分位点 (0~1)
+pb_pct              REAL    -- PB 十年分位点 (0~1)
+dyr_pct             REAL    -- 股息率十年分位点 (0~1)
+valuation_score     REAL    -- 估值水位维度得分 (0~100)
+-- 机构行为 (15%)
+fund_holding_pct    REAL    -- 基金重仓分位点（暂无数据）
+institution_score   REAL    -- 机构行为维度得分
+-- 综合
+composite_score     REAL    -- 复合拥挤度得分 (0~100)
+crowd_level         TEXT    -- 拥挤等级: 低拥挤/正常/偏高/高拥挤
+updated_at          TEXT    -- 更新时间
+```
+**数据量**: 794,426 行 | **范围**: 2016-01-01 ~ 2026-05-05
+**覆盖**: 406 个指数
+**计算脚本**: `src/scanners/index_crowding.py`
+**依赖**: `index_fundamental_daily`
 
 ### stock_margin — 融资融券数据
 ```
@@ -640,6 +697,8 @@ dist_count_20d, dist_count_15d
 | `scripts/fetch_daily_kline.py` | daily_kline | 每日 |
 | `scripts/build_weekly_kline.py` | weekly_kline | 每日 |
 | `scripts/fetch_index_kline.py` | index_daily_kline | 每日 |
+| `scripts/fetch_index_fundamental.py` | index_fundamental_daily | 每日 |
+| `src/scanners/index_crowding.py` | index_crowding_daily | 每日（依赖上条） |
 | `scripts/fetch_index_constituents.py` | index_constituents, index_constituent_weightings | 每月 |
 | `scripts/fetch_fundamental_nonfinancial.py` | fundamental_indicator | 每日 |
 | `scripts/fetch_stock_financials.py` | stock_financials_quarterly, stock_financials_annual | 季报后 |

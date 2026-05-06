@@ -1,0 +1,17 @@
+# index_crowding.yaml — 指数拥挤度回测配置
+# 权重总和自动归一化，无需手动保持总和=1.0
+
+weights:
+  turnover_ratio: 0.25    # 成交额占比分位点
+  turnover_rate: 0.10     # 换手率分位点
+  margin_balance: 0.15    # 融资余额占比分位点
+  margin_buy: 0.10        # 融资买入额占比分位点
+  pe_pct: 0.15            # PE 十年分位点
+  pb_pct: 0.05            # PB 十年分位点
+  dyr_pct: 0.05           # 股息率十年分位点
+  fund_holding: 0.15      # 基金重仓分位点
+
+levels:
+  low_max: 30             # ≤30 低拥挤
+  normal_max: 60          # 30-60 正常
+  elevated_max: 80        # 60-80 偏高 → ≥80 高拥挤
