@@ -736,7 +736,8 @@ def api_index_ad():
         return jsonify({'error': 'no indices in pool'}), 400
 
     # 批量查询K线（拉取足够历史以保证window_days+缓冲）
-    lookback = window_days + 30
+    # 注意: window_days是交易日数, 需足够日历天数(约1.5倍+缓冲)
+    lookback = window_days * 2 + 30
     placeholders = ','.join(['?' for _ in code_list])
     rows = db.execute(f"""SELECT stock_code, date, open, high, low, close, volume, amount, change
         FROM index_daily_kline WHERE kline_type='normal'
