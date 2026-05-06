@@ -67,7 +67,43 @@ def compute_ad_line(klines, as_of_idx, window_days):
     return total
 
 
-def compute_ad_for_pool(pool_codes, pool_klines, as_of_date, window_days=65):
+def compute_ad_line_zscore(klines, as_of_idx, window_days=65, zscore_days=250):
+    """
+    计算Z-score标准化后的滚动AD线。
+
+    先用过去 zscore_days 天计算 μ 和 σ，
+    再将 window_days 窗口内每天的 MFV 标准化后累加。
+
+    数据不足 zscore_days 天时返回 None。
+    """
+    if as_of_idx < zscore_days - 1:
+        return None
+
+    # 计算基线窗口的 μ 和 σ（截至 as_of_idx 之前的所有可用数据，最多 zscore_days 天）
+    baseline_start = max(0, as_of_idx - zscore_days + 1)
+    mfv_values = []
+    for i in range(baseline_start, as_of_idx + 1):
+        mfv_values.append(compute_mfv(klines[i]))
+
+    n = len(mfv_values)
+    mean_mfv = sum(mfv_values) / n
+    variance = sum((v - mean_mfv) ** 2 for v in mfv_values) / n
+    std_mfv = variance ** 0.5
+
+    if std_mfv == 0:
+        return 0.0  # 无波动，标准化后全为0
+
+    # Z-score标准化 window_days 窗口内的MFV并累加
+    total = 0.0
+    for i in range(as_of_idx - window_days + 1, as_of_idx + 1):
+        mfv = compute_mfv(klines[i])
+        z = (mfv - mean_mfv) / std_mfv
+        total += z
+
+    return total
+
+
+def compute_ad_for_pool(pool_codes, pool_klines, as_of_date, window_days=65, method='raw'):
     """
     对单个分类池内所有指数计算A/D评级
 
@@ -104,8 +140,11 @@ def compute_ad_for_pool(pool_codes, pool_klines, as_of_date, window_days=65):
         else:
             as_of_date_actual = as_of_date
 
-        # 计算AD线
-        ad_line = compute_ad_line(klines, as_of_idx, window_days)
+        # 计算AD线（按method选择）
+        if method == 'zscore':
+            ad_line = compute_ad_line_zscore(klines, as_of_idx, window_days)
+        else:
+            ad_line = compute_ad_line(klines, as_of_idx, window_days)
 
         # 最新收盘价和涨跌幅
         k = klines[as_of_idx]
@@ -184,7 +223,7 @@ RATING_MEANINGS = {
 }
 
 
-def detect(pool_klines, pool_definitions, as_of_date, window_days=65):
+def detect(pool_klines, pool_definitions, as_of_date, window_days=65, method='raw'):
     """
     A/D评级检测主入口。
 
@@ -204,11 +243,12 @@ def detect(pool_klines, pool_definitions, as_of_date, window_days=65):
     result = {
         'as_of_date': as_of_date,
         'window_days': window_days,
+        'method': method,
         'pools': {},
     }
 
     for pool_name, pool_codes in pool_definitions.items():
-        rankings = compute_ad_for_pool(pool_codes, pool_klines, as_of_date, window_days)
+        rankings = compute_ad_for_pool(pool_codes, pool_klines, as_of_date, window_days, method)
         result['pools'][pool_name] = {
             'rankings': rankings,
         }

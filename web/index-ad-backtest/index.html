@@ -109,9 +109,19 @@
     <div class="param-card" id="card1">
       <div class="param-card-header" onclick="toggleCard('card1')">
         <span class="dot" style="background:#FE2C55"></span>
-        <span class="title">🔴 滚动窗口</span>
+        <span class="title">🔴 计算方法 + 窗口</span>
       </div>
       <div class="param-card-body" id="card1-body">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <label style="flex:1;padding:8px 12px;border:1px solid var(--divider);border-radius:10px;text-align:center;cursor:pointer;font-size:0.72rem;font-weight:700;font-family:var(--font-display);" id="method-raw-label">
+            <input type="radio" name="ad-method" value="raw" checked onchange="onMethodChange()" style="display:none;">
+            原始换手率
+          </label>
+          <label style="flex:1;padding:8px 12px;border:1px solid var(--divider);border-radius:10px;text-align:center;cursor:pointer;font-size:0.72rem;font-weight:700;font-family:var(--font-display);" id="method-zscore-label">
+            <input type="radio" name="ad-method" value="zscore" onchange="onMethodChange()" style="display:none;">
+            Z-score标准化
+          </label>
+        </div>
         <div class="slider-row">
           <span class="s-label">窗口天数</span>
           <input type="range" id="window-days" min="20" max="130" step="5" value="65" oninput="syncSlider()">
@@ -173,6 +183,13 @@ var tblSort = { key: 'ad_line', dir: 'desc' };
 
 function toggleCard(id) { document.getElementById(id+'-body').classList.toggle('collapsed'); }
 function syncSlider() { document.getElementById('window-days-v').textContent = document.getElementById('window-days').value + '日'; }
+function onMethodChange() {
+  var raw = document.querySelector('input[name="ad-method"]:checked').value;
+  document.getElementById('method-raw-label').style.borderColor = raw === 'raw' ? '#FE2C55' : 'var(--divider)';
+  document.getElementById('method-raw-label').style.background = raw === 'raw' ? 'rgba(254,44,85,0.06)' : '';
+  document.getElementById('method-zscore-label').style.borderColor = raw === 'zscore' ? '#FE2C55' : 'var(--divider)';
+  document.getElementById('method-zscore-label').style.background = raw === 'zscore' ? 'rgba(254,44,85,0.06)' : '';
+}
 
 (function() {
   // 默认今天，API会自动回退到最近交易日
@@ -191,8 +208,10 @@ async function run() {
   var date = document.getElementById('rs-date').value;
   var win = document.getElementById('window-days').value;
 
+  var method = document.querySelector('input[name="ad-method"]:checked').value;
+
   try {
-    var url = API + '/api/index-ad?pool=' + pool + '&date=' + date + '&window=' + win;
+    var url = API + '/api/index-ad?pool=' + pool + '&date=' + date + '&window=' + win + '&method=' + method;
     console.log('Fetching:', url);
     var resp = await fetch(url);
     var data = await resp.json();

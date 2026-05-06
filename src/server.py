@@ -711,8 +711,15 @@ def api_index_ad():
     as_of_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
     pool_name = request.args.get('pool', None)
     window_days = int(request.args.get('window', 65))
+    method = request.args.get('method', 'raw')  # raw | zscore
 
     db = get_db()
+
+    # zscore需要250天历史基线，增加查询窗口
+    if method == 'zscore':
+        lookback = max(window_days * 2 + 30, 315)  # 250基线 + 65窗口
+    else:
+        lookback = window_days * 2 + 30
 
     # 加载指数分类池
     all_pools = load_index_pools()
@@ -735,9 +742,7 @@ def api_index_ad():
     if not code_list:
         return jsonify({'error': 'no indices in pool'}), 400
 
-    # 批量查询K线（拉取足够历史以保证window_days+缓冲）
-    # 注意: window_days是交易日数, 需足够日历天数(约1.5倍+缓冲)
-    lookback = window_days * 2 + 30
+    # 批量查询K线
     placeholders = ','.join(['?' for _ in code_list])
     rows = db.execute(f"""SELECT k.stock_code, k.date, k.open, k.high, k.low, k.close, k.volume, k.amount, k.change,
         COALESCE(f.to_r, 0) as to_r
@@ -766,7 +771,7 @@ def api_index_ad():
         })
 
     # 调用引擎
-    result = detect_index_ad(pool_klines, pools, as_of_date, window_days)
+    result = detect_index_ad(pool_klines, pools, as_of_date, window_days, method)
 
     # 补充指数名称和评级含义
     for pname, pdata in result['pools'].items():
