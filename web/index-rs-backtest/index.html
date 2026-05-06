@@ -88,6 +88,18 @@
     th.sortable[data-indicator="asc"]::after { content:'↑'; opacity:1; color:#FE2C55; }
     th.sortable[data-indicator="desc"]::after { content:'↓'; opacity:1; color:#FE2C55; }
 
+    /* Modal */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:flex; align-items:center; justify-content:center; }
+    .modal-content { background:var(--card-bg); border-radius:20px; max-width:720px; width:90%; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 8px 40px rgba(0,0,0,0.2); }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--divider); }
+    .modal-title { font-family:var(--font-display); font-size:0.9rem; font-weight:800; }
+    .modal-close { background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-tertiary); padding:4px 8px; border-radius:8px; }
+    .modal-close:hover { background:var(--divider); color:var(--text-primary); }
+    .modal-body { padding:16px 20px; overflow-y:auto; }
+    .modal-body table { width:100%; font-size:0.75rem; }
+    .clickable-name { cursor:pointer; color:var(--text-primary); text-decoration:underline; text-decoration-color:transparent; transition:text-decoration-color 0.15s; }
+    .clickable-name:hover { color:#FE2C55; text-decoration-color:#FE2C55; }
+
     @media (max-width:900px) { .bt-layout { flex-direction:column; } .bt-left { width:100%; } }
   </style>
 </head>
@@ -287,6 +299,17 @@
     </div>
 
     <footer class="page-footer">❤️ 投资手账本 · 指数强度回测 · 量化你的直觉</footer>
+
+    <!-- Constituent Modal -->
+    <div class="modal-overlay" id="constituent-modal" style="display:none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="modal-title" id="modal-title">成分股</span>
+          <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+      </div>
+    </div>
   </div>
 
   <script>

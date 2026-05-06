@@ -658,6 +658,52 @@ def api_index_rs():
     return jsonify(result)
 
 # ═══════════════════════════════════════════════
+# API: GET /api/index-constituents
+# ═══════════════════════════════════════════════
+
+@app.route('/api/index-constituents')
+def api_index_constituents():
+    index_code = request.args.get('index_code', '')
+    date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+
+    if not index_code:
+        return jsonify({'error': 'index_code required'}), 400
+
+    db = get_db()
+
+    # 找到指定日期之前最近一个月份快照
+    snap = db.execute("""SELECT date FROM index_constituents
+        WHERE index_code=? AND date <= ?
+        ORDER BY date DESC LIMIT 1""", (index_code, date)).fetchone()
+
+    if not snap:
+        return jsonify({'constituents': [], 'snapshot_date': None, 'count': 0})
+
+    snap_date = snap['date']
+
+    # 拉取成分股及权重
+    rows = db.execute("""SELECT ic.stock_code, sb.name,
+        COALESCE(icw.weighting, 0) as weighting
+        FROM index_constituents ic
+        LEFT JOIN stock_basic sb ON ic.stock_code = sb.stock_code
+        LEFT JOIN index_constituent_weightings icw
+            ON icw.index_code = ic.index_code
+            AND icw.stock_code = ic.stock_code
+            AND icw.date = ic.date
+        WHERE ic.index_code = ? AND ic.date = ?
+        ORDER BY COALESCE(icw.weighting, 0) DESC""",
+        (index_code, snap_date)).fetchall()
+
+    constituents = [dict(r) for r in rows]
+
+    return jsonify({
+        'index_code': index_code,
+        'snapshot_date': snap_date,
+        'count': len(constituents),
+        'constituents': constituents,
+    })
+
+# ═══════════════════════════════════════════════
 # CORS
 # ═══════════════════════════════════════════════
 

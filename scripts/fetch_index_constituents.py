@@ -55,7 +55,7 @@ def load_indices(categories: list = None) -> dict:
     """从 index_style.yaml 加载指数，返回 {code: name}。
     categories=None 时加载全部。
     """
-    with open(CONFIG_PATH) as f:
+    with open(CONFIG_PATH, encoding='utf-8') as f:
         data = yaml.safe_load(f)
     cats = data.get("categories", {})
     result = {}

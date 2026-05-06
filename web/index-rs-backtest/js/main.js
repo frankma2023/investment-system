@@ -235,7 +235,70 @@
 
     // Enable sorting on all tables
     ['table-l1','table-l2','table-l3','table-top10'].forEach(makeSortable);
+
+    // Enable index name clicks for constituent modal
+    enableConstituentClicks();
   }
+
+  // ── Constituent Modal ──
+  function enableConstituentClicks() {
+    document.querySelectorAll('.clickable-name').forEach(el => {
+      el.addEventListener('click', function(e) {
+        const code = this.dataset.code;
+        if (code) showConstituents(code, this.textContent.trim());
+      });
+    });
+  }
+
+  async function showConstituents(indexCode, indexName) {
+    const modal = document.getElementById('constituent-modal');
+    const title = document.getElementById('modal-title');
+    const body = document.getElementById('modal-body');
+
+    title.textContent = `🔍 ${indexName} (${indexCode})`;
+    body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary);">⏳ 加载中...</div>';
+    modal.style.display = 'flex';
+
+    const date = document.getElementById('rs-date').value;
+    try {
+      const resp = await fetch(`${API_BASE}/api/index-constituents?index_code=${indexCode}&date=${date}`);
+      const data = await resp.json();
+
+      if (!data.constituents || !data.constituents.length) {
+        body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary);">该指数暂无成分股数据</div>';
+        return;
+      }
+
+      let html = `<div style="margin-bottom:8px;font-size:0.7rem;color:var(--text-tertiary);">快照日期: ${data.snapshot_date} · 共 ${data.count} 只</div>`;
+      html += '<table class="data-table"><thead><tr>';
+      html += '<th>#</th><th>股票代码</th><th>名称</th><th>权重(%)</th>';
+      html += '</tr></thead><tbody>';
+
+      data.constituents.forEach((c, i) => {
+        const w = c.weighting ? (c.weighting * 100).toFixed(2) : '—';
+        html += `<tr>
+          <td>${i + 1}</td>
+          <td class="mono">${c.stock_code}</td>
+          <td>${c.name || '—'}</td>
+          <td class="mono">${w}</td>
+        </tr>`;
+      });
+
+      html += '</tbody></table>';
+      body.innerHTML = html;
+    } catch (e) {
+      body.innerHTML = `<div style="text-align:center;padding:32px;color:#FE2C55;">❌ 加载失败: ${e.message}</div>`;
+    }
+  }
+
+  window.closeModal = function() {
+    document.getElementById('constituent-modal').style.display = 'none';
+  };
+
+  // Click overlay to close
+  document.getElementById('constituent-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
 
   // ── Sortable table helper ──
   function makeSortable(tableId) {
@@ -303,7 +366,7 @@
 
       html += `<tr>
         <td class="mono">${item.code}</td>
-        <td>${name}</td>
+        <td><span class="clickable-name" data-code="${item.code}">${name}</span></td>
         <td class="${rsClass(rs20)}">${rs20}</td>
         <td class="${rsClass(rs60)}">${rs60}</td>
         <td class="${rsClass(rs120)}">${rs120}</td>
@@ -355,7 +418,7 @@
       html += `<tr>
         <td>${i + 1}</td>
         <td class="mono">${item.code}</td>
-        <td>${name}</td>
+        <td><span class="clickable-name" data-code="${item.code}">${name}</span></td>
         <td class="mono">${item.close?.toFixed(2) ?? '—'}</td>
         <td class="${changeCls}">${changeStr}</td>
         <td class="${rsClass(item.RS_20)}">${item.RS_20 ?? '—'}</td>
