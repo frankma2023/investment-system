@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="../shared/css/base.css">
 <link rel="stylesheet" href="../shared/css/xhs-cards.css">
 <link rel="stylesheet" href="../shared/css/components.css">
+<link rel="stylesheet" href="../shared/themes/xhs-backtest.css">
 <style>
   .bt-layout { display:flex; gap:16px; align-items:flex-start; }
   .bt-left { width:330px; flex-shrink:0; display:flex; flex-direction:column; gap:12px; }
@@ -209,13 +210,15 @@ function toggleTheme() {
   var html = document.documentElement;
   var next = html.dataset.theme === 'dark' ? 'light' : 'dark';
   html.dataset.theme = next;
-  document.querySelector('.xhs-theme-btn').textContent = next === 'dark' ? '☀' : '🌙';
-  localStorage.setItem('xhs-crowd-theme', next);
+  var btn = document.querySelector('.theme-toggle');
+  if (btn) btn.textContent = next === 'dark' ? '☀' : '🌙';
+  localStorage.setItem('theme', next);
 }
 (function() {
-  var s = localStorage.getItem('xhs-crowd-theme') || 'light';
+  var s = localStorage.getItem('theme') || 'light';
   document.documentElement.dataset.theme = s;
-  document.querySelector('.xhs-theme-btn').textContent = s === 'dark' ? '☀' : '🌙';
+  var btn = document.querySelector('.theme-toggle');
+  if (btn) btn.textContent = s === 'dark' ? '☀' : '🌙';
 })();
 
 function toggleCard(id) { var b = document.getElementById(id + '-body'); if (b) b.classList.toggle('hidden'); }
