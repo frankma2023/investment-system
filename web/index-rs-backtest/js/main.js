@@ -69,13 +69,10 @@
 
   function setDefaultDate() {
     const today = new Date();
-    // 回退到最后一个交易日：周一到周五，排除今天如果还在盘中
-    let d = new Date(today);
-    d.setDate(d.getDate() - 1);  // 默认昨天
-    while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
+    // 默认今天，API会自动回退到最近交易日
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
     document.getElementById('rs-date').value = `${yyyy}-${mm}-${dd}`;
   }
 

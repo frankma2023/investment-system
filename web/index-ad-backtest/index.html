@@ -175,8 +175,8 @@ function toggleCard(id) { document.getElementById(id+'-body').classList.toggle('
 function syncSlider() { document.getElementById('window-days-v').textContent = document.getElementById('window-days').value + '日'; }
 
 (function() {
-  var d = new Date(); d.setDate(d.getDate() - 1);
-  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
+  // 默认今天，API会自动回退到最近交易日
+  var d = new Date();
   document.getElementById('rs-date').value = d.toISOString().slice(0,10);
 })();
 
