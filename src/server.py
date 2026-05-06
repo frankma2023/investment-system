@@ -132,13 +132,26 @@ def enrich_klines(rows):
 # ═══════════════════════════════════════════════
 
 def load_config(signal_type):
-    """Load YAML config file as a flat dict. Searches config/ and config/market/ first."""
-    # Try config/market/ first (new convention), then config/ root (fallback)
-    path = os.path.join(CONFIG_DIR, 'market', f'{signal_type}.yaml')
-    if not os.path.exists(path):
-        path = os.path.join(CONFIG_DIR, f'{signal_type}.yaml')
-    if not os.path.exists(path):
+    """Load YAML config file as a flat dict.
+    Search order: config/market/ → config/ → return empty
+    """
+    # Paths to try, in order
+    candidates = [
+        os.path.join(CONFIG_DIR, f'{signal_type}.yaml'),           # config/market/
+        os.path.join(PROJECT_DIR, 'config', f'{signal_type}.yaml'), # config/
+    ]
+    path = None
+    for p in candidates:
+        if os.path.exists(p):
+            path = p
+            break
+    if not path:
         return {}
+    # Try PyYAML first (handles nested structures), fall back to simple parser
+    if HAS_YAML:
+        with open(path, encoding='utf-8') as f:
+            return yaml.safe_load(f) or {}
+    # Simple YAML parser fallback
     with open(path, encoding='utf-8') as f:
         content = f.read()
     # Parse simple YAML (no nested structures beyond 1 level)
@@ -172,8 +185,20 @@ def _parse_yaml_val(s):
     except: return s
 
 def save_config(signal_type, raw_yaml):
-    """Save raw YAML string to config file (uses market/ subdirectory)."""
-    path = os.path.join(CONFIG_DIR, 'market', f'{signal_type}.yaml')
+    """Save raw YAML string to config file.
+    Preserves existing location: config/market/ → config/ → default config/market/
+    """
+    candidates = [
+        os.path.join(CONFIG_DIR, f'{signal_type}.yaml'),           # config/market/
+        os.path.join(PROJECT_DIR, 'config', f'{signal_type}.yaml'), # config/
+    ]
+    path = None
+    for p in candidates:
+        if os.path.exists(p):
+            path = p
+            break
+    if not path:
+        path = candidates[0]  # default: config/market/
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
         f.write(raw_yaml)
