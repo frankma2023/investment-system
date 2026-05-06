@@ -353,7 +353,7 @@
 
 **数据量**：~142万条（408个指数 × ~1740天 × 2种点位）  
 **数据来源**：理杏仁指数K线API  
-**写入脚本**：`scripts/fetch_index_daily_kline.py`（通过 `config/index_rs.yaml` 配置 408 个指数）  
+**写入脚本**：`scripts/fetch_index_daily_kline.py`（通过 `config/index_style.yaml` 配置 408 个指数）  
 **读取场景**：RS计算的行业/市场基准、行业技术指标(MA200/涨跌幅/成交量)
 
 ---

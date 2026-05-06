@@ -443,7 +443,7 @@ def compute_for_api(index_codes, start_date, end_date, weights=None, levels=None
     # 指数名称映射
     try:
         import yaml
-        with open(os.path.join(PROJECT_ROOT, "config", "index_rs.yaml"), encoding='utf-8') as f:
+        with open(os.path.join(PROJECT_ROOT, "config", "index_style.yaml"), encoding='utf-8') as f:
             idx_data = yaml.safe_load(f)
         name_map = {}
         for cat_name, idx_list in idx_data.get("categories", {}).items():

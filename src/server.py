@@ -24,7 +24,7 @@ from detectors.index_rs import detect as detect_index_rs
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(BASE_DIR)  # ~/investment-system/
 CONFIG_DIR = os.path.join(PROJECT_DIR, 'config', 'market')
-INDEX_RS_CONFIG = os.path.join(PROJECT_DIR, 'config', 'index_rs.yaml')
+INDEX_RS_CONFIG = os.path.join(PROJECT_DIR, 'config', 'index_style.yaml')
 DB_PATH = os.path.join(PROJECT_DIR, 'data', 'lixinger.db')
 DATA_DIR = os.path.join(PROJECT_DIR, 'data')
 
@@ -468,7 +468,7 @@ def api_crowding_backtest():
 @app.route('/api/crowding/indices', methods=['GET'])
 def api_crowding_indices():
     """返回指数池列表"""
-    yaml_path = os.path.join(PROJECT_DIR, 'config', 'index_rs.yaml')
+    yaml_path = os.path.join(PROJECT_DIR, 'config', 'index_style.yaml')
     if not os.path.exists(yaml_path):
         return jsonify([])
     try:
@@ -493,7 +493,7 @@ def api_crowding_indices():
 # ═══════════════════════════════════════════════
 
 def load_index_pools():
-    """从 config/index_rs.yaml 加载指数分类池定义"""
+    """从 config/index_style.yaml 加载指数分类池定义"""
     if not os.path.exists(INDEX_RS_CONFIG):
         return {}
     if HAS_YAML:
@@ -534,7 +534,7 @@ def _parse_index_yaml_simple():
 INDEX_NAMES_MAP = {}
 
 def load_index_names():
-    """从 config/index_rs.yaml 加载指数代码→名称映射"""
+    """从 config/index_style.yaml 加载指数代码→名称映射"""
     global INDEX_NAMES_MAP
     if INDEX_NAMES_MAP:
         return INDEX_NAMES_MAP
@@ -566,7 +566,7 @@ def api_index_rs():
     # 加载指数分类池
     all_pools = load_index_pools()
     if not all_pools:
-        return jsonify({'error': 'index_rs.yaml not found or empty'}), 500
+        return jsonify({'error': 'index_style.yaml not found or empty'}), 500
 
     # 如果指定了pool，只加载该pool
     if pool_name and pool_name in all_pools:

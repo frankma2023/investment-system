@@ -2,7 +2,7 @@
 """
 scripts/fetch_index_constituents.py — 拉取指数成分股 & 权重数据（按月快照）
 
-从 config/index_rs.yaml 读取指数清单，拉取：
+从 config/index_style.yaml 读取指数清单，拉取：
   1. 成分股列表 (index_constituents) — 每月快照
   2. 成分股权重 (index_constituent_weightings) — 区间查询
 
@@ -29,7 +29,7 @@ from common import api_post, get_db, log
 
 # ── 配置路径 ──────────────────────────────────────────
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CONFIG_PATH = os.path.join(PROJECT_ROOT, "config", "index_rs.yaml")
+CONFIG_PATH = os.path.join(PROJECT_ROOT, "config", "index_style.yaml")
 
 # ── API 路径 ──────────────────────────────────────────
 API_CONSTITUENTS = "/index/constituents"
@@ -52,7 +52,7 @@ UPSERT_WEIGHTING = """INSERT OR REPLACE INTO index_constituent_weightings
 # ════════════════════════════════════════════════════════
 
 def load_indices(categories: list = None) -> dict:
-    """从 index_rs.yaml 加载指数，返回 {code: name}。
+    """从 index_style.yaml 加载指数，返回 {code: name}。
     categories=None 时加载全部。
     """
     with open(CONFIG_PATH) as f:

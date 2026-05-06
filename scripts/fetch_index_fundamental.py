@@ -2,7 +2,7 @@
 """
 scripts/fetch_index_fundamental.py — 拉取指数基本面数据（拥挤度计算依赖）
 
-从 config/index_rs.yaml 读取 408 个指数清单，通过理杏仁 /index/fundamental API
+从 config/index_style.yaml 读取 408 个指数清单，通过理杏仁 /index/fundamental API
 拉取近 10 年的市值/成交量/换手率/PE/PB/股息率/融资/分位点等基本面指标。
 
 用法：
@@ -25,7 +25,7 @@ from common import api_post, get_db, log
 
 # ── 配置 ──────────────────────────────────────────────
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CONFIG_PATH = os.path.join(PROJECT_ROOT, "config", "index_rs.yaml")
+CONFIG_PATH = os.path.join(PROJECT_ROOT, "config", "index_style.yaml")
 API_PATH = "/index/fundamental"
 
 # 基本面指标
@@ -80,7 +80,7 @@ CHUNK_YEARS = 9
 # ════════════════════════════════════════════════════════
 
 def load_indices(categories=None):
-    """从 index_rs.yaml 加载指数，返回 {code: name}"""
+    """从 index_style.yaml 加载指数，返回 {code: name}"""
     with open(CONFIG_PATH, encoding='utf-8') as f:
         data = yaml.safe_load(f)
     cats = data.get("categories", {})

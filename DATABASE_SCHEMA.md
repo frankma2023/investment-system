@@ -82,7 +82,7 @@ change                   -- 涨跌幅(%)
 ```
 **数据量**: 1.42M 行（normal: 1.37M, total_return: 46.9K）  
 **范围**: 2000-01-04 ~ 2026-04-30  
-**覆盖**: 409 个指数（来自 `config/index_rs.yaml`，共 5 大类：market/sector_l1/sector_l2/sector_l3/style）  
+**覆盖**: 409 个指数（来自 `config/index_style.yaml`，共 5 大类：market/sector_l1/sector_l2/sector_l3/style）  
 **更新脚本**: `scripts/fetch_index_kline.py`
 
 ### index_fundamental_daily — 指数基本面日数据（拥挤度计算依赖）
