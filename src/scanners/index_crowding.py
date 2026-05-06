@@ -422,6 +422,30 @@ def _levels_to_dict(levels):
     return {"low_max": levels[0][1], "normal_max": levels[1][1], "elevated_max": levels[2][1]}
 
 
+def _load_data_for_indices(conn, index_codes):
+    """只加载指定指数的基本面数据 + 全市场成交额"""
+    placeholders = ','.join(['?'] * len(index_codes))
+    query = f"""SELECT stock_code, date, mc, tv, ta, to_r,
+                      pe_ttm_pct, pb_pct, dyr_pct, fpa, fb, ecmc
+               FROM index_fundamental_daily
+               WHERE stock_code IN ({placeholders}) OR stock_code = '000985'
+               ORDER BY stock_code, date"""
+    rows = conn.execute(query, index_codes).fetchall()
+
+    data = defaultdict(list)
+    market_ta = []
+    for r in rows:
+        code = r["stock_code"]
+        data[code].append((
+            r["date"], r["mc"], r["tv"], r["ta"], r["to_r"],
+            r["pe_ttm_pct"], r["pb_pct"], r["dyr_pct"],
+            r["fpa"], r["fb"], r["ecmc"]
+        ))
+        if code == "000985":
+            market_ta.append((r["date"], r["ta"]))
+    return data, market_ta
+
+
 def compute_for_api(index_codes, start_date, end_date, weights=None, levels=None):
     """
     供 API 调用的计算函数。
@@ -436,8 +460,8 @@ def compute_for_api(index_codes, start_date, end_date, weights=None, levels=None
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
 
-    # 加载数据
-    data, market_ta = load_data(conn)
+    # 加载数据（只加载指定指数）
+    data, market_ta = _load_data_for_indices(conn, index_codes)
     market_ta_dict = {d: ta for d, ta in market_ta}
 
     # 指数名称映射

@@ -90,9 +90,10 @@ def compute_rs_for_pool(pool_codes, pool_klines, as_of_date):
 
         # 获取最新收盘价和涨跌幅
         k = klines[as_of_idx]
-        change_pct = k.get('change_pct', 0)
+        # index_daily_kline 用 'change' 字段存涨跌幅(%)，非 'change_pct'
+        change_pct = k.get('change')
         if change_pct is None:
-            change_pct = k.get('change', 0)
+            change_pct = k.get('change_pct', 0)
 
         # 计算N日均线（用于L3条件判断）
         ma_days_max = 60

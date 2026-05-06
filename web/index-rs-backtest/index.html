@@ -81,6 +81,13 @@
     .placeholder-card { opacity:0.55; }
     .placeholder-card .xhs-card-header::after { content:'🔒 待个股RS就绪'; font-size:0.6rem; color:var(--text-tertiary); margin-left:auto; }
 
+    /* Sortable headers */
+    th.sortable { cursor:pointer; user-select:none; position:relative; padding-right:18px !important; }
+    th.sortable:hover { color:#FE2C55; }
+    th.sortable::after { content:'↕'; position:absolute; right:4px; font-size:0.6rem; opacity:0.3; }
+    th.sortable[data-indicator="asc"]::after { content:'↑'; opacity:1; color:#FE2C55; }
+    th.sortable[data-indicator="desc"]::after { content:'↓'; opacity:1; color:#FE2C55; }
+
     @media (max-width:900px) { .bt-layout { flex-direction:column; } .bt-left { width:100%; } }
   </style>
 </head>

@@ -232,6 +232,48 @@
 
     // TOP10
     renderTop10(rankings);
+
+    // Enable sorting on all tables
+    ['table-l1','table-l2','table-l3','table-top10'].forEach(makeSortable);
+  }
+
+  // ── Sortable table helper ──
+  function makeSortable(tableId) {
+    const table = document.querySelector(`#${tableId} table`);
+    if (!table) return;
+    table.querySelectorAll('th.sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = parseInt(th.dataset.col);
+        const type = th.dataset.type || 'string';
+        const asc = th.dataset.dir !== 'asc';
+        sortTable(table, col, type, asc);
+        th.dataset.dir = asc ? 'asc' : 'desc';
+        // Update indicators
+        table.querySelectorAll('th.sortable').forEach(h => { delete h.dataset.indicator; });
+        th.dataset.indicator = asc ? 'asc' : 'desc';
+      });
+    });
+  }
+
+  function sortTable(table, col, type, asc) {
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+      const ca = a.children[col]?.textContent.trim() || '';
+      const cb = b.children[col]?.textContent.trim() || '';
+      let va, vb;
+      if (type === 'number') {
+        va = parseFloat(ca.replace(/[^\d.\-]/g, '')) || 0;
+        vb = parseFloat(cb.replace(/[^\d.\-]/g, '')) || 0;
+      } else {
+        va = ca; vb = cb;
+      }
+      if (va < vb) return asc ? -1 : 1;
+      if (va > vb) return asc ? 1 : -1;
+      return 0;
+    });
+    rows.forEach(r => tbody.appendChild(r));
   }
 
   function renderTierTable(tableId, items, pool, tierType) {
@@ -242,9 +284,14 @@
     }
 
     let html = '<table class="data-table"><thead><tr>';
-    html += '<th>代码</th><th>名称</th><th>RS_20</th><th>RS_60</th><th>RS_120</th><th>RS_250</th>';
-    if (tierType === 'l2') html += '<th>加速力度</th>';
-    if (tierType === 'l3') html += '<th>MA状态</th>';
+    html += '<th class="sortable" data-col="0" data-type="string">代码</th>';
+    html += '<th class="sortable" data-col="1" data-type="string">名称</th>';
+    html += '<th class="sortable" data-col="2" data-type="number">RS_20</th>';
+    html += '<th class="sortable" data-col="3" data-type="number">RS_60</th>';
+    html += '<th class="sortable" data-col="4" data-type="number">RS_120</th>';
+    html += '<th class="sortable" data-col="5" data-type="number">RS_250</th>';
+    if (tierType === 'l2') html += '<th class="sortable" data-col="6" data-type="number">加速力度</th>';
+    if (tierType === 'l3') html += '<th class="sortable" data-col="6" data-type="string">MA状态</th>';
     html += '</tr></thead><tbody>';
 
     for (const item of items) {
@@ -285,8 +332,16 @@
 
     const top10 = rankings.slice(0, 10);
     let html = '<table class="data-table"><thead><tr>';
-    html += '<th>排名</th><th>代码</th><th>名称</th><th>最新价</th><th>涨跌幅</th>';
-    html += '<th>RS_20</th><th>RS_60</th><th>RS_120</th><th>RS_250</th><th>类型</th>';
+    html += '<th class="sortable" data-col="0" data-type="number">排名</th>';
+    html += '<th class="sortable" data-col="1" data-type="string">代码</th>';
+    html += '<th class="sortable" data-col="2" data-type="string">名称</th>';
+    html += '<th class="sortable" data-col="3" data-type="number">最新价</th>';
+    html += '<th class="sortable" data-col="4" data-type="number">涨跌幅</th>';
+    html += '<th class="sortable" data-col="5" data-type="number">RS_20</th>';
+    html += '<th class="sortable" data-col="6" data-type="number">RS_60</th>';
+    html += '<th class="sortable" data-col="7" data-type="number">RS_120</th>';
+    html += '<th class="sortable" data-col="8" data-type="number">RS_250</th>';
+    html += '<th class="sortable" data-col="9" data-type="string">类型</th>';
     html += '</tr></thead><tbody>';
 
     for (let i = 0; i < top10.length; i++) {

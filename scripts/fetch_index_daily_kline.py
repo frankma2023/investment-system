@@ -35,7 +35,7 @@ CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config",
 def load_index_config(path: str = None) -> dict:
     """从 index_style.yaml 加载指数配置，返回 {code: name, ...} 的扁平字典"""
     path = path or CONFIG_PATH
-    with open(path, "r") as f:
+    with open(path, "r", encoding='utf-8') as f:
         data = yaml.safe_load(f)
     categories = data.get("categories", {})
     result = {}
@@ -48,7 +48,7 @@ def load_index_config(path: str = None) -> dict:
 def load_index_config_by_category(path: str = None) -> dict:
     """从 index_style.yaml 加载指数配置，按分类分组返回 {category: {code: name, ...}}"""
     path = path or CONFIG_PATH
-    with open(path, "r") as f:
+    with open(path, "r", encoding='utf-8') as f:
         data = yaml.safe_load(f)
     result = {}
     for cat_name, indices in data.get("categories", {}).items():
