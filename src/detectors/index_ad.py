@@ -25,24 +25,25 @@ def compute_mfv(k):
     """
     计算单日资金流量 (Money Flow Value)
 
-    MFV = (2*Close - High - Low) / (High - Low) * Volume
-    一字板（High==Low）时 MFV = 0
+    MFV = (2*Close - High - Low) / (High - Low) * 换手率
+    用换手率替代成交量，天然消除规模差异，不同市值指数可横向比较。
+    一字板（High==Low）时 MFV = 0。
     """
     high = k.get('high')
     low = k.get('low')
     close = k.get('close')
-    volume = k.get('volume', 0) or 0
+    to_r = k.get('to_r', 0) or 0
 
     if high is None or low is None or close is None:
         return 0.0
 
     hl_range = high - low
-    if hl_range <= 0 or volume == 0:
+    if hl_range <= 0 or to_r == 0:
         return 0.0
 
-    # (2*P - H - L) / (H - L) 范围 [-1, 1]
+    # (2*P - H - L) / (H - L) 范围 [-1, 1]，乘以换手率
     position = (2.0 * close - high - low) / hl_range
-    return position * volume
+    return position * to_r
 
 
 def compute_ad_line(klines, as_of_idx, window_days):

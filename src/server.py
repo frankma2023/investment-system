@@ -739,11 +739,14 @@ def api_index_ad():
     # 注意: window_days是交易日数, 需足够日历天数(约1.5倍+缓冲)
     lookback = window_days * 2 + 30
     placeholders = ','.join(['?' for _ in code_list])
-    rows = db.execute(f"""SELECT stock_code, date, open, high, low, close, volume, amount, change
-        FROM index_daily_kline WHERE kline_type='normal'
-        AND stock_code IN ({placeholders})
-        AND date >= date(?, '-{lookback} days')
-        ORDER BY stock_code, date""",
+    rows = db.execute(f"""SELECT k.stock_code, k.date, k.open, k.high, k.low, k.close, k.volume, k.amount, k.change,
+        COALESCE(f.to_r, 0) as to_r
+        FROM index_daily_kline k
+        LEFT JOIN index_fundamental_daily f ON k.stock_code = f.stock_code AND k.date = f.date
+        WHERE k.kline_type='normal'
+        AND k.stock_code IN ({placeholders})
+        AND k.date >= date(?, '-{lookback} days')
+        ORDER BY k.stock_code, k.date""",
         code_list + [as_of_date]).fetchall()
 
     # 按指数代码分组
@@ -758,8 +761,7 @@ def api_index_ad():
             'high': r['high'],
             'low': r['low'],
             'close': r['close'],
-            'volume': r['volume'],
-            'amount': r['amount'],
+            'to_r': r['to_r'],
             'change': r['change'],
         })
 

@@ -243,7 +243,7 @@ function renderTable() {
     { label:'排名', key:'ad_line' },
     { label:'代码', key:'code' },
     { label:'名称', key:'name' },
-    { label:'AD_Line(亿股)', key:'ad_line' },
+    { label:'AD_Line(换手)', key:'ad_line' },
     { label:'百分位', key:'percentile' },
     { label:'评级', key:'rating' },
     { label:'AD_Score', key:'ad_score' },
@@ -259,7 +259,7 @@ function renderTable() {
   html += '</tr></thead><tbody>';
 
   d.forEach(function(r, idx) {
-    var ad = r.ad_line != null ? (r.ad_line / 1e8).toFixed(0) : '—';
+    var ad = r.ad_line != null ? (r.ad_line).toFixed(3) : '—';
     var pct = r.percentile != null ? r.percentile.toFixed(1) + '%' : '—';
     var score = r.ad_score != null ? r.ad_score : '—';
     var grade = r.rating || '—';
