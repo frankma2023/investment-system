@@ -1,93 +1,51 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="dark">
+<html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>指数拥挤度回测 · NEO 全息终端</title>
-<link rel="stylesheet" href="../shared/themes/neo.css">
-<link rel="stylesheet" href="../shared/css/dashboard-base.css">
+<title>指数拥挤度回测 · 投资手账本</title>
+<link rel="stylesheet" href="../shared/themes/xhs-backtest.css">
 <style>
   .bt-layout { display:flex; gap:16px; align-items:flex-start; }
   .bt-left { width:330px; flex-shrink:0; display:flex; flex-direction:column; gap:12px; }
   .bt-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .date-row { display:flex; gap:8px; }
+  .date-row > div { flex:1; }
+  @media (max-width:900px) { .bt-layout { flex-direction:column; } .bt-left { width:100%; } }
 
-  /* ── 表单 ── */
-  .field-label { display:block; font-family:var(--font-display); font-size:0.55rem; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; }
-  .field-input { width:100%; padding:7px 10px; border:1px solid var(--glass-border); border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:0.72rem; background:var(--bg-input); color:var(--text-primary); }
-  .field-select { width:100%; padding:7px 10px; border:1px solid var(--glass-border); border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:0.75rem; background:var(--bg-input); color:var(--text-primary); }
-
-  /* ── 按钮 ── */
-  .btn-run { display:block; width:100%; padding:10px; background:var(--neon-cyan); color:var(--bg-deep); border:none; border-radius:var(--radius-sm); font-family:var(--font-display); font-size:0.78rem; font-weight:700; cursor:pointer; letter-spacing:0.08em; text-transform:uppercase; transition:opacity 0.2s,box-shadow 0.2s; }
-  .btn-run:hover { opacity:0.85; box-shadow:0 0 16px rgba(0,229,255,0.3); }
-  .btn-run:disabled { background:var(--border); cursor:not-allowed; box-shadow:none; }
-  .btn-save { display:block; width:100%; padding:8px; background:var(--glass-bg); color:var(--neon-cyan); border:1px solid var(--glass-border); border-radius:var(--radius-sm); font-family:var(--font-display); font-size:0.68rem; font-weight:600; cursor:pointer; letter-spacing:0.06em; }
-  .btn-save:hover { border-color:var(--border-bright); }
-
-  /* ── NEO 参数卡片 ── */
-  .neo-param { background:var(--glass-bg); backdrop-filter:blur(12px); border:1px solid var(--glass-border); border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-card); position:relative; }
-  .neo-param::before { content:''; position:absolute; top:0;right:0; pointer-events:none; width:20px;height:20px; border-right:1px solid rgba(0,200,255,0.12); border-top:1px solid rgba(0,200,255,0.12); }
-  .neo-param-header { display:flex; align-items:center; gap:8px; padding:10px 14px; cursor:pointer; border-bottom:1px solid rgba(0,200,255,0.06); }
-  .neo-param-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-  .neo-param-title { font-family:var(--font-display); font-size:0.65rem; font-weight:600; flex:1; letter-spacing:0.06em; text-transform:uppercase; }
-  .neo-param-body { padding:10px 14px 12px; }
-  .neo-param-body.hidden { display:none; }
-
-  /* ── 滑块行 ── */
-  .slider-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
-  .slider-row:last-child { margin-bottom:0; }
-  .slider-label { width:60px; font-size:0.56rem; color:var(--text-tertiary); font-family:var(--font-display); flex-shrink:0; text-transform:uppercase; letter-spacing:0.04em; }
-  .slider-input { flex:1; height:3px; -webkit-appearance:none; background:rgba(0,200,255,0.1); border-radius:2px; outline:none; }
-  .slider-input::-webkit-slider-thumb { -webkit-appearance:none; width:12px;height:12px; border-radius:2px; background:var(--neon-cyan); cursor:pointer; border:2px solid #05080f; box-shadow:0 0 6px rgba(0,229,255,0.4); }
-  .slider-val { width:42px; text-align:right; font-size:0.6rem; font-weight:700; color:var(--neon-cyan); font-family:var(--font-display); flex-shrink:0; }
-
-  /* ── 统计卡 ── */
-  .stat-cards { display:grid; grid-template-columns:repeat(5,1fr); gap:1px; background:var(--glass-border); border-radius:var(--radius-md); overflow:hidden; margin-bottom:0; }
-  .stat-card { background:var(--glass-bg); backdrop-filter:blur(10px); padding:10px 8px; text-align:center; }
-  .stat-value { font-family:var(--font-display); font-size:1.1rem; font-weight:700; color:var(--text-primary); letter-spacing:0.04em; }
-  .stat-label { font-size:0.52rem; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.08em; font-family:var(--font-display); margin-top:2px; }
-
-  /* ── 拥挤度等级色 ── */
-  .level-high { color:var(--neon-magenta); text-shadow:0 0 6px rgba(255,64,129,0.4); }
-  .level-elevated { color:var(--neon-amber); }
-  .level-normal { color:var(--text-secondary); }
-  .level-low { color:var(--neon-green); }
-  .badge-high { background:rgba(255,64,129,0.12); color:var(--neon-magenta); border:1px solid rgba(255,64,129,0.25); padding:1px 8px; border-radius:3px; font-size:0.6rem; font-weight:700; }
-  .badge-elevated { background:rgba(255,171,0,0.1); color:var(--neon-amber); border:1px solid rgba(255,171,0,0.2); padding:1px 8px; border-radius:3px; font-size:0.6rem; font-weight:700; }
-  .badge-normal { background:rgba(0,229,255,0.06); color:var(--text-secondary); border:1px solid rgba(0,200,255,0.1); padding:1px 8px; border-radius:3px; font-size:0.6rem; }
-  .badge-low { background:rgba(118,255,3,0.08); color:var(--neon-green); border:1px solid rgba(118,255,3,0.15); padding:1px 8px; border-radius:3px; font-size:0.6rem; font-weight:700; }
-
-  /* ── 结果表格 ── */
-  #results-table .data-table { min-width:1100px; }
-  #results-table .data-table td { font-size:0.62rem; }
-
-  .loading { display:none; text-align:center; padding:40px; color:var(--neon-cyan); font-family:var(--font-display); font-size:0.8rem; letter-spacing:0.1em; }
-  .loading.active { display:block; }
-  .error-msg { display:none; padding:12px 16px; background:rgba(255,64,129,0.08); border:1px solid rgba(255,64,129,0.2); border-radius:var(--radius-sm); color:var(--neon-magenta); font-size:0.68rem; margin-top:8px; }
-  .error-msg.active { display:block; }
-
-  @media (max-width:900px) { .bt-layout { flex-direction:column; } .bt-left { width:100%; } .stat-cards { grid-template-columns:repeat(3,1fr); } }
+  /* ── 成分股弹窗 ── */
+  .modal-overlay { display:none; position:fixed; inset:0; z-index:999; background:rgba(0,0,0,0.35); backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+  .modal-overlay.active { display:flex; }
+  .modal-dialog { background:var(--bg-card); border-radius:var(--radius-lg); box-shadow:0 8px 40px rgba(0,0,0,0.15); max-width:700px; width:92%; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
+  .modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
+  .modal-title { font-family:var(--font-display); font-size:0.9rem; font-weight:800; color:var(--text-primary); }
+  .modal-subtitle { font-size:0.62rem; color:var(--text-tertiary); font-family:var(--font-display); margin-left:8px; }
+  .modal-close { width:30px;height:30px; border-radius:50%; border:1px solid var(--border); background:var(--bg-card); color:var(--text-secondary); cursor:pointer; font-size:1rem; display:flex;align-items:center;justify-content:center; transition:all 0.15s; }
+  .modal-close:hover { background:var(--color-up-bg); color:var(--color-up); border-color:var(--color-up-border); }
+  .modal-body { padding:14px 20px 20px; overflow-y:auto; flex:1; }
+  .modal-body .xhs-table { min-width:500px; }
+  .constituent-code { cursor:pointer; color:var(--color-accent); font-weight:600; }
+  .constituent-code:hover { text-decoration:underline; }
 </style>
 </head>
-<body class="neo-body">
+<body class="xhs-body">
 
-<nav class="neo-nav">
-  <span class="neo-nav-brand">CROWD_v1.0</span>
-  <div class="neo-nav-links">
-    <a href="#" class="neo-nav-link active">[指数拥挤度]</a>
-    <a href="../distribution-day/" class="neo-nav-link">[抛盘日]</a>
-    <a href="../follow-through-day/" class="neo-nav-link">[追盘日]</a>
-    <a href="#" class="neo-nav-link">[大盘扫描]</a>
-    <a href="#" class="neo-nav-link">[指数RS]</a>
-    <a href="#" class="neo-nav-link">[仓位管理]</a>
+<!-- ═══════════ NAV ═══════════ -->
+<nav class="xhs-nav">
+  <span class="xhs-nav-brand">📊 指数拥挤度</span>
+  <div class="xhs-nav-links">
+    <a href="../distribution-day/" class="xhs-nav-link">📉 抛盘日</a>
+    <a href="../follow-through-day/" class="xhs-nav-link">📈 追盘日</a>
+    <a href="../index-rs-backtest/" class="xhs-nav-link">🏆 指数RS强度</a>
+    <a href="../index-crowdedness/" class="xhs-nav-link active">🔥 指数拥挤度</a>
   </div>
-  <div class="nav-actions">
-    <span class="neo-sync-pulse"></span>
-    <span style="font-family:var(--font-display);font-size:0.58rem;color:var(--text-tertiary);letter-spacing:0.08em;">CROWDING ENGINE</span>
-    <button class="theme-btn" onclick="toggleTheme()">◈</button>
+  <div class="xhs-nav-actions">
+    <span class="xhs-live-dot"></span>
+    <button class="xhs-theme-btn" onclick="toggleTheme()">🌙</button>
   </div>
 </nav>
 
-<div class="dashboard" style="padding-top:16px">
+<div class="dashboard">
 
   <div class="bt-layout">
 
@@ -95,169 +53,173 @@
     <div class="bt-left">
 
       <!-- 回测设置 -->
-      <div class="neo-card" style="padding:16px">
-        <div class="neo-card-label">回测设置</div>
+      <div class="xhs-card">
+        <div class="xhs-card-header"><span class="xhs-card-label">📋 回测设置</span></div>
         <div style="margin-bottom:10px">
-          <label class="field-label">指数池</label>
-          <select class="field-select" id="index-pool" onchange="onPoolChange()">
-            <option value="market">全市场指数 (29)</option>
+          <label class="xhs-label">指数池</label>
+          <select class="xhs-select" id="index-pool" onchange="onPoolChange()">
+            <option value="all" selected>全部指数 (407)</option>
+            <option value="market">全市场指数 (30)</option>
             <option value="sector_l1">一级行业指数 (11)</option>
             <option value="sector_l2">二级行业指数 (45)</option>
-            <option value="all" selected>全部指数 (407)</option>
+            <option value="thematic">主题指数 (229)</option>
+            <option value="strategy">策略指数 (93)</option>
           </select>
         </div>
-        <div class="date-row" style="display:flex;gap:8px">
-          <div style="flex:1"><label class="field-label">开始</label><input type="date" class="field-input" id="date-start" value="2026-01-01"></div>
-          <div style="flex:1"><label class="field-label">结束</label><input type="date" class="field-input" id="date-end" value="2026-05-05"></div>
+        <div class="date-row">
+          <div><label class="xhs-label">开始日期</label><input type="date" class="xhs-input" id="date-start" value="2026-01-01"></div>
+          <div><label class="xhs-label">结束日期</label><input type="date" class="xhs-input" id="date-end" value="2026-05-05"></div>
         </div>
       </div>
 
       <!-- 卡片1: 交易热度 -->
-      <div class="neo-param" id="card1">
-        <div class="neo-param-header" onclick="toggleCard('card1')">
-          <span class="neo-param-dot" style="background:var(--color-up);box-shadow:0 0 6px var(--color-up-glow)"></span>
-          <span class="neo-param-title" style="color:var(--color-up)">交易热度 (35%)</span>
+      <div class="xhs-param" id="card1">
+        <div class="xhs-param-header" onclick="toggleCard('card1')">
+          <span class="xhs-param-dot" style="background:var(--color-up)"></span>
+          <span class="xhs-param-title">🔴 交易热度</span>
         </div>
-        <div class="neo-param-body" id="card1-body">
-          <div class="slider-row">
-            <span class="slider-label">成交额占比</span>
-            <input type="range" class="slider-input" id="w-turnover_ratio" min="0" max="50" step="1" value="25" oninput="syncSlider('w-turnover_ratio')">
-            <span class="slider-val" id="w-turnover_ratio-v">25%</span>
+        <div class="xhs-param-body" id="card1-body">
+          <div class="xhs-slider-row">
+            <span class="xhs-slider-label">成交额占比</span>
+            <input type="range" class="xhs-slider-input" id="w-turnover_ratio" min="0" max="50" step="1" value="25" oninput="syncSlider('w-turnover_ratio')">
+            <span class="xhs-slider-val" id="w-turnover_ratio-v">25%</span>
           </div>
-          <div class="slider-row">
-            <span class="slider-label">换手率</span>
-            <input type="range" class="slider-input" id="w-turnover_rate" min="0" max="50" step="1" value="10" oninput="syncSlider('w-turnover_rate')">
-            <span class="slider-val" id="w-turnover_rate-v">10%</span>
+          <div class="xhs-slider-row">
+            <span class="xhs-slider-label">换手率</span>
+            <input type="range" class="xhs-slider-input" id="w-turnover_rate" min="0" max="50" step="1" value="10" oninput="syncSlider('w-turnover_rate')">
+            <span class="xhs-slider-val" id="w-turnover_rate-v">10%</span>
           </div>
         </div>
       </div>
 
       <!-- 卡片2: 资金流向 -->
-      <div class="neo-param" id="card2">
-        <div class="neo-param-header" onclick="toggleCard('card2')">
-          <span class="neo-param-dot" style="background:var(--neon-amber);box-shadow:0 0 6px rgba(255,171,0,0.4)"></span>
-          <span class="neo-param-title" style="color:var(--neon-amber)">资金流向 (25%)</span>
+      <div class="xhs-param" id="card2">
+        <div class="xhs-param-header" onclick="toggleCard('card2')">
+          <span class="xhs-param-dot" style="background:var(--color-neutral)"></span>
+          <span class="xhs-param-title">🟡 资金流向</span>
         </div>
-        <div class="neo-param-body" id="card2-body">
-          <div class="slider-row">
-            <span class="slider-label">融资余额占比</span>
-            <input type="range" class="slider-input" id="w-margin_balance" min="0" max="50" step="1" value="15" oninput="syncSlider('w-margin_balance')">
-            <span class="slider-val" id="w-margin_balance-v">15%</span>
+        <div class="xhs-param-body" id="card2-body">
+          <div class="xhs-slider-row">
+            <span class="xhs-slider-label">融资余额占比</span>
+            <input type="range" class="xhs-slider-input" id="w-margin_balance" min="0" max="50" step="1" value="15" oninput="syncSlider('w-margin_balance')">
+            <span class="xhs-slider-val" id="w-margin_balance-v">15%</span>
           </div>
-          <div class="slider-row">
-            <span class="slider-label">融资买入占比</span>
-            <input type="range" class="slider-input" id="w-margin_buy" min="0" max="50" step="1" value="10" oninput="syncSlider('w-margin_buy')">
-            <span class="slider-val" id="w-margin_buy-v">10%</span>
+          <div class="xhs-slider-row">
+            <span class="xhs-slider-label">融资买入占比</span>
+            <input type="range" class="xhs-slider-input" id="w-margin_buy" min="0" max="50" step="1" value="10" oninput="syncSlider('w-margin_buy')">
+            <span class="xhs-slider-val" id="w-margin_buy-v">10%</span>
           </div>
         </div>
       </div>
 
       <!-- 卡片3: 估值水位 -->
-      <div class="neo-param" id="card3">
-        <div class="neo-param-header" onclick="toggleCard('card3')">
-          <span class="neo-param-dot" style="background:var(--neon-purple);box-shadow:0 0 6px rgba(213,0,249,0.4)"></span>
-          <span class="neo-param-title" style="color:var(--neon-purple)">估值水位 (25%)</span>
+      <div class="xhs-param" id="card3">
+        <div class="xhs-param-header" onclick="toggleCard('card3')">
+          <span class="xhs-param-dot" style="background:var(--color-down)"></span>
+          <span class="xhs-param-title">🟢 估值水位</span>
         </div>
-        <div class="neo-param-body" id="card3-body">
-          <div class="slider-row">
-            <span class="slider-label">PE 十年分位</span>
-            <input type="range" class="slider-input" id="w-pe_pct" min="0" max="50" step="1" value="15" oninput="syncSlider('w-pe_pct')">
-            <span class="slider-val" id="w-pe_pct-v">15%</span>
+        <div class="xhs-param-body" id="card3-body">
+          <div class="xhs-slider-row">
+            <span class="xhs-slider-label">PE 十年分位</span>
+            <input type="range" class="xhs-slider-input" id="w-pe_pct" min="0" max="50" step="1" value="15" oninput="syncSlider('w-pe_pct')">
+            <span class="xhs-slider-val" id="w-pe_pct-v">15%</span>
           </div>
-          <div class="slider-row">
-            <span class="slider-label">PB 十年分位</span>
-            <input type="range" class="slider-input" id="w-pb_pct" min="0" max="50" step="1" value="5" oninput="syncSlider('w-pb_pct')">
-            <span class="slider-val" id="w-pb_pct-v">5%</span>
+          <div class="xhs-slider-row">
+            <span class="xhs-slider-label">PB 十年分位</span>
+            <input type="range" class="xhs-slider-input" id="w-pb_pct" min="0" max="50" step="1" value="5" oninput="syncSlider('w-pb_pct')">
+            <span class="xhs-slider-val" id="w-pb_pct-v">5%</span>
           </div>
-          <div class="slider-row">
-            <span class="slider-label">股息率分位</span>
-            <input type="range" class="slider-input" id="w-dyr_pct" min="0" max="50" step="1" value="5" oninput="syncSlider('w-dyr_pct')">
-            <span class="slider-val" id="w-dyr_pct-v">5%</span>
+          <div class="xhs-slider-row">
+            <span class="xhs-slider-label">股息率分位</span>
+            <input type="range" class="xhs-slider-input" id="w-dyr_pct" min="0" max="50" step="1" value="5" oninput="syncSlider('w-dyr_pct')">
+            <span class="xhs-slider-val" id="w-dyr_pct-v">5%</span>
           </div>
         </div>
       </div>
 
       <!-- 卡片4: 机构行为 -->
-      <div class="neo-param" id="card4">
-        <div class="neo-param-header" onclick="toggleCard('card4')">
-          <span class="neo-param-dot" style="background:var(--neon-cyan);box-shadow:0 0 6px rgba(0,229,255,0.4)"></span>
-          <span class="neo-param-title" style="color:var(--neon-cyan)">机构行为 (15%)</span>
+      <div class="xhs-param" id="card4">
+        <div class="xhs-param-header" onclick="toggleCard('card4')">
+          <span class="xhs-param-dot" style="background:var(--text-tertiary)"></span>
+          <span class="xhs-param-title">⚫ 机构行为</span>
         </div>
-        <div class="neo-param-body" id="card4-body">
-          <div class="slider-row">
-            <span class="slider-label">基金重仓占比</span>
-            <input type="range" class="slider-input" id="w-fund_holding" min="0" max="50" step="1" value="15" oninput="syncSlider('w-fund_holding')">
-            <span class="slider-val" id="w-fund_holding-v">15%</span>
+        <div class="xhs-param-body" id="card4-body">
+          <div class="xhs-slider-row">
+            <span class="xhs-slider-label">基金重仓占比</span>
+            <input type="range" class="xhs-slider-input" id="w-fund_holding" min="0" max="50" step="1" value="15" oninput="syncSlider('w-fund_holding')">
+            <span class="xhs-slider-val" id="w-fund_holding-v">15%</span>
           </div>
-          <div style="font-size:0.55rem;color:var(--text-tertiary);margin-top:4px">暂无数据，权重将按比例重分配</div>
+          <div style="font-size:0.6rem;color:var(--text-tertiary);margin-top:4px">暂无数据，权重将按比例重分配</div>
         </div>
       </div>
 
-      <button class="btn-run" id="btn-run" onclick="runBacktest()">▶ 运行回测</button>
-      <button class="btn-save" id="btn-save" onclick="saveConfig()">保存配置</button>
-      <div class="error-msg" id="error-msg"></div>
+      <button class="xhs-btn-run" id="btn-run" onclick="runBacktest()">🔍 运行回测</button>
+      <button class="xhs-btn-save" id="btn-save" onclick="saveConfig()">💾 保存配置</button>
+      <div class="xhs-error" id="error-msg"></div>
     </div>
 
     <!-- ═══ RIGHT PANEL ═══ -->
     <div class="bt-right">
-      <div class="stat-cards">
-        <div class="stat-card"><div class="stat-value" id="stat-total">—</div><div class="stat-label">指数总数</div></div>
-        <div class="stat-card"><div class="stat-value level-high" id="stat-high">—</div><div class="stat-label">高拥挤</div></div>
-        <div class="stat-card"><div class="stat-value level-elevated" id="stat-elevated">—</div><div class="stat-label">偏高</div></div>
-        <div class="stat-card"><div class="stat-value level-normal" id="stat-normal">—</div><div class="stat-label">正常</div></div>
-        <div class="stat-card"><div class="stat-value level-low" id="stat-low">—</div><div class="stat-label">低拥挤</div></div>
+      <div class="xhs-stats">
+        <div class="xhs-stat-card"><div class="xhs-stat-value" id="stat-total">—</div><div class="xhs-stat-label">指数总数</div></div>
+        <div class="xhs-stat-card"><div class="xhs-stat-value stat-high" id="stat-high">—</div><div class="xhs-stat-label">高拥挤</div></div>
+        <div class="xhs-stat-card"><div class="xhs-stat-value stat-elevated" id="stat-elevated">—</div><div class="xhs-stat-label">偏高</div></div>
+        <div class="xhs-stat-card"><div class="xhs-stat-value stat-normal" id="stat-normal">—</div><div class="xhs-stat-label">正常</div></div>
+        <div class="xhs-stat-card"><div class="xhs-stat-value stat-low" id="stat-low">—</div><div class="xhs-stat-label">低拥挤</div></div>
       </div>
 
-      <div class="loading" id="loading">◆ 计算中 ...</div>
+      <div class="xhs-loading" id="loading">⏳ 计算中 ...</div>
 
-      <div class="section" style="margin-top:0">
-        <div class="neo-card-label">◆ 拥挤度计算结果 <span style="font-size:0.5rem;color:var(--text-tertiary)">点击表头排序</span></div>
-        <div class="neo-card">
-          <div class="table-wrap" id="results-table"></div>
+      <div class="xhs-card">
+        <div class="xhs-card-header">
+          <span class="xhs-card-label">📊 拥挤度计算结果</span>
+          <span style="font-size:0.62rem;color:var(--text-tertiary)">点击表头排序</span>
         </div>
+        <div class="xhs-table-wrap" id="results-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ 成分股弹窗 ══════ -->
+  <div class="modal-overlay" id="constituent-modal" onclick="closeModal(event)">
+    <div class="modal-dialog" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div><span class="modal-title" id="modal-title">成分股</span><span class="modal-subtitle" id="modal-subtitle"></span></div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="xhs-loading" id="modal-loading">⏳ 加载成分股...</div>
+        <div class="xhs-table-wrap" id="modal-table"></div>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-/* ═══════════ CONFIG ═══════════ */
-var API_BASE = 'http://localhost:8789';
+var API_BASE = 'http://localhost:8788';
 var allIndices = [];
 
-/* ═══════════ THEME ═══════════ */
 function toggleTheme() {
   var html = document.documentElement;
   var next = html.dataset.theme === 'dark' ? 'light' : 'dark';
   html.dataset.theme = next;
-  localStorage.setItem('crowd-theme', next);
+  document.querySelector('.xhs-theme-btn').textContent = next === 'dark' ? '☀' : '🌙';
+  localStorage.setItem('xhs-crowd-theme', next);
 }
 (function() {
-  var s = localStorage.getItem('crowd-theme') || 'dark';
+  var s = localStorage.getItem('xhs-crowd-theme') || 'light';
   document.documentElement.dataset.theme = s;
+  document.querySelector('.xhs-theme-btn').textContent = s === 'dark' ? '☀' : '🌙';
 })();
 
-/* ═══════════ UI ═══════════ */
-function toggleCard(id) {
-  var b = document.getElementById(id + '-body');
-  if (b) b.classList.toggle('hidden');
-}
-function syncSlider(id) {
-  var el = document.getElementById(id);
-  var v = document.getElementById(id + '-v');
-  if (!el || !v) return;
-  v.textContent = el.value + '%';
-}
+function toggleCard(id) { var b = document.getElementById(id + '-body'); if (b) b.classList.toggle('hidden'); }
+function syncSlider(id) { document.getElementById(id + '-v').textContent = document.getElementById(id).value + '%'; }
 
-/* ═══════════ LOAD INDICES ═══════ */
 async function loadIndices() {
   try {
     var resp = await fetch(API_BASE + '/api/crowding/indices');
     allIndices = await resp.json();
-    console.log('Loaded ' + allIndices.length + ' indices');
-  } catch (e) {
-    console.error('Failed to load indices:', e);
-  }
+  } catch (e) { console.error(e); }
 }
 
 function getPoolIndices() {
@@ -266,90 +228,44 @@ function getPoolIndices() {
   return allIndices.filter(function(x) { return x.category === pool; }).map(function(x) { return x.code; });
 }
 
-function onPoolChange() {
-  var codes = getPoolIndices();
-  var sel = document.getElementById('index-pool');
-  var opt = sel.options[sel.selectedIndex];
-  opt.text = opt.text.replace(/\d+/, codes.length);
-}
-
-/* ═══════════ GET WEIGHTS ═══════════ */
 function getWeights() {
   var keys = ['turnover_ratio','turnover_rate','margin_balance','margin_buy','pe_pct','pb_pct','dyr_pct','fund_holding'];
   var w = {};
-  keys.forEach(function(k) {
-    w[k] = parseInt(document.getElementById('w-' + k).value) / 100;
-  });
+  keys.forEach(function(k) { w[k] = parseInt(document.getElementById('w-' + k).value) / 100; });
   return w;
 }
 
-/* ═══════════ BACKTEST ═══════════ */
-async function runBacktest() {
-  var btn = document.getElementById('btn-run');
-  var loading = document.getElementById('loading');
-  var error = document.getElementById('error-msg');
-  btn.disabled = true;
-  btn.textContent = '计算中...';
-  loading.classList.add('active');
-  error.classList.remove('active');
-  document.getElementById('results-table').innerHTML = '';
+var tblSort = { key: null, dir: 'asc' };
+var lastResults = [];
 
-  var indexCodes = getPoolIndices().slice(0, 100);  // 最多100个
-  var weights = getWeights();
-  var startDate = document.getElementById('date-start').value;
-  var endDate = document.getElementById('date-end').value;
-
-  try {
-    var resp = await fetch(API_BASE + '/api/crowding/backtest', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        index_codes: indexCodes,
-        start_date: startDate,
-        end_date: endDate,
-        weights: weights,
-        levels: {
-          low_max: 30, normal_max: 60, elevated_max: 80
-        }
-      })
+function renderTableData(data, sortKey, sortDir) {
+  var d = [].concat(data);
+  if (sortKey) {
+    d.sort(function(a, b) {
+      var va = a[sortKey] != null ? a[sortKey] : -Infinity;
+      var vb = b[sortKey] != null ? b[sortKey] : -Infinity;
+      return sortDir === 'asc' ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
     });
-    var data = await resp.json();
-    renderResults(data.results || []);
-    updateStats(data.results || []);
-  } catch (e) {
-    error.textContent = '回测失败: ' + e.message;
-    error.classList.add('active');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '▶ 运行回测';
-    loading.classList.remove('active');
   }
-}
-
-/* ═══════════ RENDER TABLE ═══════════ */
-function renderResults(results) {
-  if (!results.length) {
-    document.getElementById('results-table').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-tertiary)">暂无结果</div>';
-    return;
-  }
-
   var cols = ['代码','名称','拥挤度','等级','热度','资金','估值','PE分位','PB分位','成交占比分位','换手率分位'];
-  var html = '<table class="data-table"><thead><tr>';
-  cols.forEach(function(c) { html += '<th>' + c + '</th>'; });
+  var html = '<table class="xhs-table"><thead><tr>';
+  cols.forEach(function(c, i) {
+    var keys = ['stock_code','name','composite_score','crowd_level','heat_score','flow_score','valuation_score','pe_pct','pb_pct','turnover_ratio_pct','turnover_rate_pct'];
+    var cls = sortKey === keys[i] ? (sortDir === 'asc' ? ' style="color:var(--color-up)"' : ' style="color:var(--color-down)"') : '';
+    html += '<th' + cls + ' onclick="sortTable(\'' + keys[i] + '\')">' + c + '</th>';
+  });
   html += '</tr></thead><tbody>';
-
-  results.forEach(function(r) {
-    var levelBadge = '';
-    if (r.crowd_level === '高拥挤') levelBadge = 'badge-high';
-    else if (r.crowd_level === '偏高') levelBadge = 'badge-elevated';
-    else if (r.crowd_level === '低拥挤') levelBadge = 'badge-low';
-    else levelBadge = 'badge-normal';
-
+  d.forEach(function(r) {
+    var lvl = r.crowd_level || '—';
+    var badge = 'xhs-badge-normal';
+    if (lvl === '高拥挤') badge = 'xhs-badge-high';
+    else if (lvl === '偏高') badge = 'xhs-badge-elevated';
+    else if (lvl === '低拥挤') badge = 'xhs-badge-low';
     html += '<tr>';
-    html += '<td>' + r.stock_code + '</td>';
+    html += '<td class="constituent-code" onclick="showConstituents(\'' + r.stock_code + '\', \'' + (r.name || '').replace(/'/g, "\\'") + '\')">' + r.stock_code + '</td>';
     html += '<td style="font-weight:600">' + (r.name || r.stock_code) + '</td>';
     html += '<td style="font-weight:700;font-size:0.75rem">' + (r.composite_score != null ? r.composite_score.toFixed(1) : '—') + '</td>';
-    html += '<td><span class="' + levelBadge + '">' + (r.crowd_level || '—') + '</span></td>';
+    html += '<td><span class="' + badge + '">' + lvl + '</span></td>';
     html += '<td>' + (r.heat_score != null ? r.heat_score.toFixed(1) : '—') + '</td>';
     html += '<td>' + (r.flow_score != null ? r.flow_score.toFixed(1) : '—') + '</td>';
     html += '<td>' + (r.valuation_score != null ? r.valuation_score.toFixed(1) : '—') + '</td>';
@@ -363,6 +279,45 @@ function renderResults(results) {
   document.getElementById('results-table').innerHTML = html;
 }
 
+function sortTable(key) {
+  if (tblSort.key === key) tblSort.dir = tblSort.dir === 'asc' ? 'desc' : 'asc';
+  else { tblSort.key = key; tblSort.dir = 'asc'; }
+  renderTableData(lastResults, tblSort.key, tblSort.dir);
+}
+
+async function runBacktest() {
+  var btn = document.getElementById('btn-run');
+  var loading = document.getElementById('loading');
+  var error = document.getElementById('error-msg');
+  btn.disabled = true; btn.textContent = '⏳ 计算中...';
+  loading.classList.add('active'); error.classList.remove('active');
+
+  var indexCodes = getPoolIndices().slice(0, 100);
+  try {
+    var resp = await fetch(API_BASE + '/api/crowding/backtest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        index_codes: indexCodes,
+        start_date: document.getElementById('date-start').value,
+        end_date: document.getElementById('date-end').value,
+        weights: getWeights(),
+        levels: { low_max: 30, normal_max: 60, elevated_max: 80 }
+      })
+    });
+    var data = await resp.json();
+    lastResults = data.results || [];
+    renderTableData(lastResults);
+    updateStats(lastResults);
+  } catch (e) {
+    error.textContent = '回测失败: ' + e.message;
+    error.classList.add('active');
+  } finally {
+    btn.disabled = false; btn.textContent = '🔍 运行回测';
+    loading.classList.remove('active');
+  }
+}
+
 function updateStats(results) {
   document.getElementById('stat-total').textContent = results.length;
   document.getElementById('stat-high').textContent = results.filter(function(r){return r.crowd_level==='高拥挤'}).length;
@@ -371,34 +326,64 @@ function updateStats(results) {
   document.getElementById('stat-low').textContent = results.filter(function(r){return r.crowd_level==='低拥挤'}).length;
 }
 
-/* ═══════════ SAVE CONFIG ═══════════ */
 async function saveConfig() {
   var weights = getWeights();
   var yaml = 'weights:\n';
-  Object.keys(weights).forEach(function(k) {
-    yaml += '  ' + k + ': ' + weights[k].toFixed(2) + '\n';
-  });
-  yaml += '\nlevels:\n';
-  yaml += '  low_max: 30\n';
-  yaml += '  normal_max: 60\n';
-  yaml += '  elevated_max: 80\n';
+  Object.keys(weights).forEach(function(k) { yaml += '  ' + k + ': ' + weights[k].toFixed(2) + '\n'; });
+  yaml += '\nlevels:\n  low_max: 30\n  normal_max: 60\n  elevated_max: 80\n';
+  try {
+    await fetch(API_BASE + '/api/crowding/config', { method: 'POST', headers: {'Content-Type':'text/yaml'}, body: yaml });
+    var btn = document.getElementById('btn-save');
+    btn.textContent = '✓ 已保存到 index_crowding.yaml';
+    setTimeout(function() { btn.textContent = '💾 保存配置'; }, 2000);
+  } catch (e) { console.error(e); }
+}
+
+loadIndices();
+
+/* ═══════════ 成分股弹窗 ═══════════ */
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('constituent-modal')) return;
+  document.getElementById('constituent-modal').classList.remove('active');
+}
+
+async function showConstituents(indexCode, indexName) {
+  var modal = document.getElementById('constituent-modal');
+  var loading = document.getElementById('modal-loading');
+  var table = document.getElementById('modal-table');
+
+  document.getElementById('modal-title').textContent = indexCode + ' ' + (indexName || '');
+  document.getElementById('modal-subtitle').textContent = '';
+  modal.classList.add('active');
+  loading.classList.add('active');
+  table.innerHTML = '';
 
   try {
-    await fetch(API_BASE + '/api/crowding/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/yaml' },
-      body: yaml
-    });
-    var btn = document.getElementById('btn-save');
-    btn.textContent = '✓ 已保存';
-    setTimeout(function() { btn.textContent = '保存配置'; }, 2000);
+    var resp = await fetch(API_BASE + '/api/index-constituents?index_code=' + indexCode);
+    var data = await resp.json();
+    document.getElementById('modal-subtitle').textContent =
+      '快照 ' + (data.snapshot_date || '—') + ' · ' + data.count + ' 只成分股';
+    loading.classList.remove('active');
+    renderConstituentTable(data.constituents || []);
   } catch (e) {
-    console.error('Save failed:', e);
+    loading.classList.remove('active');
+    table.innerHTML = '<div style="padding:20px;text-align:center;color:var(--color-up)">加载失败</div>';
   }
 }
 
-/* ═══════════ INIT ═══════════ */
-loadIndices();
+function renderConstituentTable(constituents) {
+  var html = '<table class="xhs-table"><thead><tr>';
+  html += '<th>代码</th><th>名称</th><th>权重</th></tr></thead><tbody>';
+  constituents.forEach(function(c) {
+    html += '<tr>';
+    html += '<td class="constituent-code">' + c.stock_code + '</td>';
+    html += '<td style="font-weight:600">' + (c.name || c.stock_code) + '</td>';
+    html += '<td>' + (c.weighting != null ? (c.weighting * 100).toFixed(2) + '%' : '—') + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('modal-table').innerHTML = html;
+}
 </script>
 </body>
 </html>
