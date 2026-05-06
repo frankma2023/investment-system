@@ -681,17 +681,15 @@ def api_index_constituents():
 
     snap_date = snap['date']
 
-    # 拉取成分股及权重
+    # 拉取成分股及权重（权重表仅有前10大，其余显示为—）
     rows = db.execute("""SELECT ic.stock_code, sb.name,
-        COALESCE(icw.weighting, 0) as weighting
+        (SELECT icw.weighting FROM index_constituent_weightings icw
+         WHERE icw.index_code = ic.index_code AND icw.stock_code = ic.stock_code
+         ORDER BY icw.date DESC LIMIT 1) as weighting
         FROM index_constituents ic
         LEFT JOIN stock_basic sb ON ic.stock_code = sb.stock_code
-        LEFT JOIN index_constituent_weightings icw
-            ON icw.index_code = ic.index_code
-            AND icw.stock_code = ic.stock_code
-            AND icw.date = ic.date
         WHERE ic.index_code = ? AND ic.date = ?
-        ORDER BY COALESCE(icw.weighting, 0) DESC""",
+        ORDER BY weighting DESC NULLS LAST""",
         (index_code, snap_date)).fetchall()
 
     constituents = [dict(r) for r in rows]

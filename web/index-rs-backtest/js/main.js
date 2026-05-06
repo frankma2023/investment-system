@@ -275,7 +275,7 @@
       html += '</tr></thead><tbody>';
 
       data.constituents.forEach((c, i) => {
-        const w = c.weighting ? (c.weighting * 100).toFixed(2) : '—';
+        const w = (c.weighting !== null && c.weighting !== undefined) ? (c.weighting * 100).toFixed(2) : '—';
         html += `<tr>
           <td>${i + 1}</td>
           <td class="mono">${c.stock_code}</td>
