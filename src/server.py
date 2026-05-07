@@ -887,9 +887,9 @@ def api_index_divergence():
 
         # 成分股背离（仅对有预计算数据的指数）
         div_breadth = None
-        if code in advance_ratios_map:
-            ar_list = advance_ratios_map[code]
-            div_breadth = detect_breadth_divergence(klines, ar_list, as_of_idx, breadth_cfg)
+        if code in advance_ratios_map and advance_ratios_map[code]:
+            ar_dict = advance_ratios_map[code]  # {date: ratio}
+            div_breadth = detect_breadth_divergence(klines, ar_dict, as_of_idx, breadth_cfg)
 
         div_vp = confirm_divergence(klines, as_of_idx, div_vp, confirm_window)
         div_rsi = confirm_divergence(klines, as_of_idx, div_rsi, confirm_window)
@@ -998,8 +998,7 @@ def compute_advance_ratios(db, index_codes, as_of_date):
             (code, lookback_date, as_of_date)).fetchall()
 
         date_to_ratio = {r['date']: r['up_ratio'] for r in rows}
-        ratios = [date_to_ratio.get(r['date']) for r in idx_dates]
-        advance_map[code] = ratios
+        advance_map[code] = date_to_ratio  # {date: ratio}
 
     return advance_map
 

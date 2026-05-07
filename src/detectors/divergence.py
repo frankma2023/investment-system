@@ -250,50 +250,48 @@ def detect_breadth_divergence(klines, advance_ratios, as_of_idx, params):
     """
     成分股上涨比例背离。
 
-    advance_ratios: 每日上涨比例列表(与klines等长)
-    params: { consecutive_days, top_threshold, bottom_threshold }
+    advance_ratios: {date: ratio} 日期→上涨比例字典
     """
     cd = params.get('consecutive_days', 2)
     top_th = params.get('top_threshold', 50)
     bot_th = params.get('bottom_threshold', 40)
 
-    if as_of_idx < cd or not advance_ratios or as_of_idx >= len(advance_ratios):
+    if as_of_idx < cd or not advance_ratios:
         return None
 
-    closes = [k['close'] for k in klines]
-    cur_ratio = advance_ratios[as_of_idx]
+    dates_to_check = [klines[j]['date'] for j in range(as_of_idx - cd, as_of_idx + 1)]
+    ratios_to_check = [advance_ratios.get(d) for d in dates_to_check]
+    closes_to_check = [klines[j]['close'] for j in range(as_of_idx - cd, as_of_idx + 1)]
 
-    # 顶背离: 涨 + 参与度降 + < 50%
-    if closes[as_of_idx] > closes[as_of_idx - 1] and cur_ratio < advance_ratios[as_of_idx - 1] and cur_ratio < top_th:
-        # 检查连续天数
+    if any(r is None for r in ratios_to_check):
+        return None
+
+    cur_ratio = ratios_to_check[-1]
+    prev_ratio = ratios_to_check[-2]
+    cur_close = closes_to_check[-1]
+    prev_close = closes_to_check[-2]
+
+    # 顶背离
+    if cur_close > prev_close and cur_ratio < prev_ratio and cur_ratio < top_th:
         ok = True
-        for j in range(as_of_idx - cd + 1, as_of_idx + 1):
-            if j <= 0 or closes[j] <= closes[j - 1] or advance_ratios[j] >= advance_ratios[j - 1]:
-                ok = False
-                break
+        for j in range(1, len(ratios_to_check)):
+            if closes_to_check[j] <= closes_to_check[j-1] or ratios_to_check[j] >= ratios_to_check[j-1]:
+                ok = False; break
         if ok:
             return {'type': 'top', 'level': 1,
-                    'detail': f'成分股背离: 指数涨, 上涨占比仅{round(cur_ratio,1)}%'}
+                    'detail': f'成分股顶背离: 指数涨, 上涨占比仅{round(cur_ratio*100,1)}%'}
 
-    # 底背离: 跌 + 参与度升 + < 40%
-    if closes[as_of_idx] < closes[as_of_idx - 1] and cur_ratio > advance_ratios[as_of_idx - 1] and cur_ratio < bot_th:
+    # 底背离
+    if cur_close < prev_close and cur_ratio > prev_ratio and cur_ratio < bot_th:
         ok = True
-        for j in range(as_of_idx - cd + 1, as_of_idx + 1):
-            if j <= 0 or closes[j] >= closes[j - 1] or advance_ratios[j] <= advance_ratios[j - 1]:
-                ok = False
-                break
+        for j in range(1, len(ratios_to_check)):
+            if closes_to_check[j] >= closes_to_check[j-1] or ratios_to_check[j] <= ratios_to_check[j-1]:
+                ok = False; break
         if ok:
             return {'type': 'bottom', 'level': 1,
-                    'detail': f'成分股背离: 指数跌, 上涨占比改善至{round(cur_ratio,1)}%'}
+                    'detail': f'成分股底背离: 指数跌, 上涨占比改善至{round(cur_ratio*100,1)}%'}
 
     return None
-
-
-# ═══════════════════════════════════════════
-# 确认等级升级
-# ═══════════════════════════════════════════
-
-
 def confirm_divergence(klines, as_of_idx, div_result, confirm_window=20):
     """
     根据价格确认升级背离等级。
