@@ -520,6 +520,39 @@ def api_crowding_indices():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/crowding/latest', methods=['GET'])
+def api_crowding_latest():
+    """返回所有指数最新拥挤度数据（从 index_crowding_daily 表直接取）"""
+    db = get_db()
+    date = request.args.get('date', None)
+    try:
+        if not date:
+            date = db.execute("SELECT MAX(date) FROM index_crowding_daily").fetchone()[0]
+        if not date:
+            return jsonify({'results': [], 'date': None})
+        rows = db.execute('''
+            SELECT stock_code, composite_score, crowd_level,
+                   heat_score, flow_score, valuation_score,
+                   pe_pct, turnover_ratio_pct
+            FROM index_crowding_daily
+            WHERE date = ?
+            ORDER BY composite_score DESC
+        ''', (date,)).fetchall()
+        results = [{
+            'stock_code': r['stock_code'],
+            'composite_score': r['composite_score'],
+            'crowd_level': r['crowd_level'],
+            'heat_score': r['heat_score'],
+            'flow_score': r['flow_score'],
+            'valuation_score': r['valuation_score'],
+            'pe_pct': r['pe_pct'],
+            'turnover_ratio_pct': r['turnover_ratio_pct'],
+        } for r in rows]
+        return jsonify({'results': results, 'date': date, 'count': len(results)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # ═══════════════════════════════════════════════
 # API: GET /api/index-rs
 # ═══════════════════════════════════════════════
