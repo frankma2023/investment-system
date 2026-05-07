@@ -232,7 +232,10 @@ async function fetchDivergence(){
 
 async function fetchCrowding(){
   try{
-    var codes=Object.keys(rsMap).slice(0,100);  // 取前100个
+    // 先获取拥挤度可用的指数列表
+    var idxResp=await fetch(API+'/api/crowding/indices');
+    var allIdx=await idxResp.json();
+    var codes=allIdx.slice(0,100).map(function(x){return x.code});
     if(!codes.length)return;
     var resp=await fetch(API+'/api/crowding/backtest',{
       method:'POST',headers:{'Content-Type':'application/json'},
