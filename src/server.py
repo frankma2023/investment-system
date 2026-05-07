@@ -828,7 +828,10 @@ def api_index_divergence():
             results.append(build_div_result(r, index_names))
         return jsonify({'as_of_date': as_of_date, 'pool': pool_name, 'cached': True, 'indices': results})
 
-    # 批量查询K线（拉取足够历史以保证window_days+缓冲）
+    # 批量查询K线
+    lookback = 500
+    code_list = list(missing)
+    ph = ','.join(['?' for _ in code_list])
     rows = db.execute(f'''SELECT stock_code, date, open, high, low, close, volume, amount, change
         FROM index_daily_kline WHERE kline_type='normal'
         AND stock_code IN ({ph})
