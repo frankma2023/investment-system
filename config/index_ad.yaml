@@ -1,17 +1,13 @@
-# index_ad.yaml — 指数机构吸筹/出货评级参数配置
-
-# 滚动窗口交易日数
 window_days: 65
 
-# 评级映射（只读，供回测看板参考）
 ratings:
-  - { grade: "A+", min_pct: 90, meaning: "机构强烈吸筹（最佳）" }
-  - { grade: "A",  min_pct: 80, meaning: "机构强烈吸筹" }
-  - { grade: "B+", min_pct: 70, meaning: "机构较强烈吸筹" }
-  - { grade: "B",  min_pct: 60, meaning: "机构温和吸筹" }
-  - { grade: "C+", min_pct: 50, meaning: "机构买入稍大于卖出，基本平衡" }
-  - { grade: "C",  min_pct: 40, meaning: "机构买卖大致平衡" }
-  - { grade: "D+", min_pct: 30, meaning: "机构温和出货" }
-  - { grade: "D",  min_pct: 20, meaning: "机构大力出货" }
-  - { grade: "E",  min_pct: 10, meaning: "机构强烈出货" }
-  - { grade: "E-", min_pct: 0,  meaning: "机构强烈出货（最差）" }
+  - { grade: "A+", min_pct: 90 }
+  - { grade: "A", min_pct: 80 }
+  - { grade: "B+", min_pct: 70 }
+  - { grade: "B", min_pct: 60 }
+  - { grade: "C+", min_pct: 50 }
+  - { grade: "C", min_pct: 40 }
+  - { grade: "D+", min_pct: 30 }
+  - { grade: "D", min_pct: 20 }
+  - { grade: "E", min_pct: 10 }
+  - { grade: "E-", min_pct: 0 }

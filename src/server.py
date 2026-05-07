@@ -745,7 +745,7 @@ def api_index_ad():
     # 批量查询K线
     placeholders = ','.join(['?' for _ in code_list])
     rows = db.execute(f"""SELECT k.stock_code, k.date, k.open, k.high, k.low, k.close, k.volume, k.amount, k.change,
-        COALESCE(f.to_r, 0) as to_r
+        COALESCE(f.to_r, CASE WHEN f.mc > 0 THEN k.amount / f.mc ELSE 0 END) as to_r
         FROM index_daily_kline k
         LEFT JOIN index_fundamental_daily f ON k.stock_code = f.stock_code AND k.date = f.date
         WHERE k.kline_type='normal'
