@@ -23,7 +23,7 @@
 .filter-bar select,.filter-bar input { padding:6px 10px; border:1px solid rgba(255,255,255,0.1); border-radius:6px; background:rgba(0,0,0,0.4); color:rgba(255,255,255,0.7); font-family:'Share Tech Mono',monospace; font-size:0.65rem; }
 .filter-bar select:focus,.filter-bar input:focus { outline:none; border-color:var(--neon-cyan); }
 
-.data-table { width:100%; border-collapse:collapse; font-size:0.7rem; }
+.data-table { width:100%; border-collapse:collapse; font-size:0.7rem; table-layout:fixed; }
 .data-table th { background:rgba(0,200,255,0.06); padding:10px 8px; text-align:left; font-family:'Share Tech Mono',monospace; color:rgba(255,255,255,0.5); font-size:0.6rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid rgba(255,255,255,0.06); cursor:pointer; }
 .data-table th:hover { color:var(--neon-cyan); }
 .data-table th.sorted { color:var(--neon-cyan); }
@@ -52,6 +52,19 @@
 
 .clickable { cursor:pointer; }
 .clickable:hover { color:var(--neon-cyan); text-decoration:underline; }
+
+/* Light mode fixes */
+[data-theme="light"] .scan-stat { background:rgba(0,0,0,0.02); border-color:rgba(0,0,0,0.08); }
+[data-theme="light"] .scan-stat .val { color:#006080; }
+[data-theme="light"] .scan-stat .lbl { color:rgba(0,0,0,0.45); }
+[data-theme="light"] .scan-stat.highlight .val { color:#C62828; }
+[data-theme="light"] .data-table td { color:rgba(0,0,0,0.8); }
+[data-theme="light"] .data-table th { color:rgba(0,0,0,0.5); background:rgba(0,0,0,0.03); }
+[data-theme="light"] .data-table tr:hover td { background:rgba(0,0,0,0.03); }
+[data-theme="light"] .pool-tab { background:rgba(0,0,0,0.03); color:rgba(0,0,0,0.5); border-color:rgba(0,0,0,0.08); }
+[data-theme="light"] .pool-tab.active { color:#006080; border-color:#006080; background:rgba(0,96,128,0.06); }
+[data-theme="light"] .filter-bar select, [data-theme="light"] .filter-bar input { background:rgba(0,0,0,0.02); color:rgba(0,0,0,0.7); border-color:rgba(0,0,0,0.1); }
+[data-theme="light"] .alert-cell { color:rgba(0,0,0,0.55); }
 </style>
 </head>
 <body class="neo-body">
@@ -153,16 +166,15 @@ var POOLS=[
 var rsMap={}, adMap={}, divMap={}, crowdMap={}, indexNames={};
 
 async function fetchRS(){
-  var pools=['market','sector_l1','sector_l2','thematic','strategy'];
-  for(var p of pools){
-    var resp=await fetch(API+'/api/index-rs?pool='+p+'&date='+today());
+  try{
+    var resp=await fetch(API+'/api/index-rs?date='+today());
     var data=await resp.json();
-    if(data.pools&&data.pools[p]){
-      var rankings=data.pools[p].rankings||[];
-      var tiers=data.pools[p].tiers||{L1:[],L2:[],L3:[]};
+    for(var pn in data.pools||{}){
+      var rankings=data.pools[pn].rankings||[];
+      var tiers=data.pools[pn].tiers||{L1:[],L2:[],L3:[]};
       rankings.forEach(function(r){
         if(!rsMap[r.code])rsMap[r.code]={};
-        rsMap[r.code].pool=p;
+        rsMap[r.code].pool=pn;
         rsMap[r.code].rs120=r.RS_120;
         rsMap[r.code].rs60=r.RS_60;
         rsMap[r.code].rs20=r.RS_20;
@@ -171,34 +183,31 @@ async function fetchRS(){
         rsMap[r.code].change_pct=r.change_pct;
         if(r.name)indexNames[r.code]=r.name;
       });
-      // Check tier membership
       (tiers.L1||[]).forEach(function(t){if(!rsMap[t.code])rsMap[t.code]={};rsMap[t.code].tier='L1';tierCounts.L1++});
       (tiers.L2||[]).forEach(function(t){if(!rsMap[t.code])rsMap[t.code]={};rsMap[t.code].tier='L2';tierCounts.L2++});
       (tiers.L3||[]).forEach(function(t){if(!rsMap[t.code])rsMap[t.code]={};rsMap[t.code].tier='L3';tierCounts.L3++});
     }
-  }
+  }catch(e){console.error('RS fetch failed:',e)}
 }
 
 async function fetchAD(){
-  var pools=['market','sector_l1','sector_l2','thematic','strategy'];
-  for(var p of pools){
-    var resp=await fetch(API+'/api/index-ad?pool='+p+'&date='+today());
+  try{
+    var resp=await fetch(API+'/api/index-ad?date='+today());
     var data=await resp.json();
-    if(data.pools&&data.pools[p]){
-      (data.pools[p].rankings||[]).forEach(function(r){
+    for(var pn in data.pools||{}){
+      (data.pools[pn].rankings||[]).forEach(function(r){
         if(!adMap[r.code])adMap[r.code]={};
         adMap[r.code].ad_rating=r.rating;
         adMap[r.code].ad_score=r.ad_score;
         if(r.name)indexNames[r.code]=r.name;
       });
     }
-  }
+  }catch(e){console.error('AD fetch failed:',e)}
 }
 
 async function fetchDivergence(){
-  var pools=['market','sector_l1','sector_l2','thematic','strategy'];
-  for(var p of pools){
-    var resp=await fetch(API+'/api/index-divergence?pool='+p+'&date='+today()+'&sensitivity=long');
+  try{
+    var resp=await fetch(API+'/api/index-divergence?date='+today()+'&sensitivity=long');
     var data=await resp.json();
     (data.indices||[]).forEach(function(r){
       if(!divMap[r.code])divMap[r.code]={};
@@ -213,7 +222,7 @@ async function fetchDivergence(){
       if(r.resonance_level)divMap[r.code].resonance=r.resonance_level;
       if(r.name)indexNames[r.code]=r.name;
     });
-  }
+  }catch(e){console.error('Divergence fetch failed:',e)}
 }
 
 async function fetchCrowding(){
