@@ -717,7 +717,7 @@ def api_index_ad():
 
     # zscore需要250天历史基线，增加查询窗口
     if method == 'zscore':
-        lookback = max(window_days * 2 + 30, 315)  # 250基线 + 65窗口
+        lookback = 500  # 250天基线 + 65天窗口 ≈ 315个交易日 ≈ 500个日历日
     else:
         lookback = window_days * 2 + 30
 

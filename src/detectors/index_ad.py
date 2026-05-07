@@ -71,18 +71,21 @@ def compute_ad_line_zscore(klines, as_of_idx, window_days=65, zscore_days=250):
     """
     计算Z-score标准化后的滚动AD线。
 
-    先用过去 zscore_days 天计算 μ 和 σ，
-    再将 window_days 窗口内每天的 MFV 标准化后累加。
+    基线: 过去 [as_of_idx - zscore_days - window_days, as_of_idx - window_days] 的 MFV 用于计算 μ/σ
+    AD窗口: 过去 [as_of_idx - window_days + 1, as_of_idx] 的 MFV 标准化后累加
 
-    数据不足 zscore_days 天时返回 None。
+    基线与AD窗口不重叠，避免信号稀释。
+    数据不足时返回 None。
     """
-    if as_of_idx < zscore_days - 1:
+    total_days_needed = zscore_days + window_days
+    if as_of_idx < total_days_needed - 1:
         return None
 
-    # 计算基线窗口的 μ 和 σ（截至 as_of_idx 之前的所有可用数据，最多 zscore_days 天）
-    baseline_start = max(0, as_of_idx - zscore_days + 1)
+    # 基线: AD窗口之前的 zscore_days 天
+    baseline_end = as_of_idx - window_days
+    baseline_start = baseline_end - zscore_days + 1
     mfv_values = []
-    for i in range(baseline_start, as_of_idx + 1):
+    for i in range(baseline_start, baseline_end + 1):
         mfv_values.append(compute_mfv(klines[i]))
 
     n = len(mfv_values)
@@ -90,8 +93,12 @@ def compute_ad_line_zscore(klines, as_of_idx, window_days=65, zscore_days=250):
     variance = sum((v - mean_mfv) ** 2 for v in mfv_values) / n
     std_mfv = variance ** 0.5
 
-    if std_mfv == 0:
-        return 0.0  # 无波动，标准化后全为0
+    if std_mfv < 1e-10 or n < 100:
+        return None  # 数据不足或几乎无波动
+
+    # 防止极低σ放大信号
+    if std_mfv < abs(mean_mfv) * 0.1:
+        std_mfv = abs(mean_mfv) * 0.1
 
     # Z-score标准化 window_days 窗口内的MFV并累加
     total = 0.0
