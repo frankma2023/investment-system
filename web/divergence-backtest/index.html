@@ -127,9 +127,6 @@ th.sortable[data-indicator="desc"]::after { content:'↓'; opacity:1; color:#FE2
   <div class="param-card" id="card-breadth">
     <div class="param-card-header" onclick="toggleCard('card-breadth')"><span class="dot" style="background:#4CAF50"></span><span class="title">🟢 成分股参数</span></div>
     <div class="param-card-body" id="card-breadth-body">
-      <div class="slider-row"><span class="s-label">连续天数</span><input type="range" id="br-days" min="1" max="5" value="2" oninput="syncSlider('br-days')"><span class="s-val" id="br-days-v">2</span></div>
-      <div class="slider-row"><span class="s-label">顶背离阈值</span><input type="range" id="br-top" min="20" max="70" value="50" oninput="syncSlider('br-top')"><span class="s-val" id="br-top-v">50%</span></div>
-      <div class="slider-row"><span class="s-label">底背离阈值</span><input type="range" id="br-bot" min="10" max="60" value="40" oninput="syncSlider('br-bot')"><span class="s-val" id="br-bot-v">40%</span></div>
     </div>
   </div>
   <button class="btn-run" id="btn-run">🔍 计算</button>
@@ -261,6 +258,9 @@ async function save(){
   yaml+='rsi:\n  period: '+document.getElementById('rsi-period').value+'\n';
   yaml+='  lookback: '+document.getElementById('rsi-lookback').value+'\n  overbought: 70\n  oversold: 30\n';
   yaml+='macd:\n  lookback: '+document.getElementById('macd-lookback').value+'\n';
+  yaml+='breadth:\n  consecutive_days: '+document.getElementById('br-days').value+'\n';
+  yaml+='  top_threshold: '+document.getElementById('br-top').value+'\n';
+  yaml+='  bottom_threshold: '+document.getElementById('br-bot').value+'\n';
   try{
     var resp=await fetch(API+'/api/config?signal_type=divergence',{method:'POST',body:yaml});
     if(resp.ok){var btn=document.getElementById('btn-save');btn.textContent='✓ 已保存';setTimeout(function(){btn.textContent='💾 保存配置'},2000)}

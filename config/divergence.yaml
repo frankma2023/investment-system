@@ -1,40 +1,11 @@
-# divergence.yaml — 指数背离检测参数配置
-
-# 灵敏度: short | long
-sensitivity: long
-
-# 量价背离
+sensitivity: short
 volume_price:
-  mode: slow           # fast(点对点) | slow(均线趋势)
-  ma_days: 5
-  lookback: 10
-  min_strength: 3.0
-
-# RSI背离
+  mode: fast
+  min_strength: 3
 rsi:
-  period: 14           # 短线7, 长线14
-  lookback: 20         # 短线10, 长线20
+  period: 14
+  lookback: 20
   overbought: 70
   oversold: 30
-  dynamic_percentile: false  # true=动态分位(90%/10%)
-
-# MACD背离
 macd:
-  fast: 12
-  slow: 26
-  signal: 9
-  lookback: 20         # 短线10, 长线20
-
-# 成分股背离
-breadth:
-  consecutive_days: 2
-  top_threshold: 50
-  bottom_threshold: 40
-
-# 确认窗口
-confirm_window: 20     # 短线10, 长线20
-
-# 有效期
-expiry_days: 10        # 成分股5日
-breadth_expiry_days: 5
-auto_extend: true      # 是否自动延展
+  lookback: 20
