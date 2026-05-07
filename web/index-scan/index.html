@@ -234,7 +234,7 @@ async function fetchCrowding(){
   try{
     var idxResp=await fetch(API+'/api/crowding/indices');
     var allIdx=await idxResp.json();
-    var codes=allIdx.slice(0,100).map(function(x){return x.code});
+    var codes=allIdx.map(function(x){return x.code});
     if(!codes.length)return;
     var d=new Date();d.setDate(d.getDate()-25);
     var start=d.toISOString().slice(0,10);
