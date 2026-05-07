@@ -827,6 +827,25 @@ def api_index_ad():
     return jsonify(result)
 
 # ═══════════════════════════════════════════════
+# API: GET /api/stock-analysis
+# ═══════════════════════════════════════════════
+
+@app.route('/api/stock-analysis')
+def api_stock_analysis():
+    stock_code = request.args.get('code', '')
+    if not stock_code:
+        return jsonify({'error': 'code required'}), 400
+    try:
+        from analysis.financial import dcf_valuation, comps_analysis, earnings_analysis, three_statement_projection
+        dcf = dcf_valuation(stock_code)
+        comps = comps_analysis(stock_code)
+        earnings = earnings_analysis(stock_code)
+        model = three_statement_projection(stock_code)
+        return jsonify({'dcf': dcf, 'comps': comps, 'earnings': earnings, 'model': model})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ═══════════════════════════════════════════════
 # API: GET /api/index-divergence
 # ═══════════════════════════════════════════════
 
