@@ -20,6 +20,12 @@ from detectors.distribution_day import detect as detect_distribution_days
 from detectors.follow_through_day import detect as detect_follow_through_days
 from detectors.index_rs import detect as detect_index_rs
 from detectors.index_ad import detect as detect_index_ad
+from detectors.divergence import (
+    compute_rsi, compute_macd,
+    detect_volume_price_divergence, detect_rsi_divergence,
+    detect_macd_divergence, detect_breadth_divergence,
+    confirm_divergence, compute_resonance
+)
 
 # ── Config ───────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -782,6 +788,143 @@ def api_index_ad():
                 item['meaning'] = RATING_MEANINGS.get(item['rating'], '')
 
     return jsonify(result)
+
+# ═══════════════════════════════════════════════
+# API: GET /api/index-divergence
+# ═══════════════════════════════════════════════
+
+@app.route('/api/index-divergence')
+def api_index_divergence():
+    as_of_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    pool_name = request.args.get('pool', 'market')
+    sensitivity = request.args.get('sensitivity', 'long')
+
+    db = get_db()
+
+    all_pools = load_index_pools()
+    if pool_name not in all_pools:
+        return jsonify({'error': 'invalid pool'}), 400
+    pool_codes = all_pools[pool_name]
+    index_names = load_index_names()
+
+    # 先查缓存
+    placeholders = ','.join(['?' for _ in pool_codes])
+    cached = db.execute(f'''SELECT * FROM index_divergence_daily
+        WHERE stock_code IN ({placeholders}) AND date = ?''',
+        pool_codes + [as_of_date]).fetchall()
+
+    cached_map = {r['stock_code']: r for r in cached}
+    all_codes = set(pool_codes)
+    missing = all_codes - set(cached_map.keys())
+
+    # 如果全部缓存命中，直接返回
+    if not missing:
+        results = []
+        for r in cached:
+            results.append(build_div_result(r, index_names))
+        return jsonify({'as_of_date': as_of_date, 'pool': pool_name, 'cached': True, 'indices': results})
+
+    # 需要计算：拉取K线
+    lookback = 500
+    code_list = list(missing)
+    ph = ','.join(['?' for _ in code_list])
+    rows = db.execute(f'''SELECT stock_code, date, open, high, low, close, volume, amount, change
+        FROM index_daily_kline WHERE kline_type='normal'
+        AND stock_code IN ({ph})
+        AND date >= date(?, '-{lookback} days')
+        ORDER BY stock_code, date''',
+        code_list + [as_of_date]).fetchall()
+
+    pool_klines = {}
+    for r in rows:
+        code = r['stock_code']
+        if code not in pool_klines:
+            pool_klines[code] = []
+        pool_klines[code].append(dict(r))
+
+    # 加载配置
+    cfg = load_config('divergence')
+    vp_cfg = cfg.get('volume_price', {}) if cfg else {}
+    rsi_cfg = cfg.get('rsi', {}) if cfg else {}
+    macd_cfg = cfg.get('macd', {}) if cfg else {}
+    confirm_window = cfg.get('confirm_window', 20) if cfg else 20
+
+    if sensitivity == 'short':
+        rsi_cfg = {**rsi_cfg, 'period': 7, 'lookback': 10}
+        macd_cfg = {**macd_cfg, 'lookback': 10}
+        confirm_window = 10
+
+    results = []
+    for code in sorted(missing):
+        klines = pool_klines.get(code, [])
+        if not klines: continue
+
+        as_of_idx = None
+        for i, k in enumerate(klines):
+            if k['date'] == as_of_date: as_of_idx = i; break
+        if as_of_idx is None:
+            for i in range(len(klines)-1, -1, -1):
+                if klines[i]['date'] <= as_of_date: as_of_idx = i; break
+        if as_of_idx is None: continue
+
+        actual_date = klines[as_of_idx]['date']
+        close_val = klines[as_of_idx]['close']
+
+        div_vp = detect_volume_price_divergence(klines, vp_cfg, as_of_idx)
+        div_rsi = detect_rsi_divergence(klines, rsi_cfg, as_of_idx)
+        div_macd = detect_macd_divergence(klines, macd_cfg, as_of_idx)
+
+        div_vp = confirm_divergence(klines, as_of_idx, div_vp, confirm_window)
+        div_rsi = confirm_divergence(klines, as_of_idx, div_rsi, confirm_window)
+        div_macd = confirm_divergence(klines, as_of_idx, div_macd, confirm_window)
+
+        divergences = {'vp': div_vp, 'rsi': div_rsi, 'macd': div_macd, 'breadth': None}
+        resonance_level, alert_text = compute_resonance(divergences, None, None, None)
+
+        db.execute('''INSERT OR REPLACE INTO index_divergence_daily
+            (stock_code, date, div_vp_type, div_vp_level, div_vp_strength,
+             div_rsi_type, div_rsi_level, div_macd_type, div_macd_level,
+             div_breadth_type, div_breadth_level,
+             resonance_level, alert_text, close, updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime("now","localtime"))''',
+            (code, actual_date,
+             div_vp['type'] if div_vp else None, div_vp['level'] if div_vp else None, div_vp.get('strength') if div_vp else None,
+             div_rsi['type'] if div_rsi else None, div_rsi['level'] if div_rsi else None,
+             div_macd['type'] if div_macd else None, div_macd['level'] if div_macd else None,
+             None, None,
+             resonance_level, alert_text, close_val))
+
+        results.append({
+            'code': code, 'name': index_names.get(code, code), 'close': close_val,
+            'div_vp': {'type': div_vp['type'], 'level': div_vp['level'], 'strength': div_vp.get('strength')} if div_vp else None,
+            'div_rsi': {'type': div_rsi['type'], 'level': div_rsi['level']} if div_rsi else None,
+            'div_macd': {'type': div_macd['type'], 'level': div_macd['level']} if div_macd else None,
+            'div_breadth': None,
+            'resonance_level': resonance_level, 'alert_text': alert_text,
+        })
+
+    db.commit()
+
+    # 合并缓存结果
+    for r in cached:
+        if r['stock_code'] not in missing:
+            results.append(build_div_result(r, index_names))
+
+    results.sort(key=lambda x: x['code'])
+    return jsonify({'as_of_date': as_of_date, 'pool': pool_name, 'indices': results})
+
+
+def build_div_result(r, index_names):
+    return {
+        'code': r['stock_code'], 'name': index_names.get(r['stock_code'], r['stock_code']),
+        'close': r['close'],
+        'div_vp': {'type': r['div_vp_type'], 'level': r['div_vp_level'], 'strength': r['div_vp_strength']} if r['div_vp_type'] else None,
+        'div_rsi': {'type': r['div_rsi_type'], 'level': r['div_rsi_level']} if r['div_rsi_type'] else None,
+        'div_macd': {'type': r['div_macd_type'], 'level': r['div_macd_level']} if r['div_macd_type'] else None,
+        'div_breadth': {'type': r['div_breadth_type'], 'level': r['div_breadth_level']} if r['div_breadth_type'] else None,
+        'resonance_level': r['resonance_level'], 'alert_text': r['alert_text'],
+        'rs_rating': r['rs_rating'], 'ad_rating': r['ad_rating'], 'crowd_level': r['crowd_level'],
+    }
 
 # ═══════════════════════════════════════════════
 # CORS
