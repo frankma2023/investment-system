@@ -828,10 +828,7 @@ def api_index_divergence():
             results.append(build_div_result(r, index_names))
         return jsonify({'as_of_date': as_of_date, 'pool': pool_name, 'cached': True, 'indices': results})
 
-    # 需要计算：拉取K线
-    lookback = 500
-    code_list = list(missing)
-    ph = ','.join(['?' for _ in code_list])
+    # 批量查询K线（拉取足够历史以保证window_days+缓冲）
     rows = db.execute(f'''SELECT stock_code, date, open, high, low, close, volume, amount, change
         FROM index_daily_kline WHERE kline_type='normal'
         AND stock_code IN ({ph})
@@ -851,12 +848,19 @@ def api_index_divergence():
     vp_cfg = cfg.get('volume_price', {}) if cfg else {}
     rsi_cfg = cfg.get('rsi', {}) if cfg else {}
     macd_cfg = cfg.get('macd', {}) if cfg else {}
+    breadth_cfg = cfg.get('breadth', {}) if cfg else {}
     confirm_window = cfg.get('confirm_window', 20) if cfg else 20
 
     if sensitivity == 'short':
         rsi_cfg = {**rsi_cfg, 'period': 7, 'lookback': 10}
         macd_cfg = {**macd_cfg, 'lookback': 10}
         confirm_window = 10
+
+    # ── 成分股上涨比例预计算 ──
+    # 仅对 market/sector_l1/sector_l2 计算（86个指数），其余跳过
+    advance_ratios_map = {}
+    if pool_name in ('market', 'sector_l1', 'sector_l2'):
+        advance_ratios_map = compute_advance_ratios(db, pool_codes, as_of_date)
 
     results = []
     for code in sorted(missing):
@@ -878,11 +882,18 @@ def api_index_divergence():
         div_rsi = detect_rsi_divergence(klines, rsi_cfg, as_of_idx)
         div_macd = detect_macd_divergence(klines, macd_cfg, as_of_idx)
 
+        # 成分股背离（仅对有预计算数据的指数）
+        div_breadth = None
+        if code in advance_ratios_map:
+            ar_list = advance_ratios_map[code]
+            div_breadth = detect_breadth_divergence(klines, ar_list, as_of_idx, breadth_cfg)
+
         div_vp = confirm_divergence(klines, as_of_idx, div_vp, confirm_window)
         div_rsi = confirm_divergence(klines, as_of_idx, div_rsi, confirm_window)
         div_macd = confirm_divergence(klines, as_of_idx, div_macd, confirm_window)
+        div_breadth = confirm_divergence(klines, as_of_idx, div_breadth, min(confirm_window, 10))
 
-        divergences = {'vp': div_vp, 'rsi': div_rsi, 'macd': div_macd, 'breadth': None}
+        divergences = {'vp': div_vp, 'rsi': div_rsi, 'macd': div_macd, 'breadth': div_breadth}
         resonance_level, alert_text = compute_resonance(divergences, None, None, None)
 
         db.execute('''INSERT OR REPLACE INTO index_divergence_daily
@@ -895,7 +906,7 @@ def api_index_divergence():
              div_vp['type'] if div_vp else None, div_vp['level'] if div_vp else None, div_vp.get('strength') if div_vp else None,
              div_rsi['type'] if div_rsi else None, div_rsi['level'] if div_rsi else None,
              div_macd['type'] if div_macd else None, div_macd['level'] if div_macd else None,
-             None, None,
+             div_breadth['type'] if div_breadth else None, div_breadth['level'] if div_breadth else None,
              resonance_level, alert_text, close_val))
 
         results.append({
@@ -903,7 +914,7 @@ def api_index_divergence():
             'div_vp': {'type': div_vp['type'], 'level': div_vp['level'], 'strength': div_vp.get('strength')} if div_vp else None,
             'div_rsi': {'type': div_rsi['type'], 'level': div_rsi['level']} if div_rsi else None,
             'div_macd': {'type': div_macd['type'], 'level': div_macd['level']} if div_macd else None,
-            'div_breadth': None,
+            'div_breadth': {'type': div_breadth['type'], 'level': div_breadth['level']} if div_breadth else None,
             'resonance_level': resonance_level, 'alert_text': alert_text,
         })
 
@@ -929,6 +940,65 @@ def build_div_result(r, index_names):
         'resonance_level': r['resonance_level'], 'alert_text': r['alert_text'],
         'rs_rating': r['rs_rating'], 'ad_rating': r['ad_rating'], 'crowd_level': r['crowd_level'],
     }
+
+
+def compute_advance_ratios(db, index_codes, as_of_date):
+    """
+    预计算每个指数的每日成分股上涨比例。
+    返回 {code: [ratio, ...]} 与 index_daily_kline 等长。
+    """
+    advance_map = {}
+
+    # 1. 找到最近一次成分股快照
+    placeholders = ','.join(['?' for _ in index_codes])
+    snapshots = db.execute(f'''SELECT stock_code, MAX(date) as snap_date
+        FROM index_constituents WHERE stock_code IN ({placeholders})
+        AND date <= ? GROUP BY stock_code''',
+        index_codes + [as_of_date]).fetchall()
+
+    snap_map = {r['stock_code']: r['snap_date'] for r in snapshots}
+
+    # 2. 对每个指数，取成分股列表 → 查询近65天的日涨跌
+    lookback_date = (datetime.strptime(as_of_date, '%Y-%m-%d') - timedelta(days=100)).strftime('%Y-%m-%d')
+
+    for code in index_codes:
+        snap_date = snap_map.get(code)
+        if not snap_date:
+            advance_map[code] = None
+            continue
+
+        # 取成分股列表
+        constituents = db.execute('''SELECT stock_code FROM index_constituents
+            WHERE index_code = ? AND date = ?''', (code, snap_date)).fetchall()
+        if not constituents:
+            advance_map[code] = None
+            continue
+
+        c_codes = [r['stock_code'] for r in constituents]
+        c_ph = ','.join(['?' for _ in c_codes])
+
+        # 查询这些成分股的日涨跌
+        rows = db.execute(f'''SELECT date, AVG(CASE WHEN change_pct > 0 THEN 1.0 ELSE 0.0 END) as up_ratio
+            FROM daily_kline WHERE stock_code IN ({c_ph})
+            AND date >= ? AND date <= ?
+            GROUP BY date ORDER BY date''',
+            c_codes + [lookback_date, as_of_date]).fetchall()
+
+        if not rows:
+            advance_map[code] = None
+            continue
+
+        # 构建与index_daily_kline对齐的日期列表
+        idx_dates = db.execute('''SELECT date FROM index_daily_kline
+            WHERE stock_code = ? AND kline_type="normal"
+            AND date >= ? AND date <= ? ORDER BY date''',
+            (code, lookback_date, as_of_date)).fetchall()
+
+        date_to_ratio = {r['date']: r['up_ratio'] for r in rows}
+        ratios = [date_to_ratio.get(r['date']) for r in idx_dates]
+        advance_map[code] = ratios
+
+    return advance_map
 
 # ═══════════════════════════════════════════════
 # CORS
