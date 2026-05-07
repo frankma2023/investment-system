@@ -212,7 +212,7 @@ def comps_analysis(stock_code, peer_codes=None):
     for a in annuals:
         if a['stock_code'] not in seen_codes:
             seen_codes.add(a['stock_code'])
-            ann_data[a['stock_code']] = a
+            ann_data[a['stock_code']] = dict(a)
 
     # 估值倍数
     multiples = db.execute(f'''SELECT stock_code, metric_code, value
