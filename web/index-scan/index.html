@@ -24,6 +24,12 @@
 .filter-bar select:focus,.filter-bar input:focus { outline:none; border-color:var(--neon-cyan); }
 
 .data-table { width:100%; border-collapse:collapse; font-size:0.7rem; table-layout:fixed; }
+.data-table th:nth-child(1){width:7%} .data-table th:nth-child(2){width:9%}
+.data-table th:nth-child(3){width:6%} .data-table th:nth-child(4){width:5%}
+.data-table th:nth-child(5){width:5%} .data-table th:nth-child(6){width:5%}
+.data-table th:nth-child(7){width:5%} .data-table th:nth-child(8){width:9%}
+.data-table th:nth-child(9){width:6%} .data-table th:nth-child(10){width:6%}
+.data-table th:nth-child(11){width:5%} .data-table th:nth-child(12){width:auto}
 .data-table th { background:rgba(0,200,255,0.06); padding:10px 8px; text-align:left; font-family:'Share Tech Mono',monospace; color:rgba(255,255,255,0.5); font-size:0.6rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid rgba(255,255,255,0.06); cursor:pointer; }
 .data-table th:hover { color:var(--neon-cyan); }
 .data-table th.sorted { color:var(--neon-cyan); }
@@ -227,16 +233,20 @@ async function fetchDivergence(){
 
 async function fetchCrowding(){
   try{
+    var codes=Object.keys(rsMap).slice(0,100);  // 取前100个
+    if(!codes.length)return;
     var resp=await fetch(API+'/api/crowding/backtest',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({index_codes:[],start_date:today(),end_date:today(),weights:{turnover_ratio:0.25,turnover_rate:0.1,margin_balance:0.15,margin_buy:0.1,pe_pct:0.15,pb_pct:0.05,dyr_pct:0.05,fund_holding:0.15},levels:{low_max:30,normal_max:60,elevated_max:80}})
+      body:JSON.stringify({index_codes:codes,start_date:today(),end_date:today(),
+        weights:{turnover_ratio:0.25,turnover_rate:0.1,margin_balance:0.15,margin_buy:0.1,pe_pct:0.15,pb_pct:0.05,dyr_pct:0.05,fund_holding:0.15},
+        levels:{low_max:30,normal_max:60,elevated_max:80}})
     });
     var data=await resp.json();
     (data.results||[]).forEach(function(r){
       crowdMap[r.stock_code]={crowd_level:r.crowd_level,composite_score:r.composite_score};
       if(r.name)indexNames[r.stock_code]=r.name;
     });
-  }catch(e){}
+  }catch(e){console.error('Crowding:',e)}
 }
 
 // ══════ MERGE ══════
