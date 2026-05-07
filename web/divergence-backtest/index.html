@@ -214,7 +214,7 @@ function renderTable(){
     return dir==='asc'?(va>vb?1:-1):(va<vb?1:-1);
   });
   var cols=[{l:'代码',k:'code'},{l:'名称',k:'name'},{l:'收盘价',k:'close'},
-    {l:'量价',k:'div_vp'},{l:'RSI',k:'div_rsi'},{l:'MACD',k:'div_macd'},
+    {l:'量价',k:'div_vp'},{l:'RSI',k:'div_rsi'},{l:'MACD',k:'div_macd'},{l:'成分股',k:'div_breadth'},
     {l:'共振',k:'resonance_level'},{l:'预警',k:'alert_text'}];
   var html='<table class="data-table"><thead><tr>';
   cols.forEach(function(c,i){
@@ -229,6 +229,7 @@ function renderTable(){
     html+='<td>'+divBadge(r.div_vp)+'</td>';
     html+='<td>'+divBadge(r.div_rsi)+'</td>';
     html+='<td>'+divBadge(r.div_macd)+'</td>';
+    html+='<td>'+divBadge(r.div_breadth)+'</td>';
     var res=r.resonance_level||'无';
     var resCls='';
     if(res==='高')resCls='resonance-high';
