@@ -61,6 +61,17 @@
     .ref-table td { padding:3px 6px; }
     .ref-table .ref-grade { font-weight:800; }
 
+    /* Modal */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:flex; align-items:center; justify-content:center; }
+    .modal-content { background:var(--card-bg); border-radius:20px; max-width:720px; width:90%; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 8px 40px rgba(0,0,0,0.2); }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--divider); }
+    .modal-title { font-family:var(--font-display); font-size:0.9rem; font-weight:800; }
+    .modal-close { background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-tertiary); padding:4px 8px; border-radius:8px; }
+    .modal-close:hover { background:var(--divider); color:var(--text-primary); }
+    .modal-body { padding:16px 20px; overflow-y:auto; }
+    .clickable-code { cursor:pointer; color:var(--text-primary); text-decoration:underline; text-decoration-color:transparent; transition:all 0.15s; }
+    .clickable-code:hover { color:#FE2C55; text-decoration-color:#FE2C55; }
+
     @media (max-width:900px) { .bt-layout { flex-direction:column; } .bt-left { width:100%; } }
   </style>
 </head>
@@ -173,6 +184,17 @@
   </div>
 
   <footer class="page-footer">❤️ 投资手账本 · A/D评级回测 · 量化你的直觉</footer>
+
+  <!-- 成分股弹窗 -->
+  <div class="modal-overlay" id="constituent-modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-title">成分股</span>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
 </div>
 
 <script src="../shared/js/theme.js"></script>
@@ -284,7 +306,7 @@ function renderTable() {
     var grade = r.rating || '—';
     html += '<tr>';
     html += '<td>' + (idx + 1) + '</td>';
-    html += '<td class="mono">' + r.code + '</td>';
+    html += '<td class="mono clickable-code" onclick="showConstituents(\'' + r.code + '\', \'' + (r.name || '').replace(/'/g, "\\'") + '\')">' + r.code + '</td>';
     html += '<td>' + (r.name || r.code) + '</td>';
     html += '<td class="mono">' + ad + '</td>';
     html += '<td class="mono">' + pct + '</td>';
@@ -313,6 +335,45 @@ async function save() {
     var resp = await fetch(API + '/api/config?signal_type=index_ad', { method:'POST', body: yaml });
     if (resp.ok) { var btn = document.getElementById('btn-save'); btn.textContent = '✓ 已保存'; setTimeout(function(){ btn.textContent = '💾 保存配置'; }, 2000); }
   } catch(e) {}
+}
+
+/* ══════ 成分股弹窗 ══════ */
+function closeModal() {
+  document.getElementById('constituent-modal').style.display = 'none';
+}
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('constituent-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+});
+
+async function showConstituents(indexCode, indexName) {
+  var modal = document.getElementById('constituent-modal');
+  var body = document.getElementById('modal-body');
+  var title = document.getElementById('modal-title');
+
+  title.textContent = (indexName || indexCode) + ' (' + indexCode + ')';
+  body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary);">⏳ 加载中...</div>';
+  modal.style.display = 'flex';
+
+  try {
+    var resp = await fetch(API + '/api/index-constituents?index_code=' + indexCode);
+    var data = await resp.json();
+    if (!data.constituents || !data.constituents.length) {
+      body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary);">该指数暂无成分股数据</div>';
+      return;
+    }
+    var html = '<div style="margin-bottom:8px;font-size:0.7rem;color:var(--text-tertiary);">快照: ' + (data.snapshot_date || '—') + ' · ' + data.count + ' 只</div>';
+    html += '<table class="data-table"><thead><tr><th>#</th><th>代码</th><th>名称</th><th>权重(%)</th></tr></thead><tbody>';
+    data.constituents.forEach(function(c, i) {
+      var w = (c.weighting != null) ? (c.weighting * 100).toFixed(2) : '—';
+      html += '<tr><td>' + (i+1) + '</td><td class="mono">' + c.stock_code + '</td><td>' + (c.name || '—') + '</td><td class="mono">' + w + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    body.innerHTML = html;
+  } catch(e) {
+    body.innerHTML = '<div style="text-align:center;padding:32px;color:#FE2C55;">❌ 加载失败</div>';
+  }
 }
 </script>
 </body>
