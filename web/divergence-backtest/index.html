@@ -175,6 +175,22 @@ function onVpChange(){var v=document.querySelector('input[name="vp-mode"]:checke
 document.getElementById('btn-run').addEventListener('click',run);
 document.getElementById('btn-save').addEventListener('click',save);
 
+(async function loadConfig(){
+  try{
+    var resp=await fetch(API+'/api/config?signal_type=divergence');
+    var cfg=await resp.json();
+    if(!cfg)return;
+    if(cfg.sensitivity){var r=document.querySelector('input[name="sensitivity"][value="'+cfg.sensitivity+'"]');if(r){r.checked=true;onSensChange()}}
+    if(cfg.volume_price&&cfg.volume_price.mode){var r=document.querySelector('input[name="vp-mode"][value="'+cfg.volume_price.mode+'"]');if(r){r.checked=true;onVpChange()}}
+    if(cfg.volume_price&&cfg.volume_price.min_strength){setSlider('vp-strength',cfg.volume_price.min_strength)}
+    if(cfg.rsi&&cfg.rsi.period){setSlider('rsi-period',cfg.rsi.period)}
+    if(cfg.rsi&&cfg.rsi.lookback){setSlider('rsi-lookback',cfg.rsi.lookback)}
+    if(cfg.macd&&cfg.macd.lookback){setSlider('macd-lookback',cfg.macd.lookback)}
+    if(cfg.breadth){setSlider('br-days',cfg.breadth.consecutive_days);setSlider('br-top',cfg.breadth.top_threshold);setSlider('br-bot',cfg.breadth.bottom_threshold)}
+  }catch(e){}
+})();
+function setSlider(id,val){var el=document.getElementById(id);if(el){el.value=val;syncSlider(id)}}
+
 async function run(){
   var btn=document.getElementById('btn-run'); btn.disabled=true; btn.textContent='⏳ 计算中...';
   var pool=document.getElementById('pool-select').value;

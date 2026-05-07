@@ -9,3 +9,7 @@ rsi:
   oversold: 30
 macd:
   lookback: 20
+breadth:
+  consecutive_days: 1
+  top_threshold: 50
+  bottom_threshold: 40
