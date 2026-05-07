@@ -807,11 +807,15 @@ def api_index_divergence():
     pool_codes = all_pools[pool_name]
     index_names = load_index_names()
 
-    # 先查缓存
-    placeholders = ','.join(['?' for _ in pool_codes])
-    cached = db.execute(f'''SELECT * FROM index_divergence_daily
-        WHERE stock_code IN ({placeholders}) AND date = ?''',
-        pool_codes + [as_of_date]).fetchall()
+    # 如带 _t 参数则跳过缓存，强制重算
+    force_refresh = bool(request.args.get('_t', ''))
+
+    # 先查缓存（跳过强制刷新时）
+    cached = []
+    if not force_refresh:
+        cached = db.execute(f'''SELECT * FROM index_divergence_daily
+            WHERE stock_code IN ({placeholders}) AND date = ?''',
+            pool_codes + [as_of_date]).fetchall()
 
     cached_map = {r['stock_code']: r for r in cached}
     all_codes = set(pool_codes)

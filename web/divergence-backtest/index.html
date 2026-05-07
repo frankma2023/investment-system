@@ -47,6 +47,16 @@ th.sortable[data-indicator="desc"]::after { content:'↓'; opacity:1; color:#FE2
 .resonance-high { background:#FFCDD2; color:#B71C1C; font-weight:800; }
 .resonance-mid { background:#FFF3E0; color:#E65100; font-weight:700; }
 .resonance-low { background:#E8EAF6; color:#283593; }
+/* Modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:flex; align-items:center; justify-content:center; }
+.modal-content { background:var(--card-bg); border-radius:20px; max-width:720px; width:90%; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 8px 40px rgba(0,0,0,0.2); }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--divider); }
+.modal-title { font-family:var(--font-display); font-size:0.9rem; font-weight:800; }
+.modal-close { background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-tertiary); padding:4px 8px; border-radius:8px; }
+.modal-close:hover { background:var(--divider); color:var(--text-primary); }
+.modal-body { padding:16px 20px; overflow-y:auto; }
+.clickable-code { cursor:pointer; text-decoration:underline; text-decoration-color:transparent; transition:all 0.15s; }
+.clickable-code:hover { color:#FE2C55; text-decoration-color:#FE2C55; }
 @media (max-width:900px) { .bt-layout { flex-direction:column; } .bt-left { width:100%; } }
 </style>
 </head>
@@ -132,6 +142,14 @@ th.sortable[data-indicator="desc"]::after { content:'↓'; opacity:1; color:#FE2
 </div>
 </div>
 <footer class="page-footer">❤️ 投资手账本 · 指数背离检测 · 量化你的直觉</footer>
+
+<!-- 成分股弹窗 -->
+<div class="modal-overlay" id="constituent-modal" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header"><span class="modal-title" id="modal-title">成分股</span><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
 </div>
 <script src="../shared/js/theme.js"></script>
 <script>
@@ -139,21 +157,12 @@ var API='http://localhost:8788', lastData=[], tblSort={key:'code',dir:'asc'};
 function toggleCard(id){document.getElementById(id+'-body').classList.toggle('collapsed')}
 function syncSlider(id){document.getElementById(id+'-v').textContent=document.getElementById(id).value}
 function syncRsi(){document.getElementById('rsi-period-v').textContent=document.getElementById('rsi-period').value}
-function onSensChange(){highlightRadio('sens')}
-function onVpChange(){highlightRadio('vp')}
-function highlightRadio(prefix){
-  var v=document.querySelector('input[name="'+(prefix==='sens'?'sensitivity':'vp-mode')+'"]:checked').value;
-  document.getElementById(prefix+'-long-label').style.borderColor=v==='long'?'#FE2C55':'var(--divider)';
-  document.getElementById(prefix+'-long-label').style.background=v==='long'?'rgba(254,44,85,0.06)':'';
-  document.getElementById(prefix+'-short-label').style.borderColor=v==='short'?'#FE2C55':'var(--divider)';
-  document.getElementById(prefix+'-short-label').style.background=v==='short'?'rgba(254,44,85,0.06)':'';
-  if(prefix==='vp'){
-    document.getElementById('vp-slow-label').style.borderColor=v==='slow'?'#FE2C55':'var(--divider)';
-    document.getElementById('vp-slow-label').style.background=v==='slow'?'rgba(254,44,85,0.06)':'';
-    document.getElementById('vp-fast-label').style.borderColor=v==='fast'?'#FE2C55':'var(--divider)';
-    document.getElementById('vp-fast-label').style.background=v==='fast'?'rgba(254,44,85,0.06)':'';
-  }
-}
+function onSensChange(){var v=document.querySelector('input[name="sensitivity"]:checked').value;
+  document.getElementById('sens-long-label').style.borderColor=v==='long'?'#FE2C55':'var(--divider)'; document.getElementById('sens-long-label').style.background=v==='long'?'rgba(254,44,85,0.06)':'';
+  document.getElementById('sens-short-label').style.borderColor=v==='short'?'#FE2C55':'var(--divider)'; document.getElementById('sens-short-label').style.background=v==='short'?'rgba(254,44,85,0.06)':'';}
+function onVpChange(){var v=document.querySelector('input[name="vp-mode"]:checked').value;
+  document.getElementById('vp-slow-label').style.borderColor=v==='slow'?'#FE2C55':'var(--divider)'; document.getElementById('vp-slow-label').style.background=v==='slow'?'rgba(254,44,85,0.06)':'';
+  document.getElementById('vp-fast-label').style.borderColor=v==='fast'?'#FE2C55':'var(--divider)'; document.getElementById('vp-fast-label').style.background=v==='fast'?'rgba(254,44,85,0.06)':'';}
 (function(){var d=new Date();document.getElementById('rs-date').value=d.toISOString().slice(0,10)})();
 document.getElementById('btn-run').addEventListener('click',run);
 document.getElementById('btn-save').addEventListener('click',save);
@@ -165,7 +174,7 @@ async function run(){
   var sens=document.querySelector('input[name="sensitivity"]:checked').value;
   var vpm=document.querySelector('input[name="vp-mode"]:checked').value;
   try{
-    var url=API+'/api/index-divergence?pool='+pool+'&date='+date+'&sensitivity='+sens;
+    var url=API+'/api/index-divergence?pool='+pool+'&date='+date+'&sensitivity='+sens+'&_t='+Date.now();
     var resp=await fetch(url); var data=await resp.json();
     if(data.error){alert(data.error);return}
     lastData=data.indices||[];
@@ -215,7 +224,7 @@ function renderTable(){
   html+='</tr></thead><tbody>';
   d.forEach(function(r){
     html+='<tr>';
-    html+='<td class="mono">'+r.code+'</td><td>'+r.name+'</td>';
+    html+='<td class="mono clickable-code" onclick="showConstituents(\''+r.code+'\')">'+r.code+'</td><td>'+r.name+'</td>';
     html+='<td class="mono">'+(r.close?r.close.toFixed(2):'—')+'</td>';
     html+='<td>'+divBadge(r.div_vp)+'</td>';
     html+='<td>'+divBadge(r.div_rsi)+'</td>';
@@ -247,6 +256,20 @@ async function save(){
     var resp=await fetch(API+'/api/config?signal_type=divergence',{method:'POST',body:yaml});
     if(resp.ok){var btn=document.getElementById('btn-save');btn.textContent='✓ 已保存';setTimeout(function(){btn.textContent='💾 保存配置'},2000)}
   }catch(e){}
+}
+/* ══════ 成分股弹窗 ══════ */
+function closeModal(){document.getElementById('constituent-modal').style.display='none';}
+document.addEventListener('DOMContentLoaded',function(){document.getElementById('constituent-modal').addEventListener('click',function(e){if(e.target===this)closeModal()})});
+async function showConstituents(code){
+  var modal=document.getElementById('constituent-modal'),body=document.getElementById('modal-body'),title=document.getElementById('modal-title');
+  title.textContent=code; body.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-tertiary);">⏳ 加载中...</div>'; modal.style.display='flex';
+  try{
+    var resp=await fetch(API+'/api/index-constituents?index_code='+code); var data=await resp.json();
+    if(!data.constituents||!data.constituents.length){body.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-tertiary);">暂无成分股数据</div>';return}
+    var html='<div style="margin-bottom:8px;font-size:0.7rem;color:var(--text-tertiary);">快照: '+data.snapshot_date+' · '+data.count+' 只</div><table class="data-table"><thead><tr><th>#</th><th>代码</th><th>名称</th><th>权重(%)</th></tr></thead><tbody>';
+    data.constituents.forEach(function(c,i){var w=c.weighting!=null?(c.weighting*100).toFixed(2):'—';html+='<tr><td>'+(i+1)+'</td><td class="mono">'+c.stock_code+'</td><td>'+(c.name||'—')+'</td><td class="mono">'+w+'</td></tr>'});
+    html+='</tbody></table>'; body.innerHTML=html;
+  }catch(e){body.innerHTML='<div style="text-align:center;padding:32px;color:#FE2C55;">❌ 加载失败</div>'}
 }
 </script>
 </body>
