@@ -954,12 +954,12 @@ def compute_advance_ratios(db, index_codes, as_of_date):
 
     # 1. 找到最近一次成分股快照
     placeholders = ','.join(['?' for _ in index_codes])
-    snapshots = db.execute(f'''SELECT stock_code, MAX(date) as snap_date
-        FROM index_constituents WHERE stock_code IN ({placeholders})
-        AND date <= ? GROUP BY stock_code''',
+    snapshots = db.execute(f'''SELECT index_code, MAX(date) as snap_date
+        FROM index_constituents WHERE index_code IN ({placeholders})
+        AND date <= ? GROUP BY index_code''',
         index_codes + [as_of_date]).fetchall()
 
-    snap_map = {r['stock_code']: r['snap_date'] for r in snapshots}
+    snap_map = {r['index_code']: r['snap_date'] for r in snapshots}
 
     # 2. 对每个指数，取成分股列表 → 查询近65天的日涨跌
     lookback_date = (datetime.strptime(as_of_date, '%Y-%m-%d') - timedelta(days=100)).strftime('%Y-%m-%d')
