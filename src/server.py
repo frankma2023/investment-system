@@ -528,8 +528,12 @@ def api_crowding_latest():
     try:
         if not date:
             date = db.execute("SELECT MAX(date) FROM index_crowding_daily").fetchone()[0]
-        if not date:
-            return jsonify({'results': [], 'date': None})
+        # 找到不晚于请求日期且记录最多的快照
+        snap = db.execute("""SELECT date, COUNT(*) as cnt FROM index_crowding_daily
+            WHERE date <= ? GROUP BY date ORDER BY cnt DESC LIMIT 1""", (date,)).fetchone()
+        if not snap or not snap['date']:
+            return jsonify({'results': [], 'date': date, 'count': 0})
+        date = snap['date']
         rows = db.execute('''
             SELECT stock_code, composite_score, crowd_level,
                    heat_score, flow_score, valuation_score,
