@@ -222,6 +222,22 @@ function onMethodChange() {
 document.getElementById('btn-run').addEventListener('click', run);
 document.getElementById('btn-save').addEventListener('click', save);
 
+// 加载配置恢复上次的方法选择
+(async function loadConfig() {
+  try {
+    var resp = await fetch(API + '/api/config?signal_type=index_ad');
+    var cfg = await resp.json();
+    if (cfg && cfg.method) {
+      var radio = document.querySelector('input[name="ad-method"][value="' + cfg.method + '"]');
+      if (radio) { radio.checked = true; onMethodChange(); }
+    }
+    if (cfg && cfg.window_days) {
+      document.getElementById('window-days').value = cfg.window_days;
+      syncSlider();
+    }
+  } catch(e) {}
+})();
+
 async function run() {
   var btn = document.getElementById('btn-run');
   btn.disabled = true; btn.textContent = '⏳ 计算中...';
@@ -327,7 +343,8 @@ function sortBy(key, col) {
 
 async function save() {
   var win = document.getElementById('window-days').value;
-  var yaml = 'window_days: ' + win + '\n\nratings:\n';
+  var method = document.querySelector('input[name="ad-method"]:checked').value;
+  var yaml = 'method: ' + method + '\nwindow_days: ' + win + '\n\nratings:\n';
   [{g:'A+',p:90},{g:'A',p:80},{g:'B+',p:70},{g:'B',p:60},{g:'C+',p:50},{g:'C',p:40},{g:'D+',p:30},{g:'D',p:20},{g:'E',p:10},{g:'E-',p:0}].forEach(function(r) {
     yaml += '  - { grade: "' + r.g + '", min_pct: ' + r.p + ' }\n';
   });

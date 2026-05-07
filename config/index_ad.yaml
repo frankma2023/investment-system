@@ -1,5 +1,12 @@
+# index_ad.yaml — 指数机构吸筹/出货评级参数配置
+
+# 计算方法: raw(原始换手率) | zscore(Z-score标准化)
+method: raw
+
+# 滚动窗口交易日数
 window_days: 65
 
+# 评级映射（只读，供回测看板参考）
 ratings:
   - { grade: "A+", min_pct: 90 }
   - { grade: "A", min_pct: 80 }
