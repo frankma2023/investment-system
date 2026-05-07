@@ -23,13 +23,19 @@
 .filter-bar select,.filter-bar input { padding:6px 10px; border:1px solid rgba(255,255,255,0.1); border-radius:6px; background:rgba(0,0,0,0.4); color:rgba(255,255,255,0.7); font-family:'Share Tech Mono',monospace; font-size:0.65rem; }
 .filter-bar select:focus,.filter-bar input:focus { outline:none; border-color:var(--neon-cyan); }
 
-.scan-table { width:100%; border-collapse:collapse; font-size:0.7rem; table-layout:auto; }
-.scan-table th { background:rgba(0,200,255,0.06); padding:8px 8px; text-align:left; font-family:'Share Tech Mono',monospace; color:rgba(255,255,255,0.5); font-size:0.6rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid rgba(255,255,255,0.06); cursor:pointer; white-space:nowrap; }
-.scan-table th:hover { color:var(--neon-cyan); }
-.scan-table th.sorted { color:var(--neon-cyan); }
-.scan-table td { padding:7px 8px; border-bottom:1px solid rgba(255,255,255,0.03); color:rgba(255,255,255,0.8); }
-.scan-table tr:hover td { background:rgba(0,200,255,0.03); }
-.scan-table .mono { font-family:'Share Tech Mono',monospace; }
+.data-table { width:100%; border-collapse:collapse; font-size:0.7rem; table-layout:fixed; }
+.data-table th:nth-child(1){width:7%} .data-table th:nth-child(2){width:9%}
+.data-table th:nth-child(3){width:6%} .data-table th:nth-child(4){width:5%}
+.data-table th:nth-child(5){width:5%} .data-table th:nth-child(6){width:5%}
+.data-table th:nth-child(7){width:5%} .data-table th:nth-child(8){width:9%}
+.data-table th:nth-child(9){width:6%} .data-table th:nth-child(10){width:6%}
+.data-table th:nth-child(11){width:5%} .data-table th:nth-child(12){width:auto}
+.data-table th { background:rgba(0,200,255,0.06); padding:10px 8px; text-align:left; font-family:'Share Tech Mono',monospace; color:rgba(255,255,255,0.5); font-size:0.6rem; text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid rgba(255,255,255,0.06); cursor:pointer; }
+.data-table th:hover { color:var(--neon-cyan); }
+.data-table th.sorted { color:var(--neon-cyan); }
+.data-table td { padding:8px; border-bottom:1px solid rgba(255,255,255,0.03); color:rgba(255,255,255,0.8); }
+.data-table tr:hover td { background:rgba(0,200,255,0.03); }
+.data-table .mono { font-family:'Share Tech Mono',monospace; }
 
 .badge { display:inline-block; padding:2px 6px; border-radius:4px; font-size:0.6rem; font-weight:700; }
 .badge-rs { background:rgba(0,200,255,0.15); color:var(--neon-cyan); }
@@ -58,9 +64,9 @@
 [data-theme="light"] .scan-stat .val { color:#006080; }
 [data-theme="light"] .scan-stat .lbl { color:rgba(0,0,0,0.45); }
 [data-theme="light"] .scan-stat.highlight .val { color:#C62828; }
-[data-theme="light"] .scan-table td { color:rgba(0,0,0,0.8); }
-[data-theme="light"] .scan-table th { color:rgba(0,0,0,0.5); background:rgba(0,0,0,0.03); }
-[data-theme="light"] .scan-table tr:hover td { background:rgba(0,0,0,0.03); }
+[data-theme="light"] .data-table td { color:rgba(0,0,0,0.8); }
+[data-theme="light"] .data-table th { color:rgba(0,0,0,0.5); background:rgba(0,0,0,0.03); }
+[data-theme="light"] .data-table tr:hover td { background:rgba(0,0,0,0.03); }
 [data-theme="light"] .pool-tab { background:rgba(0,0,0,0.03); color:rgba(0,0,0,0.5); border-color:rgba(0,0,0,0.08); }
 [data-theme="light"] .pool-tab.active { color:#006080; border-color:#006080; background:rgba(0,96,128,0.06); }
 [data-theme="light"] .filter-bar select, [data-theme="light"] .filter-bar input { background:rgba(0,0,0,0.02); color:rgba(0,0,0,0.7); border-color:rgba(0,0,0,0.1); }
@@ -117,7 +123,7 @@
       </select>
     </div>
     <div class="neo-card">
-      <div id="main-table"></div>
+      <div class="table-wrapper" id="main-table" style="max-height:60vh;overflow-y:auto;"></div>
     </div>
   </div>
 </div>
@@ -192,42 +198,37 @@ async function fetchRS(){
 
 async function fetchAD(){
   try{
-    var pools=['market','sector_l1','sector_l2','thematic','strategy'];
-    for(var p of pools){
-      var resp=await fetch(API+'/api/index-ad?pool='+p+'&date='+today());
-      var data=await resp.json();
-      for(var pn in data.pools||{}){
-        (data.pools[pn].rankings||[]).forEach(function(r){
-          if(!adMap[r.code])adMap[r.code]={};
-          adMap[r.code].ad_rating=r.rating;
-          adMap[r.code].ad_score=r.ad_score;
-          if(r.name)indexNames[r.code]=r.name;
-        });
-      }
+    var resp=await fetch(API+'/api/index-ad?date='+today());
+    var data=await resp.json();
+    for(var pn in data.pools||{}){
+      (data.pools[pn].rankings||[]).forEach(function(r){
+        if(!adMap[r.code])adMap[r.code]={};
+        adMap[r.code].ad_rating=r.rating;
+        adMap[r.code].ad_score=r.ad_score;
+        if(r.name)indexNames[r.code]=r.name;
+      });
     }
-  }catch(e){console.error('AD:',e)}
+  }catch(e){console.error('AD fetch failed:',e)}
 }
 
 async function fetchDivergence(){
   try{
-    var pools=['market','sector_l1','sector_l2','thematic','strategy'];
-    for(var p of pools){
-      var resp=await fetch(API+'/api/index-divergence?pool='+p+'&date='+today()+'&sensitivity=long&_t=scan');
-      var data=await resp.json();
-      (data.indices||[]).forEach(function(r){
-        if(!divMap[r.code])divMap[r.code]={};
-        if(r.div_vp&&r.div_vp.type==='top')divMap[r.code].div='top';
-        else if(r.div_vp&&r.div_vp.type==='bottom')divMap[r.code].div='bottom';
-        else if(r.div_rsi&&r.div_rsi.type==='top')divMap[r.code].div='top';
-        else if(r.div_rsi&&r.div_rsi.type==='bottom')divMap[r.code].div='bottom';
-        else if(r.div_macd&&r.div_macd.type==='top')divMap[r.code].div='top';
-        else if(r.div_macd&&r.div_macd.type==='bottom')divMap[r.code].div='bottom';
-        else if(r.div_breadth&&r.div_breadth.type==='top')divMap[r.code].div='top';
-        else if(r.div_breadth&&r.div_breadth.type==='bottom')divMap[r.code].div='bottom';
-        if(r.name)indexNames[r.code]=r.name;
-      });
-    }
-  }catch(e){console.error('DIV:',e)}
+    var resp=await fetch(API+'/api/index-divergence?date='+today()+'&sensitivity=long');
+    var data=await resp.json();
+    (data.indices||[]).forEach(function(r){
+      if(!divMap[r.code])divMap[r.code]={};
+      if(r.div_vp&&r.div_vp.type==='top')divMap[r.code].div='top';
+      else if(r.div_vp&&r.div_vp.type==='bottom')divMap[r.code].div='bottom';
+      else if(r.div_rsi&&r.div_rsi.type==='top')divMap[r.code].div='top';
+      else if(r.div_rsi&&r.div_rsi.type==='bottom')divMap[r.code].div='bottom';
+      else if(r.div_macd&&r.div_macd.type==='top')divMap[r.code].div='top';
+      else if(r.div_macd&&r.div_macd.type==='bottom')divMap[r.code].div='bottom';
+      else if(r.div_breadth&&r.div_breadth.type==='top')divMap[r.code].div='top';
+      else if(r.div_breadth&&r.div_breadth.type==='bottom')divMap[r.code].div='bottom';
+      if(r.resonance_level)divMap[r.code].resonance=r.resonance_level;
+      if(r.name)indexNames[r.code]=r.name;
+    });
+  }catch(e){console.error('Divergence fetch failed:',e)}
 }
 
 async function fetchCrowding(){
@@ -376,7 +377,7 @@ function renderTable(items){
     {k:'tier',l:'层级',t:'string'},{k:'ad_rating',l:'AD评级',t:'string'},
     {k:'crowd',l:'拥挤度',t:'string'},{k:'div',l:'背离',t:'string'},{k:'alert',l:'预警',t:'string'}
   ];
-  var html='<table class="scan-table"><thead><tr>';
+  var html='<table class="data-table"><thead><tr>';
   cols.forEach(function(c){
     var cls=sortCol===c.k?' sorted':'';
     html+='<th class="'+cls+'" onclick="sortBy(\''+c.k+'\')">'+c.l+'</th>';

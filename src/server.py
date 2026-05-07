@@ -812,6 +812,7 @@ def api_index_divergence():
 
     # 先查缓存（跳过强制刷新时）
     cached = []
+    placeholders = ','.join(['?' for _ in pool_codes])
     if not force_refresh:
         cached = db.execute(f'''SELECT * FROM index_divergence_daily
             WHERE stock_code IN ({placeholders}) AND date = ?''',
