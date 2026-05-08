@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""
+scripts/pull_adj_close.py — 全量补拉复权K线数据 + 计算前复权收盘价
+
+步骤:
+  1. 全量重拉 daily_kline（填充 complex_factor）
+  2. 计算前复权价格: adj_close = close / cf × latest_cf
+
+用法:
+  python scripts/pull_adj_close.py                    # 全量重拉
+  python scripts/pull_adj_close.py --compute-only     # 仅计算adj_close（已拉完数据后）
+"""
+
+import sys
+from datetime import datetime, timedelta
+from common import api_post, get_db, get_latest_date, log
+
+API_PATH = "/company/candlestick"
+
+UPSERT_SQL = """INSERT OR REPLACE INTO daily_kline
+    (stock_code, date, open, close, high, low,
+     volume, amount, change_pct, turnover_rate, complex_factor)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+
+
+def fetch_date(date_str: str) -> list:
+    payload = {"date": date_str}
+    return api_post(API_PATH, payload)
+
+
+def save_klines(conn, klines: list) -> int:
+    if not klines:
+        return 0
+    rows = []
+    for k in klines:
+        rows.append((
+            k["stockCode"], k["date"][:10],
+            k.get("open"), k.get("close"), k.get("high"), k.get("low"),
+            k.get("volume"), k.get("amount"), k.get("change"), k.get("to_r"),
+            k.get("complexFactor"),
+        ))
+    conn.executemany(UPSERT_SQL, rows)
+    conn.commit()
+    return len(rows)
+
+
+def generate_weekdays(start: str, end: str) -> list:
+    s = datetime.strptime(start, "%Y-%m-%d")
+    e = datetime.strptime(end, "%Y-%m-%d")
+    days = []
+    cur = s
+    while cur <= e:
+        if cur.weekday() < 5:
+            days.append(cur.strftime("%Y-%m-%d"))
+        cur += timedelta(days=1)
+    return days
+
+
+def pull_all():
+    """全量重拉 2000-01-01 至今"""
+    conn = get_db()
+    start_date = "2000-01-01"
+    end_date = datetime.now().strftime("%Y-%m-%d")
+    weekdays = generate_weekdays(start_date, end_date)
+
+    log.info(f"全量重拉 {len(weekdays)} 个工作日 ({start_date} ~ {end_date})")
+    log.info(f"预估耗时: 约 {len(weekdays)*0.1/60:.0f} 分钟")
+
+    total = 0
+    trading = 0
+    
+    for i, date_str in enumerate(weekdays, 1):
+        try:
+            klines = fetch_date(date_str)
+            if klines:
+                n = save_klines(conn, klines)
+                total += n
+                trading += 1
+                if i % 50 == 0 or i == len(weekdays):
+                    log.info(f"[{i}/{len(weekdays)}] {date_str} ✅ {n}条 | 累计{total:,}条")
+            else:
+                if i % 100 == 0:
+                    log.info(f"[{i}/{len(weekdays)}] {date_str} ⏭")
+        except Exception as e:
+            log.error(f"[{i}/{len(weekdays)}] {date_str} ❌ {e}")
+
+    log.info(f"拉取完成: {trading}交易日, {total:,}条")
+    conn.close()
+    return total
+
+
+def compute_adj_close():
+    """计算前复权收盘价: adj_close = close / cf × latest_cf"""
+    conn = get_db()
+    
+    log.info("计算前复权价格...")
+    
+    # 对每只股票，找到最新交易日的complex_factor
+    log.info("Step 1: 获取每只股票的最新复权因子...")
+    stocks = conn.execute('''SELECT stock_code, complex_factor
+        FROM daily_kline WHERE complex_factor IS NOT NULL
+        ORDER BY stock_code, date DESC''').fetchall()
+    
+    # 取每只股票的最新complex_factor
+    latest_cf = {}
+    for s in stocks:
+        if s['stock_code'] not in latest_cf:
+            latest_cf[s['stock_code']] = s['complex_factor']
+    
+    log.info(f"  共 {len(latest_cf)} 只股票有复权因子数据")
+    
+    # 批量更新adj_close
+    log.info("Step 2: 批量计算 adj_close...")
+    count = 0
+    for code, lcf in latest_cf.items():
+        if not lcf or lcf == 0:
+            continue
+        # 前复权: adj_close = close / cf × latest_cf
+        result = conn.execute('''UPDATE daily_kline
+            SET adj_close = ROUND(close * ? / complex_factor, 4),
+                adj_open = ROUND(open * ? / complex_factor, 4),
+                adj_high = ROUND(high * ? / complex_factor, 4),
+                adj_low = ROUND(low * ? / complex_factor, 4)
+            WHERE stock_code = ? AND complex_factor IS NOT NULL AND complex_factor > 0''',
+            (lcf, lcf, lcf, lcf, code)).rowcount
+        count += result
+        if count % 100000 == 0:
+            conn.commit()
+            log.info(f"  已更新 {count:,} 条...")
+    
+    conn.commit()
+    log.info(f"完成: {count:,} 条记录已更新adj_close")
+    conn.close()
+
+
+if __name__ == "__main__":
+    if "--compute-only" in sys.argv:
+        compute_adj_close()
+    else:
+        total = pull_all()
+        log.info(f"拉取完成: {total:,}条, 开始计算前复权价...")
+        compute_adj_close()
