@@ -291,9 +291,13 @@ def comps_analysis(stock_code, peer_codes=None):
             (idx_code, stock_code)).fetchall()
         peer_codes = [p['stock_code'] for p in peers if p['stock_code']]
     else:
-        # 申万: 同行业
-        peers = db.execute('''SELECT stock_code FROM stock_sw_industry
-            WHERE industry_name = ? AND stock_code != ? LIMIT 20''',
+        # 申万: 同行业，按总市值降序取TOP20
+        peers = db.execute('''SELECT sw.stock_code FROM stock_sw_industry sw
+            LEFT JOIN stock_equity_change eq ON sw.stock_code=eq.stock_code
+            LEFT JOIN daily_kline k ON sw.stock_code=k.stock_code
+                AND k.date = (SELECT MAX(date) FROM daily_kline WHERE stock_code=sw.stock_code)
+            WHERE sw.industry_name = ? AND sw.stock_code != ?
+            ORDER BY eq.capitalization * k.close DESC LIMIT 20''',
             (industry_name, stock_code)).fetchall()
         peer_codes = [p['stock_code'] for p in peers]
 
