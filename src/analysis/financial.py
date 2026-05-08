@@ -229,48 +229,79 @@ def _load_l2_indices():
     return {item['code']: item['name'] for item in data.get('categories', {}).get('sector_l2', [])}
 
 
+def _load_l1_indices():
+    """加载中证一级行业指数列表"""
+    import yaml
+    cfg_path = os.path.join(PROJECT_ROOT, 'config', 'index_style.yaml')
+    with open(cfg_path, encoding='utf-8') as f:
+        data = yaml.safe_load(f)
+    return {item['code']: item['name'] for item in data.get('categories', {}).get('sector_l1', [])}
+
+
 def comps_analysis(stock_code, peer_codes=None):
     """
     可比公司估值。通过中证二级行业指数成分股找可比公司。
     """
     db = get_db()
 
-    # 1. 找到该股票所属的中证二级行业指数
-    # 从 index_constituents 反查：哪些 L2 指数包含了这只股票
+    # 1. 三级查找：L2 → L1 → 申万一级
     l2_indices = _load_l2_indices()
-    l2_codes = list(l2_indices.keys())
-    ph = ','.join(['?' for _ in l2_codes])
-    index_row = db.execute(f'''SELECT DISTINCT index_code FROM index_constituents
-        WHERE stock_code = ? AND index_code IN ({ph})
-        AND date >= date('now', '-3 months') LIMIT 1''',
-        [stock_code] + l2_codes).fetchone()
+    l1_indices = _load_l1_indices()
+    industry_name = None
+    industry_source = None
 
-    if not index_row:
+    # L2（最精确，45个指数，覆盖32%）
+    for name, codes, idx_map in [('L2', list(l2_indices.keys()), l2_indices),
+                                   ('L1', list(l1_indices.keys()), l1_indices)]:
+        ph = ','.join(['?' for _ in codes])
+        row = db.execute(f'''SELECT DISTINCT index_code FROM index_constituents
+            WHERE stock_code = ? AND index_code IN ({ph})
+            AND date >= date('now', '-3 months') LIMIT 1''',
+            [stock_code] + codes).fetchone()
+        if row:
+            industry_name = idx_map.get(row['index_code'], row['index_code'])
+            industry_source = '中证二级行业' if name == 'L2' else '中证一级行业'
+            break
+
+    # 申万兜底（全覆盖）
+    if not industry_name:
+        sw = db.execute('''SELECT industry_name FROM stock_sw_industry
+            WHERE stock_code = ?''', (stock_code,)).fetchone()
+        if sw:
+            industry_name = sw['industry_name']
+            industry_source = '申万一级行业'
+
+    if not industry_name:
         db.close()
-        return {'error': f'{stock_code} 未找到所属中证二级行业指数'}
+        return {'error': f'{stock_code} 无行业分类数据'}
 
-    l2_code = index_row['index_code']
-    l2_name = l2_indices.get(l2_code, l2_code)
-
-    # 2. 获取该指数前20大权重股作为可比公司
-    peers = db.execute('''SELECT DISTINCT ic.stock_code, sb.name,
-        (SELECT weighting FROM index_constituent_weightings icw
-         WHERE icw.index_code=ic.index_code AND icw.stock_code=ic.stock_code
-         ORDER BY icw.date DESC LIMIT 1) as weight
-        FROM index_constituents ic
-        LEFT JOIN stock_basic sb ON ic.stock_code=sb.stock_code
-        WHERE ic.index_code = ? AND ic.date >= date('now', '-3 months')
-        AND ic.stock_code != ?
-        ORDER BY weight DESC NULLS LAST LIMIT 20''',
-        (l2_code, stock_code)).fetchall()
-
-    peer_codes = [p['stock_code'] for p in peers if p['stock_code']]
+    # 2. 获取可比公司：L2/L1用前20权重股，申万用同行业
+    if industry_source != '申万一级行业':
+        # L2/L1: 权重股
+        idx_code = row['index_code']
+        peers = db.execute('''SELECT DISTINCT ic.stock_code, sb.name,
+            (SELECT weighting FROM index_constituent_weightings icw
+             WHERE icw.index_code=ic.index_code AND icw.stock_code=ic.stock_code
+             ORDER BY icw.date DESC LIMIT 1) as weight
+            FROM index_constituents ic
+            LEFT JOIN stock_basic sb ON ic.stock_code=sb.stock_code
+            WHERE ic.index_code = ? AND ic.date >= date('now', '-3 months')
+            AND ic.stock_code != ?
+            ORDER BY weight DESC NULLS LAST LIMIT 20''',
+            (idx_code, stock_code)).fetchall()
+        peer_codes = [p['stock_code'] for p in peers if p['stock_code']]
+    else:
+        # 申万: 同行业
+        peers = db.execute('''SELECT stock_code FROM stock_sw_industry
+            WHERE industry_name = ? AND stock_code != ? LIMIT 20''',
+            (industry_name, stock_code)).fetchall()
+        peer_codes = [p['stock_code'] for p in peers]
 
     if not peer_codes:
         db.close()
-        return {'error': f'{l2_name} 指数无可比公司数据'}
+        return {'error': f'{industry_name} 无可比公司'}
 
-    # 3. 收集财务数据（目标+可比）
+    # 3. 收集财务数据
     all_codes = [stock_code] + peer_codes
     ph2 = ','.join(['?' for _ in all_codes])
 
@@ -393,7 +424,7 @@ def comps_analysis(stock_code, peer_codes=None):
     return {
         'stock_code': stock_code,
         'name': name_map.get(stock_code, stock_code),
-        'industry': l2_name,
+        'industry': industry_name,
         'method': 'Comparable Company Analysis',
         'peer_count': len(peer_codes),
         'peers': peers_table,
