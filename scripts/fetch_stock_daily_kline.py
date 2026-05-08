@@ -21,10 +21,14 @@ from common import api_post, get_db, get_latest_date, log, RateLimiter
 # ── 配置 ──────────────────────────────────────────────
 API_PATH = "/company/candlestick"
 
-UPSERT_SQL = """INSERT OR REPLACE INTO daily_kline
+UPSERT_SQL = """INSERT INTO daily_kline
     (stock_code, date, open, close, high, low,
      volume, amount, change_pct, turnover_rate, complex_factor)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(stock_code, date) DO UPDATE SET
+    open=excluded.open, close=excluded.close, high=excluded.high, low=excluded.low,
+    volume=excluded.volume, amount=excluded.amount, change_pct=excluded.change_pct,
+    turnover_rate=excluded.turnover_rate, complex_factor=excluded.complex_factor"""
 
 
 # ════════════════════════════════════════════════════════

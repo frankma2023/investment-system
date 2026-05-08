@@ -17,14 +17,16 @@ from common import api_post, get_db, get_latest_date, log
 
 API_PATH = "/company/candlestick"
 
-UPSERT_SQL = """INSERT OR REPLACE INTO daily_kline
-    (stock_code, date, open, close, high, low,
-     volume, amount, change_pct, turnover_rate, complex_factor)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+UPSERT_SQL = """INSERT INTO daily_kline
+    (stock_code, date, adj_open, adj_high, adj_low, adj_close)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(stock_code, date) DO UPDATE SET
+    adj_open=excluded.adj_open, adj_high=excluded.adj_high,
+    adj_low=excluded.adj_low, adj_close=excluded.adj_close"""
 
 
 def fetch_date(date_str: str) -> list:
-    payload = {"date": date_str}
+    payload = {"date": date_str, "type": "lxr_fc_rights"}
     return api_post(API_PATH, payload)
 
 
@@ -35,9 +37,7 @@ def save_klines(conn, klines: list) -> int:
     for k in klines:
         rows.append((
             k["stockCode"], k["date"][:10],
-            k.get("open"), k.get("close"), k.get("high"), k.get("low"),
-            k.get("volume"), k.get("amount"), k.get("change"), k.get("to_r"),
-            k.get("complexFactor"),
+            k.get("open"), k.get("high"), k.get("low"), k.get("close"),
         ))
     conn.executemany(UPSERT_SQL, rows)
     conn.commit()
@@ -134,9 +134,5 @@ def compute_adj_close():
 
 
 if __name__ == "__main__":
-    if "--compute-only" in sys.argv:
-        compute_adj_close()
-    else:
-        total = pull_all()
-        log.info(f"拉取完成: {total:,}条, 开始计算前复权价...")
-        compute_adj_close()
+    total = pull_all()
+    log.info(f"完成: {total:,}条前复权数据已写入 adj_* 列")

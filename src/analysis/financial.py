@@ -117,17 +117,24 @@ def dcf_valuation(stock_code, assumptions=None):
                       (stock_code,)).fetchone()
     name = info['name'] if info else stock_code
 
-    # 估算股本
-    pe_row = db.execute('''SELECT value FROM fundamental_indicator
-        WHERE stock_code = ? AND metric_code = 'pe_ttm'
+    # 取最新总股本（优先从 stock_equity_change，回退估算）
+    eq_row = db.execute('''SELECT capitalization FROM stock_equity_change
+        WHERE stock_code = ?
         ORDER BY date DESC LIMIT 1''', (stock_code,)).fetchone()
-    pe = pe_row['value'] if pe_row else 20
+    if eq_row and eq_row['capitalization']:
+        shares = eq_row['capitalization']
+    else:
+        price_row = db.execute('''SELECT value FROM fundamental_indicator
+            WHERE stock_code = ? AND metric_code = 'sp'
+            ORDER BY date DESC LIMIT 1''', (stock_code,)).fetchone()
+        current_price = price_row['value'] if price_row else (market_cap / 1000 if market_cap > 0 else 10)
+        shares = market_cap / current_price if current_price > 0 else 10000
 
+    # 取当前股价
     price_row = db.execute('''SELECT value FROM fundamental_indicator
         WHERE stock_code = ? AND metric_code = 'sp'
         ORDER BY date DESC LIMIT 1''', (stock_code,)).fetchone()
-    current_price = price_row['value'] if price_row else (market_cap / 1000 if market_cap > 0 else 10)
-    shares = market_cap / current_price if current_price > 0 else 10000
+    current_price = price_row['value'] if price_row else 10
     target_price = equity_value / shares if shares > 0 else 0
     db.close()
 
