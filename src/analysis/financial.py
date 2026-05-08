@@ -30,73 +30,107 @@ def get_db():
 
 def dcf_valuation(stock_code, assumptions=None):
     """
-    简化DCF估值。基于最近年报数据，预测5年自由现金流，折现到企业价值。
+    DCF估值。基于最近年报真实数据 + 用户假设参数。
 
-    Args:
-        stock_code: 股票代码
-        assumptions: {
-            growth_rates: [0.12, 0.10, 0.08, 0.06, 0.05],  # 5年营收增长率
-            ebitda_margin: None,      # None=用历史毛利率近似
-            tax_rate: 0.25,
-            da_pct: 0.03,             # D&A占营收比
-            capex_pct: 0.05,          # CapEx占营收比
-            nwc_pct: 0.01,            # NWC变动占增量营收比
-            wacc: 0.10,               # 加权平均资本成本
-            terminal_g: 0.025,        # 永续增长率
-            projection_years: 5
-        }
-    Returns: dict with enterprise_value, equity_value, target_price, sensitivity
+    所有财务数据取自 stock_financials_annual + stock_financials_annual_ext，
+    不使用任何兜底估算值。数据缺失时在返回的 warnings 中列出。
     """
     db = get_db()
 
-    # 默认假设
     if assumptions is None:
         assumptions = {}
     g = assumptions.get('growth_rates', [0.12, 0.10, 0.08, 0.06, 0.05])
-    tax = assumptions.get('tax_rate', 0.25)
-    da_pct = assumptions.get('da_pct', 0.03)
-    capex_pct = assumptions.get('capex_pct', 0.05)
-    nwc_pct = assumptions.get('nwc_pct', 0.01)
     wacc = assumptions.get('wacc', 0.10)
-    t_g = assumptions.get('terminal_g', 0.025)
+    t_g = assumptions.get('terminal_growth', 0.025)
+    tax = assumptions.get('tax_rate', 0.25)
 
-    # 取最近年报
     annual = db.execute('''SELECT * FROM stock_financials_annual
         WHERE stock_code = ? ORDER BY report_date DESC LIMIT 1''',
         (stock_code,)).fetchone()
+    if not annual or not annual['revenue']:
+        db.close(); return {'error': f'{stock_code} 无年报数据'}
 
-    if not annual:
-        db.close()
-        return {'error': f'{stock_code} 无年报数据'}
+    ext = db.execute('''SELECT * FROM stock_financials_annual_ext
+        WHERE stock_code = ? AND report_date = ?''',
+        (stock_code, annual['report_date'])).fetchone()
 
-    revenue = annual['revenue'] or 0
-    gross_margin = (annual['gross_margin'] or 20) / 100.0
-    if revenue <= 0:
-        db.close()
-        return {'error': f'{stock_code} 营收数据异常'}
+    warnings = []
 
-    # EBITDA估计 = 营收 × EBITDA利润率（用毛利率近似，扣除SG&A约5%）
-    ebitda_margin = assumptions.get('ebitda_margin', gross_margin - 0.05)
+    # ── 营收 ──
+    revenue = annual['revenue']
 
-    # 取最新市值和净债务
-    funda = db.execute('''SELECT value FROM fundamental_indicator
-        WHERE stock_code = ? AND metric_code = 'mc'
-        ORDER BY date DESC LIMIT 1''', (stock_code,)).fetchone()
-    market_cap = funda['value'] if funda else 0
+    # ── EBITDA ──
+    if ext and ext['ebitda']:
+        ebitda_margin = ext['ebitda'] / revenue
+        ebitda_val = ext['ebitda']
+    else:
+        warnings.append('EBITDA: stock_financials_annual_ext 中无数据')
+        ebitda_margin = None; ebitda_val = None
 
-    # 市值兜底: 用收盘价×总股本估算
-    if not market_cap or market_cap <= 0:
-        eq_row = db.execute('''SELECT capitalization FROM stock_equity_change
-            WHERE stock_code = ? ORDER BY date DESC LIMIT 1''',
-            (stock_code,)).fetchone()
-        k_row = db.execute('''SELECT close FROM daily_kline
-            WHERE stock_code = ? ORDER BY date DESC LIMIT 1''',
-            (stock_code,)).fetchone()
-        if eq_row and eq_row['capitalization'] and k_row:
-            market_cap = eq_row['capitalization'] * k_row['close']
+    # ── 折旧与摊销 ──
+    if ext and (ext['depreciation_fa'] or ext['depreciation_ip']):
+        da_pct = (ext['depreciation_fa'] + ext['depreciation_ip']) / revenue
+    else:
+        warnings.append('D&A(折旧摊销): 缺失')
+        da_pct = None
 
-    asset_ratio = (annual['asset_liability_ratio'] or 40) / 100.0
-    net_debt = market_cap * 0.15  # 简化：净债务≈市值的15%
+    # ── CapEx ──
+    ocf = annual['operating_cash_flow']
+    fcf_annual = annual['free_cash_flow']
+    if ocf and fcf_annual:
+        capex_pct = (ocf - fcf_annual) / revenue
+    else:
+        warnings.append('CapEx: 经营CF或自由CF缺失')
+        capex_pct = None
+
+    # ── 利息支出 ──
+    if ext and ext['interest_expense']:
+        interest = ext['interest_expense']
+    else:
+        warnings.append('利息支出: 缺失')
+        interest = None
+
+    # ── 股本 ──
+    eq_row = db.execute('''SELECT capitalization FROM stock_equity_change
+        WHERE stock_code = ? ORDER BY date DESC LIMIT 1''',
+        (stock_code,)).fetchone()
+    if eq_row and eq_row['capitalization']:
+        shares = eq_row['capitalization']
+    else:
+        warnings.append('总股本: stock_equity_change 中无数据')
+        shares = None
+
+    # ── 当前股价 ──
+    kline_row = db.execute('''SELECT close FROM daily_kline
+        WHERE stock_code = ? ORDER BY date DESC LIMIT 1''',
+        (stock_code,)).fetchone()
+    current_price = kline_row['close'] if kline_row else None
+    if not current_price:
+        warnings.append('当前股价: daily_kline 中无数据')
+
+    # ── 净债务 ──
+    if ext and ext['total_assets'] and annual['interest_bearing_debt_ratio']:
+        net_debt = ext['total_assets'] * (annual['interest_bearing_debt_ratio'] / 100)
+    else:
+        warnings.append('净债务: 总资产或有息负债率缺失')
+        net_debt = None
+
+    # ── 名称 ──
+    info = db.execute('SELECT name FROM stock_basic WHERE stock_code=?',
+                      (stock_code,)).fetchone()
+    name = info['name'] if info else stock_code
+    db.close()
+
+    # 检查是否所有必要数据齐全
+    if ebitda_margin is None or da_pct is None or capex_pct is None or shares is None or current_price is None:
+        return {
+            'stock_code': stock_code, 'name': name, 'method': 'DCF',
+            'error': '必要财务数据缺失，无法完成DCF估值',
+            'warnings': warnings,
+            'current_price': current_price,
+        }
+
+    market_cap = shares * current_price
 
     # ── FCF预测 ──
     rev = revenue
@@ -110,75 +144,47 @@ def dcf_valuation(stock_code, assumptions=None):
         nopat = ebit * (1 - tax)
         capex = rev * capex_pct
         prev_rev = rev / (1 + g[yr])
-        dnwc = (rev - prev_rev) * nwc_pct
+        dnwc = (rev - prev_rev) * 0.01  # NWC变动 = 增量营收 × 1%
         ufcf = nopat + da - capex - dnwc
         period = yr + 0.5
         pv = ufcf / ((1 + wacc) ** period)
         pv_fcfs.append(pv)
-        fcf_details.append({'year': yr + 1, 'revenue': round(rev, 1), 'ufcf': round(ufcf, 1), 'pv': round(pv, 1)})
+        fcf_details.append({'year': yr+1, 'revenue': round(rev,1), 'ufcf': round(ufcf,1), 'pv': round(pv,1)})
 
     last_fcf = fcf_details[-1]['ufcf']
     tv = last_fcf * (1 + t_g) / (wacc - t_g)
     pv_tv = tv / ((1 + wacc) ** (len(g) + 0.5))
     enterprise_value = sum(pv_fcfs) + pv_tv
-    equity_value = enterprise_value - net_debt
-
-    # 股票名称
-    info = db.execute('SELECT name FROM stock_basic WHERE stock_code=?',
-                      (stock_code,)).fetchone()
-    name = info['name'] if info else stock_code
-
-    # 当前股价
-    price_row = db.execute('''SELECT value FROM fundamental_indicator
-        WHERE stock_code = ? AND metric_code = 'sp'
-        ORDER BY date DESC LIMIT 1''', (stock_code,)).fetchone()
-    if price_row and price_row['value']:
-        current_price = price_row['value']
-    else:
-        kline_row = db.execute('''SELECT close FROM daily_kline
-            WHERE stock_code = ? ORDER BY date DESC LIMIT 1''',
-            (stock_code,)).fetchone()
-        current_price = kline_row['close'] if kline_row else 10
-
-    # 股本：优先 stock_equity_change，回退 market_cap/price
-    eq_row = db.execute('''SELECT capitalization FROM stock_equity_change
-        WHERE stock_code = ? ORDER BY date DESC LIMIT 1''',
-        (stock_code,)).fetchone()
-    if eq_row and eq_row['capitalization']:
-        shares = eq_row['capitalization']
-    elif market_cap > 0 and current_price > 0:
-        shares = market_cap / current_price
-    else:
-        shares = 100000000  # 默认1亿股
+    equity_value = enterprise_value - (net_debt or 0)
     target_price = equity_value / shares if shares > 0 else 0
-    db.close()
 
-    # 敏感性分析
     sensitivity = []
     for w in [0.08, 0.09, 0.10, 0.11, 0.12]:
-        ev = sum(ufcf / ((1 + w) ** (yr + 0.5)) for yr, ufcf in enumerate(
-            [d['ufcf'] for d in fcf_details]))
+        ev = sum(d['ufcf'] / ((1 + w) ** (yr + 0.5)) for yr, d in enumerate(fcf_details))
         tv_s = last_fcf * (1 + t_g) / (w - t_g)
         ev += tv_s / ((1 + w) ** (len(g) + 0.5))
-        tp = (ev - net_debt) / shares if shares > 0 else 0
-        sensitivity.append({'wacc': f'{w*100:.0f}%', 'target_price': round(tp, 2)})
+        tp = (ev - (net_debt or 0)) / shares if shares > 0 else 0
+        sensitivity.append({'wacc': f'{w*100:.0f}%', 'target_price': round(tp,2)})
 
     return {
-        'stock_code': stock_code,
-        'name': name,
-        'method': 'DCF',
+        'stock_code': stock_code, 'name': name, 'method': 'DCF',
         'current_price': round(current_price, 2),
         'base_revenue': round(revenue, 1),
         'ebitda_margin': f'{ebitda_margin*100:.1f}%',
+        'ebitda': round(ebitda_val, 1) if ebitda_val else None,
+        'da_pct': f'{da_pct*100:.1f}%',
+        'capex_pct': f'{capex_pct*100:.1f}%',
+        'interest_expense': round(interest, 1) if interest else None,
+        'net_debt': round(net_debt, 1) if net_debt else None,
         'wacc': f'{wacc*100:.0f}%',
         'terminal_growth': f'{t_g*100:.1f}%',
         'projections': fcf_details,
-        'terminal_value': round(pv_tv, 1),
         'enterprise_value': round(enterprise_value, 1),
         'equity_value': round(equity_value, 1),
         'target_price': round(target_price, 2),
         'upside_pct': round((target_price/current_price - 1) * 100, 1) if current_price > 0 else None,
         'sensitivity': sensitivity,
+        'warnings': warnings if warnings else None,
     }
 
 
