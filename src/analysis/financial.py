@@ -220,45 +220,64 @@ def dcf_valuation(stock_code, assumptions=None):
 # 2. 可比公司分析 (Comps)
 # ═══════════════════════════════════════════
 
+def _load_l2_indices():
+    """加载中证二级行业指数列表"""
+    import yaml
+    cfg_path = os.path.join(PROJECT_ROOT, 'config', 'index_style.yaml')
+    with open(cfg_path, encoding='utf-8') as f:
+        data = yaml.safe_load(f)
+    return {item['code']: item['name'] for item in data.get('categories', {}).get('sector_l2', [])}
+
+
 def comps_analysis(stock_code, peer_codes=None):
     """
-    可比公司估值。在同行业中找可比公司，用中位数倍数估值。
-
-    Args:
-        stock_code: 目标股票代码
-        peer_codes: 可比公司列表(None=自动找同行业)
+    可比公司估值。通过中证二级行业指数成分股找可比公司。
     """
     db = get_db()
 
-    # 获取目标公司行业
-    industry = db.execute('''SELECT industry_name FROM stock_sw_industry
-        WHERE stock_code = ?''', (stock_code,)).fetchone()
+    # 1. 找到该股票所属的中证二级行业指数
+    # 从 index_constituents 反查：哪些 L2 指数包含了这只股票
+    l2_indices = _load_l2_indices()
+    l2_codes = list(l2_indices.keys())
+    ph = ','.join(['?' for _ in l2_codes])
+    index_row = db.execute(f'''SELECT DISTINCT index_code FROM index_constituents
+        WHERE stock_code = ? AND index_code IN ({ph})
+        AND date >= date('now', '-3 months') LIMIT 1''',
+        [stock_code] + l2_codes).fetchone()
 
-    if not industry:
+    if not index_row:
         db.close()
-        return {'error': f'{stock_code} 无行业分类'}
+        return {'error': f'{stock_code} 未找到所属中证二级行业指数'}
 
-    ind_name = industry['industry_name']
+    l2_code = index_row['index_code']
+    l2_name = l2_indices.get(l2_code, l2_code)
 
-    # 自动找同行业公司
-    if not peer_codes:
-        peers = db.execute('''SELECT stock_code FROM stock_sw_industry
-            WHERE industry_name = ? AND stock_code != ?
-            LIMIT 20''', (ind_name, stock_code)).fetchall()
-        peer_codes = [p['stock_code'] for p in peers]
+    # 2. 获取该指数前20大权重股作为可比公司
+    peers = db.execute('''SELECT DISTINCT ic.stock_code, sb.name,
+        (SELECT weighting FROM index_constituent_weightings icw
+         WHERE icw.index_code=ic.index_code AND icw.stock_code=ic.stock_code
+         ORDER BY icw.date DESC LIMIT 1) as weight
+        FROM index_constituents ic
+        LEFT JOIN stock_basic sb ON ic.stock_code=sb.stock_code
+        WHERE ic.index_code = ? AND ic.date >= date('now', '-3 months')
+        AND ic.stock_code != ?
+        ORDER BY weight DESC NULLS LAST LIMIT 20''',
+        (l2_code, stock_code)).fetchall()
+
+    peer_codes = [p['stock_code'] for p in peers if p['stock_code']]
 
     if not peer_codes:
         db.close()
-        return {'error': f'{ind_name} 行业无可比公司'}
+        return {'error': f'{l2_name} 指数无可比公司数据'}
 
-    # 收集所有公司（目标+可比）的财务数据
+    # 3. 收集财务数据（目标+可比）
     all_codes = [stock_code] + peer_codes
-    ph = ','.join(['?' for _ in all_codes])
+    ph2 = ','.join(['?' for _ in all_codes])
 
     # 最近年报数据
     annuals = db.execute(f'''SELECT stock_code, revenue, revenue_yoy, gross_margin,
         roe, net_profit, asset_liability_ratio
-        FROM stock_financials_annual WHERE stock_code IN ({ph})
+        FROM stock_financials_annual WHERE stock_code IN ({ph2})
         ORDER BY report_date DESC''',
         all_codes).fetchall()
 
@@ -305,7 +324,7 @@ def comps_analysis(stock_code, peer_codes=None):
 
     # 名称
     names = db.execute(f'''SELECT stock_code, name FROM stock_basic
-        WHERE stock_code IN ({ph})''', all_codes).fetchall()
+        WHERE stock_code IN ({ph2})''', all_codes).fetchall()
     name_map = {n['stock_code']: n['name'] for n in names}
     db.close()
 
@@ -374,7 +393,7 @@ def comps_analysis(stock_code, peer_codes=None):
     return {
         'stock_code': stock_code,
         'name': name_map.get(stock_code, stock_code),
-        'industry': ind_name,
+        'industry': l2_name,
         'method': 'Comparable Company Analysis',
         'peer_count': len(peer_codes),
         'peers': peers_table,
