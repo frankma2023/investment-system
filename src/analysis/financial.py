@@ -134,7 +134,7 @@ def dcf_valuation(stock_code, assumptions=None):
     market_cap = shares * current_price
 
     # ── 确定基准年 ──
-    base_year = int(annual['report_date'][:4]) if annual.get('report_date') else 2025
+    base_year = int(annual['report_date'][:4]) if annual['report_date'] else 2025
 
     # ── FCF预测 ──
     rev = revenue
@@ -536,7 +536,7 @@ def three_statement_projection(stock_code, assumptions=None):
     db.close()
 
     # 确定基准年份
-    base_year = int(annual['report_date'][:4]) if annual.get('report_date') else 2025
+    base_year = int(annual['report_date'][:4]) if annual['report_date'] else 2025
 
     if sga_pct is None or da_pct is None or capex_pct is None:
         return {'stock_code': stock_code, 'name': name, 'method': '3-Statement Projection',
