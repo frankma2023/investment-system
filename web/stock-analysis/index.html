@@ -293,23 +293,60 @@ function earningsAnalysis(e){
 
 function modelAnalysis(m){
   if(m.error)return '<p style="color:#FE2C55">❌ '+m.error+'</p>';
-  var h='<h3 style="margin-top:0">一、基准数据</h3>';
-  h+='<p>基于最近年报，基准营收<strong>'+fmtNum(m.base_revenue)+'</strong>，毛利率<strong>'+m.base_gross_margin+'</strong>，SG&A率<strong>'+(m.sga_pct||'—')+'</strong>，折旧率<strong>'+(m.da_pct||'—')+'</strong>，CapEx率<strong>'+(m.capex_pct||'—')+'</strong>。</p>';
+  var h='<h3 style="margin-top:0">一、基础参数（全部来自真实年报）</h3>';
+  var baseRev=fmtNum(m.base_revenue), sga=m.sga_pct||'?', da=m.da_pct||'?', capex=m.capex_pct||'?', gm=m.base_gross_margin||'?';
+  h+='<table class="mini-table"><tr><th>参数</th><th>数值</th><th>来源</th></tr>';
+  h+='<tr><td>基准年</td><td class="mono">'+(m.base_year||'—')+'</td><td>最近年报 report_date</td></tr>';
+  h+='<tr><td>基准营收</td><td class="mono">'+baseRev+'</td><td>年报 stock_financials_annual.revenue</td></tr>';
+  h+='<tr><td>毛利率</td><td class="mono">'+gm+'</td><td>年报 gross_margin</td></tr>';
+  h+='<tr><td>SG&A率(销售+管理)</td><td class="mono">'+sga+'</td><td>年报扩展表 selling_expense + admin_expense</td></tr>';
+  h+='<tr><td>折旧率</td><td class="mono">'+da+'</td><td>年报扩展表 depreciation_fa</td></tr>';
+  h+='<tr><td>资本开支率</td><td class="mono">'+capex+'</td><td>(经营CF-自由CF)÷营收</td></tr>';
+  h+='<tr><td>税率</td><td class="mono">25%</td><td>法定企业所得税率</td></tr>';
+  h+='</table>';
 
-  h+='<h3>二、推导逻辑</h3>';
-  h+='<p>利润表：营收 → 毛利润 → 扣除SG&A → 扣除折旧 → EBIT → 扣除利息和税 → 净利润。</p>';
-  h+='<p>现金流量表：净利润 + 折旧 = 经营现金流。经营现金流 - CapEx = 自由现金流。</p>';
-  h+='<p>三张表的联动关系：利润表的净利润影响资产负债表的留存收益；资产负债表的CapEx来自现金流量表的投资支出；现金流量表的经营部分起点是利润表的净利润。</p>';
+  var projs=m.projections||[], last=projs[projs.length-1];
+  var sgaVal=parseFloat(sga)/100, daVal=parseFloat(da)/100, capexVal=parseFloat(capex)/100, gmVal=parseFloat(gm)/100;
 
-  h+='<h3>三、三年预测</h3>';
-  h+='<table class="mini-table"><tr><th>年</th><th>营收</th><th>毛利</th><th>SG&A</th><th>折旧</th><th>净利</th><th>自由CF</th></tr>';
-  (m.projections||[]).forEach(function(p){
-    var i=p.income_statement||{}, cf=p.cash_flow||{};
-    var rev=i.revenue, sga=rev*parseFloat(m.sga_pct)/100, da=rev*parseFloat(m.da_pct)/100;
-    h+='<tr><td>Y'+p.year+'</td><td class="mono">'+fmtNum(rev)+'</td><td class="mono">'+fmtNum(i.gross_profit)+'</td><td class="mono">'+fmtNum(sga)+'</td><td class="mono">'+fmtNum(da)+'</td><td class="mono">'+fmtNum(i.net_income)+'</td><td class="mono">'+fmtNum(cf.free_cf)+'</td></tr>';
+  h+='<h3>二、逐年推导（以'+projs[0].year+'年为例）</h3>';
+  var p=projs[0], i=p.income_statement||{}, cf=p.cash_flow||{};
+  var rev=i.revenue, gp=i.gross_profit, ni=i.net_income, ocf2=cf.operating_cf, fcf2=cf.free_cf;
+  var sga_amt=rev*sgaVal, da_amt=rev*daVal, capex_amt=rev*capexVal;
+  var ebit_amt=gp-sga_amt-da_amt;
+
+  h+='<div style="background:rgba(254,44,85,0.04);padding:12px;border-radius:10px;margin:8px 0">';
+  h+='<p><strong>Step 1: 营收预测</strong><br>';
+  h+='基准营收'+baseRev+' × (1 + 增长率12%) = <strong>'+fmtNum(rev)+'</strong></p>';
+  h+='<p><strong>Step 2: 毛利润</strong><br>';
+  h+='营收 × 毛利率'+gm+' = '+fmtNum(rev)+' × '+gm+' = <strong>'+fmtNum(gp)+'</strong></p>';
+  h+='<p><strong>Step 3: 扣除费用</strong><br>';
+  h+='SG&A(销售+管理费) = '+fmtNum(rev)+' × '+sga+' = <strong>'+fmtNum(sga_amt)+'</strong><br>';
+  h+='折旧摊销 = '+fmtNum(rev)+' × '+da+' = <strong>'+fmtNum(da_amt)+'</strong><br>';
+  h+='EBIT = '+fmtNum(gp)+' − '+fmtNum(sga_amt)+' − '+fmtNum(da_amt)+' = <strong>'+fmtNum(ebit_amt)+'</strong></p>';
+  h+='<p><strong>Step 4: 净利润</strong><br>';
+  h+='EBIT × (1−税率25%) = '+fmtNum(ebit_amt)+' × 0.75 = <strong>'+fmtNum(ni)+'</strong></p>';
+  h+='<p><strong>Step 5: 经营现金流</strong><br>';
+  h+='净利润 + 折旧 = '+fmtNum(ni)+' + '+fmtNum(da_amt)+' = <strong>'+fmtNum(ocf2)+'</strong></p>';
+  h+='<p><strong>Step 6: 自由现金流</strong><br>';
+  h+='经营CF − CapEx = '+fmtNum(ocf2)+' − '+fmtNum(capex_amt)+' = <strong>'+fmtNum(fcf2)+'</strong></p>';
+  h+='</div>';
+
+  h+='<h3>三、三年汇总</h3>';
+  h+='<table class="mini-table"><tr><th>年</th><th>营收</th><th>毛利</th><th>SG&A</th><th>折旧</th><th>EBIT</th><th>净利</th><th>经营CF</th><th>CapEx</th><th>自由CF</th></tr>';
+  projs.forEach(function(px){
+    var ix=px.income_statement||{}, cfx=px.cash_flow||{};
+    var rx=ix.revenue, sx=rx*sgaVal, dx=rx*daVal, cx=rx*capexVal;
+    var ex=ix.gross_profit-sx-dx;
+    h+='<tr><td>'+px.year+'</td><td class="mono">'+fmtNum(rx)+'</td><td class="mono">'+fmtNum(ix.gross_profit)+'</td><td class="mono">'+fmtNum(sx)+'</td><td class="mono">'+fmtNum(dx)+'</td><td class="mono">'+fmtNum(ex)+'</td><td class="mono">'+fmtNum(ix.net_income)+'</td><td class="mono">'+fmtNum(cfx.operating_cf)+'</td><td class="mono">'+fmtNum(cx)+'</td><td class="mono">'+fmtNum(cfx.free_cf)+'</td></tr>';
   });
   h+='</table>';
-  h+='<p>三表预测和DCF使用相同的底层假设。两者对照可以看出：DCF关注的是自由现金流的现值，三表关注的是利润表和资产负债表的勾稽关系。</p>';
+
+  h+='<h3>四、关键关系</h3>';
+  h+='<p>① <strong>利润表</strong>：营收 → 毛利 → EBIT → 净利润。这是一条线往下减。</p>';
+  h+='<p>② <strong>现金流量表</strong>：净利润 + 非现金支出(折旧) = 经营CF。经营CF − 投资支出(CapEx) = 自由CF。</p>';
+  h+='<p>③ <strong>为什么折旧要加回来？</strong>折旧是会计上的"分摊"——买了设备分年扣，但现金当年就付掉了。所以算现金流时要把折旧加回净利润。</p>';
+  h+='<p>④ <strong>为什么CapEx这么高？</strong>CapEx率='+capex+'，意味着'+baseRev+'的营收需要投'+fmtNum(parseFloat(m.base_revenue)*capexVal)+'回厂房设备。这是重资产制造业的典型特征——赚的钱大量要再投回去。</p>';
+  h+='<p>⑤ <strong>三表如何联动？</strong>利润表的净利润流入资产负债表的留存收益；资产负债表的固定资产增加来自现金流量表的CapEx支出；现金流量表的起点是利润表的净利润（加回折旧）。三张表通过这几个节点连在一起。</p>';
   return h;
 }
 </script>
