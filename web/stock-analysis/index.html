@@ -181,17 +181,15 @@ function renderResults(data){
   html+='</div>';
 
   document.getElementById('results').innerHTML=html;
-
-  // 绑定分析按钮
-  document.querySelectorAll('.btn-analysis').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var type=this.dataset.type;
-      showAnalysis(type, data);
+  setTimeout(function(){
+    document.querySelectorAll('.btn-analysis').forEach(function(btn){
+      btn.onclick=function(){ window._showAnalysis(this.dataset.type, data); };
     });
-  });
+  }, 100);
 }
 
-function showAnalysis(type, data){
+
+window._showAnalysis=function(type, data){
   var panel=document.getElementById('analysis-panel');
   var body=document.getElementById('analysis-body');
   var title=document.getElementById('analysis-title');
