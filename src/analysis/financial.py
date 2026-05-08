@@ -84,6 +84,17 @@ def dcf_valuation(stock_code, assumptions=None):
         ORDER BY date DESC LIMIT 1''', (stock_code,)).fetchone()
     market_cap = funda['value'] if funda else 0
 
+    # 市值兜底: 用收盘价×总股本估算
+    if not market_cap or market_cap <= 0:
+        eq_row = db.execute('''SELECT capitalization FROM stock_equity_change
+            WHERE stock_code = ? ORDER BY date DESC LIMIT 1''',
+            (stock_code,)).fetchone()
+        k_row = db.execute('''SELECT close FROM daily_kline
+            WHERE stock_code = ? ORDER BY date DESC LIMIT 1''',
+            (stock_code,)).fetchone()
+        if eq_row and eq_row['capitalization'] and k_row:
+            market_cap = eq_row['capitalization'] * k_row['close']
+
     asset_ratio = (annual['asset_liability_ratio'] or 40) / 100.0
     net_debt = market_cap * 0.15  # 简化：净债务≈市值的15%
 
@@ -117,24 +128,28 @@ def dcf_valuation(stock_code, assumptions=None):
                       (stock_code,)).fetchone()
     name = info['name'] if info else stock_code
 
-    # 取最新总股本（优先从 stock_equity_change，回退估算）
-    eq_row = db.execute('''SELECT capitalization FROM stock_equity_change
-        WHERE stock_code = ?
-        ORDER BY date DESC LIMIT 1''', (stock_code,)).fetchone()
-    if eq_row and eq_row['capitalization']:
-        shares = eq_row['capitalization']
-    else:
-        price_row = db.execute('''SELECT value FROM fundamental_indicator
-            WHERE stock_code = ? AND metric_code = 'sp'
-            ORDER BY date DESC LIMIT 1''', (stock_code,)).fetchone()
-        current_price = price_row['value'] if price_row else (market_cap / 1000 if market_cap > 0 else 10)
-        shares = market_cap / current_price if current_price > 0 else 10000
-
-    # 取当前股价
+    # 当前股价
     price_row = db.execute('''SELECT value FROM fundamental_indicator
         WHERE stock_code = ? AND metric_code = 'sp'
         ORDER BY date DESC LIMIT 1''', (stock_code,)).fetchone()
-    current_price = price_row['value'] if price_row else 10
+    if price_row and price_row['value']:
+        current_price = price_row['value']
+    else:
+        kline_row = db.execute('''SELECT close FROM daily_kline
+            WHERE stock_code = ? ORDER BY date DESC LIMIT 1''',
+            (stock_code,)).fetchone()
+        current_price = kline_row['close'] if kline_row else 10
+
+    # 股本：优先 stock_equity_change，回退 market_cap/price
+    eq_row = db.execute('''SELECT capitalization FROM stock_equity_change
+        WHERE stock_code = ? ORDER BY date DESC LIMIT 1''',
+        (stock_code,)).fetchone()
+    if eq_row and eq_row['capitalization']:
+        shares = eq_row['capitalization']
+    elif market_cap > 0 and current_price > 0:
+        shares = market_cap / current_price
+    else:
+        shares = 100000000  # 默认1亿股
     target_price = equity_value / shares if shares > 0 else 0
     db.close()
 
