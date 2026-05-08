@@ -242,20 +242,38 @@ def comps_analysis(stock_code, peer_codes=None):
             seen_codes.add(a['stock_code'])
             ann_data[a['stock_code']] = dict(a)
 
-    # 估值倍数
-    multiples = db.execute(f'''SELECT stock_code, metric_code, value
-        FROM fundamental_indicator WHERE stock_code IN ({ph})
-        AND metric_code IN ('pe_ttm', 'pb', 'ps_ttm', 'mc')
-        AND date >= date('now', '-30 days')
-        ORDER BY date DESC''',
-        all_codes).fetchall()
-
+    # 估值倍数 — 用真实数据自行计算
+    # PE = 市值/净利润 = (股本×股价)/净利润
+    # PB = 市值/净资产 = (股本×股价)/股东权益
+    # PS = 市值/营收
     mult_data = {}
-    for m in multiples:
-        if m['stock_code'] not in mult_data:
-            mult_data[m['stock_code']] = {}
-        if m['metric_code'] not in mult_data[m['stock_code']]:
-            mult_data[m['stock_code']][m['metric_code']] = m['value']
+    for code in all_codes:
+        # 取股价
+        k_row = db.execute('''SELECT close FROM daily_kline
+            WHERE stock_code = ? ORDER BY date DESC LIMIT 1''', (code,)).fetchone()
+        price = k_row['close'] if k_row else None
+        # 取股本
+        eq_row = db.execute('''SELECT capitalization FROM stock_equity_change
+            WHERE stock_code = ? ORDER BY date DESC LIMIT 1''', (code,)).fetchone()
+        shares = eq_row['capitalization'] if eq_row else None
+        # 取年报数据
+        a = ann_data.get(code, {})
+        # 取扩展数据
+        ext2 = db.execute('''SELECT total_equity FROM stock_financials_annual_ext
+            WHERE stock_code = ? ORDER BY report_date DESC LIMIT 1''', (code,)).fetchone()
+        total_equity = ext2['total_equity'] if ext2 else None
+
+        if price and shares and shares > 0:
+            mkt_cap = price * shares
+            np = a.get('net_profit')
+            rev = a.get('revenue')
+            mult_data[code] = {}
+            if np and np > 0:
+                mult_data[code]['pe_ttm'] = round(mkt_cap / np, 1)
+            if total_equity and total_equity > 0:
+                mult_data[code]['pb'] = round(mkt_cap / total_equity, 1)
+            if rev and rev > 0:
+                mult_data[code]['ps_ttm'] = round(mkt_cap / rev, 1)
 
     # 名称
     names = db.execute(f'''SELECT stock_code, name FROM stock_basic
@@ -428,22 +446,12 @@ def earnings_analysis(stock_code, quarters=8):
 
 
 # ═══════════════════════════════════════════
-# 4. 三表联动预测 (简化版)
+# 4. 三表联动预测
 # ═══════════════════════════════════════════
 
 def three_statement_projection(stock_code, assumptions=None):
     """
-    三表联动预测：基于最近年报，推导利润表→资产负债表→现金流量表。
-
-    Args:
-        assumptions: {
-            growth_rates: [0.12, 0.10, 0.08],  # 3年营收增长率
-            gross_margin: None,    # None=用历史值
-            tax_rate: 0.25,
-            da_pct: 0.03,
-            capex_pct: 0.05,
-            nwc_pct: 0.12,        # NWC占营收的%
-        }
+    三表联动预测。基于最近年报真实数据 + 用户假设增长率。
     """
     db = get_db()
 
@@ -451,29 +459,61 @@ def three_statement_projection(stock_code, assumptions=None):
         assumptions = {}
     g_list = assumptions.get('growth_rates', [0.12, 0.10, 0.08])
     tax = assumptions.get('tax_rate', 0.25)
-    da_pct = assumptions.get('da_pct', 0.03)
-    capex_pct = assumptions.get('capex_pct', 0.05)
     nwc_pct = assumptions.get('nwc_pct', 0.12)
 
     annual = db.execute('''SELECT * FROM stock_financials_annual
         WHERE stock_code = ? ORDER BY report_date DESC LIMIT 1''',
         (stock_code,)).fetchone()
+    if not annual or not annual['revenue']:
+        db.close(); return {'error': f'{stock_code} 无年报数据'}
 
-    if not annual:
-        db.close()
-        return {'error': f'{stock_code} 无年报数据'}
+    ext = db.execute('''SELECT * FROM stock_financials_annual_ext
+        WHERE stock_code = ? AND report_date = ?''',
+        (stock_code, annual['report_date'])).fetchone()
 
     name_row = db.execute('SELECT name FROM stock_basic WHERE stock_code=?',
                           (stock_code,)).fetchone()
     name = name_row['name'] if name_row else stock_code
+
+    warnings = []
+    base_revenue = annual['revenue']
+    gm = (annual['gross_margin'] or 0) / 100.0
+
+    # 真实 SG&A
+    if ext and (ext['selling_expense'] or ext['admin_expense']):
+        sga_pct = ((ext['selling_expense'] or 0) + (ext['admin_expense'] or 0)) / base_revenue
+    else:
+        warnings.append('SG&A: 缺失')
+        sga_pct = None
+
+    # 真实 D&A
+    if ext and (ext['depreciation_fa'] or ext['depreciation_ip']):
+        da_pct = ((ext['depreciation_fa'] or 0) + (ext['depreciation_ip'] or 0)) / base_revenue
+    else:
+        warnings.append('D&A: 缺失')
+        da_pct = None
+
+    # 真实 CapEx
+    ocf = annual['operating_cash_flow']
+    fcf_a = annual['free_cash_flow']
+    if ocf and fcf_a:
+        capex_pct = (ocf - fcf_a) / base_revenue
+    else:
+        warnings.append('CapEx: 缺失')
+        capex_pct = None
+
+    # 真实利息
+    if ext and ext['interest_expense']:
+        interest_pct = ext['interest_expense'] / base_revenue
+    else:
+        warnings.append('利息支出: 缺失')
+        interest_pct = None
+
     db.close()
 
-    base_revenue = annual['revenue'] or 0
-    gm = (annual['gross_margin'] or 30) / 100.0
-    gm = assumptions.get('gross_margin', gm)
-
-    if base_revenue <= 0:
-        return {'error': '营收数据异常'}
+    if sga_pct is None or da_pct is None or capex_pct is None:
+        return {'stock_code': stock_code, 'name': name, 'method': '3-Statement Projection',
+                'error': '必要财务数据缺失', 'warnings': warnings}
 
     projections = []
     rev = base_revenue
@@ -481,20 +521,16 @@ def three_statement_projection(stock_code, assumptions=None):
     for yr, g in enumerate(g_list):
         rev = rev * (1 + g)
         gross_profit = rev * gm
-        sga = rev * 0.08  # SG&A≈营收8%
+        sga = rev * sga_pct
         da = rev * da_pct
         ebit = gross_profit - sga - da
-        interest = rev * 0.01  # 简化利息
+        interest = rev * interest_pct
         pretax = ebit - interest
         net_income = pretax * (1 - tax)
-
-        # 资产负债表
         nwc = rev * nwc_pct
         capex = rev * capex_pct
-
-        # 现金流量表
-        ocf = net_income + da  # 简化：OCF≈净利+D&A
-        fcf = ocf - capex
+        ocf_proj = net_income + da
+        fcf_proj = ocf_proj - capex
 
         projections.append({
             'year': yr + 1,
@@ -504,25 +540,24 @@ def three_statement_projection(stock_code, assumptions=None):
                 'ebit': round(ebit, 1),
                 'net_income': round(net_income, 1),
                 'gross_margin': f'{gm*100:.1f}%',
+                'sga_margin': f'{sga_pct*100:.1f}%',
                 'net_margin': f'{net_income/rev*100:.1f}%' if rev > 0 else 'N/A',
             },
-            'balance_sheet': {
-                'nwc': round(nwc, 1),
-                'capex': round(capex, 1),
-            },
             'cash_flow': {
-                'operating_cf': round(ocf, 1),
-                'free_cf': round(fcf, 1),
+                'operating_cf': round(ocf_proj, 1),
+                'free_cf': round(fcf_proj, 1),
             }
         })
 
     return {
-        'stock_code': stock_code,
-        'name': name,
-        'method': '3-Statement Projection',
+        'stock_code': stock_code, 'name': name, 'method': '3-Statement Projection',
         'base_revenue': round(base_revenue, 1),
         'base_gross_margin': f'{gm*100:.1f}%',
+        'sga_pct': f'{sga_pct*100:.1f}%',
+        'da_pct': f'{da_pct*100:.1f}%',
+        'capex_pct': f'{capex_pct*100:.1f}%',
         'projections': projections,
+        'warnings': warnings if warnings else None,
     }
 
 
