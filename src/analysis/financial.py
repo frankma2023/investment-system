@@ -39,7 +39,11 @@ def dcf_valuation(stock_code, assumptions=None):
 
     if assumptions is None:
         assumptions = {}
-    g = assumptions.get('growth_rates', [0.12, 0.10, 0.08, 0.06, 0.05])
+    # 用最近一期营收同比作为默认基准增速，逐年递减至永续增长
+    rev_yoy = annual['revenue_yoy'] or 12
+    base_g = max(rev_yoy * 0.7, 5)  # 取历史增速的70%，不低于5%
+    g = assumptions.get('growth_rates', [base_g, max(base_g-2,5), max(base_g-4,5), max(base_g-5,4), max(base_g-6,3)])
+    g = [x/100.0 for x in g]  # 转为小数
     wacc = assumptions.get('wacc', 0.10)
     t_g = assumptions.get('terminal_growth', 0.025)
     exit_multiple = assumptions.get('exit_multiple', None)  # EV/EBITDA退出倍数, None=用永续增长
@@ -481,7 +485,10 @@ def three_statement_projection(stock_code, assumptions=None):
 
     if assumptions is None:
         assumptions = {}
-    g_list = assumptions.get('growth_rates', [0.12, 0.10, 0.08])
+    rev_yoy = annual['revenue_yoy'] or 12
+    base_g = max(rev_yoy * 0.7, 5)
+    g_list_assume = assumptions.get('growth_rates', [base_g, max(base_g-2,5), max(base_g-4,5)])
+    g_list = [x/100.0 for x in g_list_assume]
     tax = assumptions.get('tax_rate', 0.25)
     nwc_pct = assumptions.get('nwc_pct', 0.12)
 
@@ -579,6 +586,7 @@ def three_statement_projection(stock_code, assumptions=None):
     return {
         'stock_code': stock_code, 'name': name, 'method': '3-Statement Projection',
         'base_year': base_year,
+        'base_growth': f'{base_g:.1f}%',
         'base_revenue': round(base_revenue, 1),
         'base_gross_margin': f'{gm*100:.1f}%',
         'sga_pct': f'{sga_pct*100:.1f}%',

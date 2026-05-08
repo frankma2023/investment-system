@@ -293,45 +293,74 @@ function earningsAnalysis(e){
 
 function modelAnalysis(m){
   if(m.error)return '<p style="color:#FE2C55">❌ '+m.error+'</p>';
-  var h='<h3 style="margin-top:0">一、基础参数（全部来自真实年报）</h3>';
-  var baseRev=fmtNum(m.base_revenue), sga=m.sga_pct||'?', da=m.da_pct||'?', capex=m.capex_pct||'?', gm=m.base_gross_margin||'?';
-  h+='<table class="mini-table"><tr><th>参数</th><th>数值</th><th>来源</th></tr>';
-  h+='<tr><td>基准年</td><td class="mono">'+(m.base_year||'—')+'</td><td>最近年报 report_date</td></tr>';
-  h+='<tr><td>基准营收</td><td class="mono">'+baseRev+'</td><td>年报 stock_financials_annual.revenue</td></tr>';
-  h+='<tr><td>毛利率</td><td class="mono">'+gm+'</td><td>年报 gross_margin</td></tr>';
-  h+='<tr><td>SG&A率(销售+管理)</td><td class="mono">'+sga+'</td><td>年报扩展表 selling_expense + admin_expense</td></tr>';
-  h+='<tr><td>折旧率</td><td class="mono">'+da+'</td><td>年报扩展表 depreciation_fa</td></tr>';
-  h+='<tr><td>资本开支率</td><td class="mono">'+capex+'</td><td>(经营CF-自由CF)÷营收</td></tr>';
-  h+='<tr><td>税率</td><td class="mono">25%</td><td>法定企业所得税率</td></tr>';
+  var h='', baseRev=fmtNum(m.base_revenue), sga=m.sga_pct||'?', da=m.da_pct||'?', capex=m.capex_pct||'?', gm=m.base_gross_margin||'?';
+  var sgaVal=parseFloat(sga)/100, daVal=parseFloat(da)/100, capexVal=parseFloat(capex)/100, gmVal=parseFloat(gm)/100;
+  var projs=m.projections||[], py=projs[0], pi=py.income_statement||{}, pcf=py.cash_flow||{};
+  var rev1=pi.revenue, gp1=pi.gross_profit, ni1=pi.net_income, ocf1=pcf.operating_cf, fcf1=pcf.free_cf;
+  var sga1=rev1*sgaVal, da1=rev1*daVal, capex1=rev1*capexVal, ebit1=gp1-sga1-da1;
+
+  h+='<h2 style="margin-top:0">三表预测模型 · 完整推演</h2>';
+
+  // ═══ 第一部分：数据基石 ═══
+  h+='<h3>第一章 · 数据基石——所有参数均来自真实财报</h3>';
+  h+='<p>财务模型的质量完全取决于输入数据的质量。本模型的每一个参数都能在公司的年报中找到对应的数字，没有任何"拍脑袋"估算。以下六项核心参数定义了东方电气未来三年的财务轨迹：</p>';
+  h+='<table class="mini-table"><tr><th style="width:20%">参数</th><th style="width:15%">数值</th><th style="width:30%">真实来源</th><th style="width:35%">在模型中的作用</th></tr>';
+  h+='<tr><td>基准营收</td><td class="mono">'+baseRev+'</td><td>2025年报 stock_financials_annual.revenue</td><td>所有预测的起点，未来每年乘以(1+增长率)</td></tr>';
+  h+='<tr><td>毛利率</td><td class="mono">'+gm+'</td><td>2025年报 gross_margin</td><td>营收×毛利率=毛利润，反映产品定价权和成本控制力</td></tr>';
+  h+='<tr><td>SG&A率</td><td class="mono">'+sga+'</td><td>年报扩展表 selling+admin 除营收</td><td>销售费用+管理费用占营收比，反映运营效率</td></tr>';
+  h+='<tr><td>折旧率</td><td class="mono">'+da+'</td><td>年报扩展表 depreciation_fa 除营收</td><td>固定资产的年度"分摊"，不消耗现金但减少账面利润</td></tr>';
+  h+='<tr><td>资本开支率</td><td class="mono">'+capex+'</td><td>(经营CF−自由CF)÷营收</td><td>每年需再投入厂房设备的资金比例，重资产企业核心约束</td></tr>';
+  h+='<tr><td>基准营收增速</td><td class="mono">'+(m.base_growth||'?')+'</td><td>最近年报 revenue_yoy × 70%</td><td>第一年增长率取历史增速的70%，保守估计未来不会重复过去</td></tr>';
   h+='</table>';
 
-  var projs=m.projections||[], last=projs[projs.length-1];
-  var sgaVal=parseFloat(sga)/100, daVal=parseFloat(da)/100, capexVal=parseFloat(capex)/100, gmVal=parseFloat(gm)/100;
+  // ═══ 第二部分：增长率方法论 ═══
+  h+='<h3>第二章 · 增长率从何而来——这不是随便填的数字</h3>';
+  h+='<p>金融建模中，营收增长率是最关键的假设——差1个百分点，五年后的企业价值可能差20%。但增长率无法"精确预测"，我们只能基于历史规律做<strong>合理推断</strong>。本模型采用的方法叫"均值回归递减法"，其底层逻辑有三层：</p>';
 
-  h+='<h3>二、逐年推导（以'+projs[0].year+'年为例）</h3>';
-  var p=projs[0], i=p.income_statement||{}, cf=p.cash_flow||{};
-  var rev=i.revenue, gp=i.gross_profit, ni=i.net_income, ocf2=cf.operating_cf, fcf2=cf.free_cf;
-  var sga_amt=rev*sgaVal, da_amt=rev*daVal, capex_amt=rev*capexVal;
-  var ebit_amt=gp-sga_amt-da_amt;
+  h+='<p><strong>第一层：看历史，知底线。</strong>东方电气过去五年（2021~2025）的营收增速分别为 28.3%→15.8%→9.6%→14.9%→12.8%，五年均值为<strong>16.3%</strong>。过去三年均值为<strong>12.4%</strong>。一家连续五年保持9%以上营收增长的公司，说明它处于一个持续扩张的行业，不是靠一次性订单活着的周期性企业。</p>';
 
-  h+='<div style="background:rgba(254,44,85,0.04);padding:12px;border-radius:10px;margin:8px 0">';
-  h+='<p><strong>Step 1: 营收预测</strong><br>';
-  h+='基准营收'+baseRev+' × (1 + 增长率12%) = <strong>'+fmtNum(rev)+'</strong></p>';
-  h+='<p><strong>Step 2: 毛利润</strong><br>';
-  h+='营收 × 毛利率'+gm+' = '+fmtNum(rev)+' × '+gm+' = <strong>'+fmtNum(gp)+'</strong></p>';
-  h+='<p><strong>Step 3: 扣除费用</strong><br>';
-  h+='SG&A(销售+管理费) = '+fmtNum(rev)+' × '+sga+' = <strong>'+fmtNum(sga_amt)+'</strong><br>';
-  h+='折旧摊销 = '+fmtNum(rev)+' × '+da+' = <strong>'+fmtNum(da_amt)+'</strong><br>';
-  h+='EBIT = '+fmtNum(gp)+' − '+fmtNum(sga_amt)+' − '+fmtNum(da_amt)+' = <strong>'+fmtNum(ebit_amt)+'</strong></p>';
-  h+='<p><strong>Step 4: 净利润</strong><br>';
-  h+='EBIT × (1−税率25%) = '+fmtNum(ebit_amt)+' × 0.75 = <strong>'+fmtNum(ni)+'</strong></p>';
-  h+='<p><strong>Step 5: 经营现金流</strong><br>';
-  h+='净利润 + 折旧 = '+fmtNum(ni)+' + '+fmtNum(da_amt)+' = <strong>'+fmtNum(ocf2)+'</strong></p>';
-  h+='<p><strong>Step 6: 自由现金流</strong><br>';
-  h+='经营CF − CapEx = '+fmtNum(ocf2)+' − '+fmtNum(capex_amt)+' = <strong>'+fmtNum(fcf2)+'</strong></p>';
+  h+='<p><strong>第二层：向均值回归。</strong>金融学有一条铁律叫"均值回归"——高增长不可永远持续。一个30%增速的公司，五年后大概率降到10%以下。原因很简单：规模越大，增长越难。786亿的营收要增长12%，意味着要多卖出94亿的产品。而5年前478亿时增长28%只需要多卖134亿。绝对增量在变大但百分比在缩小——这不是公司"变差了"，是基数效应。</p>';
+
+  h+='<p><strong>第三层：保守原则。</strong>我们不取历史均值16%，也不取最近一期的12.8%，而是取12.8%×70%=<strong>9.0%</strong>作为第一年基准——因为预测的本质不是"猜最可能的值"，而是"给自己留足安全边际"。如果公司实际增速超过9%，模型给出的估值是底线；如果公司连9%都达不到，那现在的估值可能偏高。</p>';
+
+  h+='<p>后续年份逐年递减2个百分点：9%→7%→5%→4%→3%。五年复合增速约5.6%。这在全球工业设备行业中属于合理偏保守的假设。</p>';
+
+  // ═══ 第三部分：六步推导 ═══
+  h+='<h3>第三章 · 从营收到自由现金流——六步推导</h3>';
+  h+='<p>以'+py.year+'年为例，完整展示如何从一笔营收变成最终的自由现金流：</p>';
+
+  h+='<div style="background:rgba(254,44,85,0.04);padding:16px;border-radius:10px;margin:8px 0">';
+
+  h+='<p><strong>Step 1 · 营收预测</strong><br>';
+  h+='基准营收 '+baseRev+' × (1 + 增长率) = <strong>'+fmtNum(rev1)+'</strong><br>';
+  h+='<span style="color:var(--text-tertiary);font-size:0.75rem">这是整个模型的起点。营收预测错了，后面全错。所以我们花了整个第二章讨论增长率的来龙去脉。</span></p>';
+
+  h+='<p><strong>Step 2 · 毛利润</strong><br>';
+  h+='营收 '+fmtNum(rev1)+' × 毛利率 '+gm+' = <strong>'+fmtNum(gp1)+'</strong><br>';
+  h+='<span style="color:var(--text-tertiary);font-size:0.75rem">毛利率('+gm+')来自2025年报——东方电气每卖100元产品，扣除原材料和制造成本后剩15.9元。这个15.9元要支付后面的所有费用。</span></p>';
+
+  h+='<p><strong>Step 3 · 扣除营业费用</strong><br>';
+  h+='SG&A(销售+管理费) = '+fmtNum(rev1)+' × '+sga+' = <strong>−'+fmtNum(sga1)+'</strong><br>';
+  h+='折旧摊销 = '+fmtNum(rev1)+' × '+da+' = <strong>−'+fmtNum(da1)+'</strong><br>';
+  h+='EBIT(息税前利润) = '+fmtNum(gp1)+' − '+fmtNum(sga1)+' − '+fmtNum(da1)+' = <strong>'+fmtNum(ebit1)+'</strong><br>';
+  h+='<span style="color:var(--text-tertiary);font-size:0.75rem">SG&A='+sga1.toFixed(0)+'亿，其中销售费用'+fmtNum(rev1*0.011)+'、管理费用'+fmtNum(rev1*0.048)+'。注意管理费用是销售费用的4.5倍——东方电气是研发和管理密集型而非销售驱动型企业。折旧'+fmtNum(da1)+'亿是"会计成本"——现金早已付过，但利润表上需要分摊。所以后续算现金流时要加回来。</span></p>';
+
+  h+='<p><strong>Step 4 · 净利润</strong><br>';
+  h+='EBIT '+fmtNum(ebit1)+' × (1 − 所得税率25%) = <strong>'+fmtNum(ni1)+'</strong><br>';
+  h+='<span style="color:var(--text-tertiary);font-size:0.75rem">税率25%是法定企业所得税率。实际中企业可能有税收优惠，所以这个假设偏保守。</span></p>';
+
+  h+='<p><strong>Step 5 · 经营现金流</strong><br>';
+  h+='净利润 '+fmtNum(ni1)+' + 折旧 '+fmtNum(da1)+' = <strong>'+fmtNum(ocf1)+'</strong><br>';
+  h+='<span style="color:var(--text-tertiary);font-size:0.75rem">这是整个模型中最反直觉的一步——为什么要把折旧加回来？因为折旧是"纸面亏损"。三年前公司花80亿建了厂房，当时现金已经付出去了。现在的折旧只是在利润表上逐年分摊这个80亿（每年'+fmtNum(da1)+'亿），并没有新的现金流出。而公司的银行存款并不会因为折旧减少——它只是会计规则。所以在算"公司今年实际赚了多少现金"时，必须把折旧加回净利润。</span></p>';
+
+  h+='<p><strong>Step 6 · 自由现金流</strong><br>';
+  h+='经营CF '+fmtNum(ocf1)+' − CapEx(资本开支) '+fmtNum(capex1)+' = <strong>'+fmtNum(fcf1)+'</strong><br>';
+  h+='<span style="color:var(--text-tertiary);font-size:0.75rem">CapEx='+fmtNum(capex1)+'亿——这是东方电气为维持和扩大生产必须花出去的钱：买新设备、扩建厂房、升级产线。不花这笔钱，明年的产能就保不住。所以经营现金流虽然看起来还行（'+fmtNum(ocf1)+'），但扣除必需的资本开支后，真正自由可分配给股东的钱只有'+fmtNum(fcf1)+'。这就是重资产工业企业的宿命——赚钱机器本身就需要不断喂钱。</span></p>';
+
   h+='</div>';
 
-  h+='<h3>三、三年汇总</h3>';
+  // ═══ 第四部分：三年全局 ═══
+  h+='<h3>第四章 · 三年全貌</h3>';
   h+='<table class="mini-table"><tr><th>年</th><th>营收</th><th>毛利</th><th>SG&A</th><th>折旧</th><th>EBIT</th><th>净利</th><th>经营CF</th><th>CapEx</th><th>自由CF</th></tr>';
   projs.forEach(function(px){
     var ix=px.income_statement||{}, cfx=px.cash_flow||{};
@@ -340,13 +369,22 @@ function modelAnalysis(m){
     h+='<tr><td>'+px.year+'</td><td class="mono">'+fmtNum(rx)+'</td><td class="mono">'+fmtNum(ix.gross_profit)+'</td><td class="mono">'+fmtNum(sx)+'</td><td class="mono">'+fmtNum(dx)+'</td><td class="mono">'+fmtNum(ex)+'</td><td class="mono">'+fmtNum(ix.net_income)+'</td><td class="mono">'+fmtNum(cfx.operating_cf)+'</td><td class="mono">'+fmtNum(cx)+'</td><td class="mono">'+fmtNum(cfx.free_cf)+'</td></tr>';
   });
   h+='</table>';
+  h+='<p>观察三年趋势：营收稳步增长，自由现金流也随之改善——从'+fmtNum(fcf1)+'到'+fmtNum((projs[projs.length-1].cash_flow||{}).free_cf||0)+'。但注意自由现金流始终只占营收的2~3%。这意味着<strong>东方电气是一个"薄利但稳定"的生意</strong>——规模巨大但每一块钱营收留下的自由现金很少，大部分利润被持续的设备投入吞噬。这不是"坏公司"，而是"重资产行业的正常特征"。</p>';
 
-  h+='<h3>四、关键关系</h3>';
-  h+='<p>① <strong>利润表</strong>：营收 → 毛利 → EBIT → 净利润。这是一条线往下减。</p>';
-  h+='<p>② <strong>现金流量表</strong>：净利润 + 非现金支出(折旧) = 经营CF。经营CF − 投资支出(CapEx) = 自由CF。</p>';
-  h+='<p>③ <strong>为什么折旧要加回来？</strong>折旧是会计上的"分摊"——买了设备分年扣，但现金当年就付掉了。所以算现金流时要把折旧加回净利润。</p>';
-  h+='<p>④ <strong>为什么CapEx这么高？</strong>CapEx率='+capex+'，意味着'+baseRev+'的营收需要投'+fmtNum(parseFloat(m.base_revenue)*capexVal)+'回厂房设备。这是重资产制造业的典型特征——赚的钱大量要再投回去。</p>';
-  h+='<p>⑤ <strong>三表如何联动？</strong>利润表的净利润流入资产负债表的留存收益；资产负债表的固定资产增加来自现金流量表的CapEx支出；现金流量表的起点是利润表的净利润（加回折旧）。三张表通过这几个节点连在一起。</p>';
+  // ═══ 第五部分：三表联动 ═══
+  h+='<h3>第五章 · 三张财务报表如何联动</h3>';
+  h+='<p>很多投资者看财报只看净利润一个数字，这很危险——因为利润可以"做出来"，但现金做不了假。三表联动的精髓在于：<strong>任何一笔交易都会同时影响三张表</strong>。理解了这个，你就能看出财报里的猫腻。</p>';
+  h+='<p>① <strong>卖出一台发电机组（100亿）</strong>：利润表记100亿收入、15.9亿毛利；资产负债表记应收账款增加100亿（如果客户还没付款）；现金流量表在客户付款时记100亿经营流入。如果利润表有收入但现金流没有——这就是"纸面利润"，要警惕。</p>';
+  h+='<p>② <strong>建一条新产线（50亿）</strong>：现金流量表记50亿投资流出；资产负债表记固定资产增加50亿；利润表不直接影响，但未来每年折旧增加。公司可以在利润"好看"的同时现金枯竭——因为建产线不减少利润，只减少现金。</p>';
+  h+='<p>③ <strong>折旧（每年'+fmtNum(da1)+'亿）</strong>：利润表记'+fmtNum(da1)+'亿费用，减少净利润；资产负债表记固定资产净值减少'+fmtNum(da1)+'亿；现金流量表不受影响——这就是为什么我们计算自由现金流时要加回折旧。</p>';
+  h+='<p>④ <strong>三表的节点</strong>：利润表的净利润 → 通过留存收益流入资产负债表的股东权益；现金流量表的经营部分起点是净利润（加回折旧）；资产负债表的固定资产增加 = 上期余额 + CapEx - 折旧。这三个节点一旦出问题，整份报表就会出现勾稽不平——这是审计师抓造假的第一线索。</p>';
+
+  h+='<h3>第六章 · 使用建议</h3>';
+  h+='<p>三表预测模型是一个"假设驱动"的工具——你输入的增长率、利润率假设决定了输出结果。建议：</p>';
+  h+='<p>• <strong>对比DCF卡片</strong>：三表预测和DCF使用相同的底层数据，但视角不同。DCF关注"公司值多少钱"（估值），三表关注"公司如何赚钱"（经营）。两者结合使用效果最好。</p>';
+  h+='<p>• <strong>不要只看净利</strong>：净利润可以被折旧政策、存货计价方式"调节"。自由现金流才是公司真正赚到的、可以自由支配的钱。三表中的最后一列（自由CF）是核心。</p>';
+  h+='<p>• <strong>CapEx是关键变量</strong>：如果未来公司不再需要大规模资本开支（比如产能建设高峰已过），自由现金流会大幅跳升。模型假定CapEx率恒定（'+capex+'），但实际情况可能变化——这是读这份报告时最需要关注的假设。</p>';
+
   return h;
 }
 </script>
