@@ -42,6 +42,7 @@ def dcf_valuation(stock_code, assumptions=None):
     g = assumptions.get('growth_rates', [0.12, 0.10, 0.08, 0.06, 0.05])
     wacc = assumptions.get('wacc', 0.10)
     t_g = assumptions.get('terminal_growth', 0.025)
+    exit_multiple = assumptions.get('exit_multiple', None)  # EV/EBITDA退出倍数, None=用永续增长
     tax = assumptions.get('tax_rate', 0.25)
 
     annual = db.execute('''SELECT * FROM stock_financials_annual
@@ -152,19 +153,37 @@ def dcf_valuation(stock_code, assumptions=None):
         fcf_details.append({'year': yr+1, 'revenue': round(rev,1), 'ufcf': round(ufcf,1), 'pv': round(pv,1)})
 
     last_fcf = fcf_details[-1]['ufcf']
-    tv = last_fcf * (1 + t_g) / (wacc - t_g)
+    last_ebitda = fcf_details[-1]['revenue'] * ebitda_margin
+
+    # 终值计算
+    if exit_multiple:
+        tv = last_ebitda * exit_multiple
+        tv_method = f'EV/EBITDA {exit_multiple}x'
+    else:
+        tv = last_fcf * (1 + t_g) / (wacc - t_g)
+        tv_method = f'永续增长 {t_g*100:.1f}%'
+
     pv_tv = tv / ((1 + wacc) ** (len(g) + 0.5))
     enterprise_value = sum(pv_fcfs) + pv_tv
     equity_value = enterprise_value - (net_debt or 0)
     target_price = equity_value / shares if shares > 0 else 0
 
     sensitivity = []
-    for w in [0.08, 0.09, 0.10, 0.11, 0.12]:
-        ev = sum(d['ufcf'] / ((1 + w) ** (yr + 0.5)) for yr, d in enumerate(fcf_details))
-        tv_s = last_fcf * (1 + t_g) / (w - t_g)
-        ev += tv_s / ((1 + w) ** (len(g) + 0.5))
-        tp = (ev - (net_debt or 0)) / shares if shares > 0 else 0
-        sensitivity.append({'wacc': f'{w*100:.0f}%', 'target_price': round(tp,2)})
+    if exit_multiple:
+        for m in [exit_multiple-4, exit_multiple-2, exit_multiple, exit_multiple+2, exit_multiple+4]:
+            if m <= 0: continue
+            ev = sum(d['ufcf'] / ((1 + wacc) ** (yr + 0.5)) for yr, d in enumerate(fcf_details))
+            tv_s = last_ebitda * m
+            ev += tv_s / ((1 + wacc) ** (len(g) + 0.5))
+            tp = (ev - (net_debt or 0)) / shares if shares > 0 else 0
+            sensitivity.append({'label': f'EV/EBITDA {m}x', 'target_price': round(tp,2)})
+    else:
+        for w in [0.08, 0.09, 0.10, 0.11, 0.12]:
+            ev = sum(d['ufcf'] / ((1 + w) ** (yr + 0.5)) for yr, d in enumerate(fcf_details))
+            tv_s = last_fcf * (1 + t_g) / (w - t_g)
+            ev += tv_s / ((1 + w) ** (len(g) + 0.5))
+            tp = (ev - (net_debt or 0)) / shares if shares > 0 else 0
+            sensitivity.append({'label': f'WACC {w*100:.0f}%', 'target_price': round(tp,2)})
 
     return {
         'stock_code': stock_code, 'name': name, 'method': 'DCF',
@@ -178,7 +197,9 @@ def dcf_valuation(stock_code, assumptions=None):
         'net_debt': round(net_debt, 1) if net_debt else None,
         'wacc': f'{wacc*100:.0f}%',
         'terminal_growth': f'{t_g*100:.1f}%',
+        'tv_method': tv_method,
         'projections': fcf_details,
+        'terminal_value': round(pv_tv, 1),
         'enterprise_value': round(enterprise_value, 1),
         'equity_value': round(equity_value, 1),
         'target_price': round(target_price, 2),

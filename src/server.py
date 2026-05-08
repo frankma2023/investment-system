@@ -837,7 +837,7 @@ def api_stock_analysis():
         return jsonify({'error': 'code required'}), 400
     try:
         from analysis.financial import dcf_valuation, comps_analysis, earnings_analysis, three_statement_projection
-        dcf = dcf_valuation(stock_code)
+        dcf = dcf_valuation(stock_code, {'exit_multiple': 8})
         comps = comps_analysis(stock_code)
         earnings = earnings_analysis(stock_code)
         model = three_statement_projection(stock_code)

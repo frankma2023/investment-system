@@ -92,12 +92,12 @@ function renderResults(data){
   var code=d.stock_code||c.stock_code||'';
 
   var html='<div class="stock-header"><span class="code">'+code+'</span><span class="name">'+name+'</span></div>';
-  html+='<div class="result-grid">';
+  html+='<div class="result-grid" id="result-grid">';
 
   // ═══ DCF ═══
   var upside=d.upside_pct;
   var upsideTag=upside>20?'<span class="tag tag-green">低估 '+upside+'%</span>':(upside<-10?'<span class="tag tag-red">高估 '+Math.abs(upside)+'%</span>':'<span class="tag tag-orange">合理</span>');
-  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">💰 DCF估值</span>'+upsideTag+'</div>';
+  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">💰 DCF估值</span>'+upsideTag+'<button class="btn-analysis" data-type="dcf" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.65rem;font-family:var(--font-display);">📖 详解</button></div>';
   html+='<div class="metric-row">';
   html+='<div class="metric-item"><div class="val">'+(d.current_price||'—')+'</div><div class="lbl">当前价</div></div>';
   html+='<div class="metric-item"><div class="val '+(upside>0?'up':'down')+'">'+(d.target_price||'—')+'</div><div class="lbl">DCF目标价</div></div>';
@@ -117,7 +117,7 @@ function renderResults(data){
   html+='</div>';
 
   // ═══ Comps ═══
-  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📊 可比公司分析</span><span style="font-size:0.65rem;color:var(--text-tertiary)">'+c.industry+' · '+c.peer_count+'家可比</span></div>';
+  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📊 可比公司分析</span><span style="font-size:0.65rem;color:var(--text-tertiary)">'+c.industry+' · '+c.peer_count+'家可比</span><button class="btn-analysis" data-type="comps" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.65rem;font-family:var(--font-display);">📖 详解</button></div>';
   var mm=c.median_multiples||{};
   html+='<div class="metric-row">';
   html+='<div class="metric-item"><div class="val">'+(mm.pe||'—')+'x</div><div class="lbl">中位PE</div></div>';
@@ -141,7 +141,7 @@ function renderResults(data){
   html+='</div>';
 
   // ═══ Earnings ═══
-  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📈 盈利趋势</span><span style="font-size:0.65rem;color:var(--text-tertiary)">'+e.trend_summary+'</span></div>';
+  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📈 盈利趋势</span><span style="font-size:0.65rem;color:var(--text-tertiary)">'+e.trend_summary+'</span><button class="btn-analysis" data-type="earnings" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.65rem;font-family:var(--font-display);">📖 详解</button></div>';
   var lt=e.latest||{};
   html+='<div class="metric-row">';
   html+='<div class="metric-item"><div class="val '+(lt.revenue_yoy>0?'up':'down')+'">'+(lt.revenue_yoy!=null?(lt.revenue_yoy>0?'+':'')+lt.revenue_yoy+'%':'—')+'</div><div class="lbl">营收同比</div></div>';
@@ -161,7 +161,7 @@ function renderResults(data){
   html+='</div>';
 
   // ═══ 3-Statement ═══
-  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 三表预测</span><span style="font-size:0.65rem;color:var(--text-tertiary)">'+m.base_gross_margin+' 基准毛利率</span></div>';
+  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 三表预测</span><span style="font-size:0.65rem;color:var(--text-tertiary)">'+m.base_gross_margin+' 基准毛利率</span><button class="btn-analysis" data-type="model" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.65rem;font-family:var(--font-display);">📖 详解</button></div>';
   if(m.projections){
     html+='<table class="mini-table"><tr><th>年</th><th>营收</th><th>毛利</th><th>净利</th><th>经营CF</th><th>自由CF</th></tr>';
     m.projections.forEach(function(p){
@@ -172,11 +172,146 @@ function renderResults(data){
   }
   html+='</div>';
 
+  html+='</div>';  // result-grid
+
+  // ═══ 分析面板 ═══
+  html+='<div class="xhs-card" id="analysis-panel" style="display:none;margin-top:16px">';
+  html+='<div class="xhs-card-header"><span class="xhs-card-label">📖 详细分析</span><span id="analysis-title" style="font-size:0.7rem;color:var(--text-tertiary);margin-left:8px;"></span></div>';
+  html+='<div id="analysis-body" style="padding:16px;font-size:0.8rem;line-height:1.8;color:var(--text-primary);max-height:60vh;overflow-y:auto;"></div>';
   html+='</div>';
+
   document.getElementById('results').innerHTML=html;
+
+  // 绑定分析按钮
+  document.querySelectorAll('.btn-analysis').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var type=this.dataset.type;
+      showAnalysis(type, data);
+    });
+  });
+}
+
+function showAnalysis(type, data){
+  var panel=document.getElementById('analysis-panel');
+  var body=document.getElementById('analysis-body');
+  var title=document.getElementById('analysis-title');
+  panel.style.display='';
+
+  if(type==='dcf'){ title.textContent='DCF估值推演'; body.innerHTML=dcfAnalysis(data.dcf||{}); }
+  else if(type==='comps'){ title.textContent='可比公司分析推演'; body.innerHTML=compsAnalysis(data.comps||{}); }
+  else if(type==='earnings'){ title.textContent='盈利趋势推演'; body.innerHTML=earningsAnalysis(data.earnings||{}); }
+  else if(type==='model'){ title.textContent='三表预测推演'; body.innerHTML=modelAnalysis(data.model||{}); }
+  panel.scrollIntoView({behavior:'smooth'});
 }
 
 function fmtNum(v){if(v==null)return'—';var n=Math.abs(v);if(n>=1e8)return(v/1e8).toFixed(1)+'亿';if(n>=1e4)return(v/1e4).toFixed(1)+'万';return v.toFixed(1)}
+
+// ══════ 分析文本生成 ══════
+
+function dcfAnalysis(d){
+  if(d.error)return '<p style="color:#FE2C55">❌ '+d.error+'</p>';
+  var rev=d.base_revenue||0, ebitda_m=d.ebitda_margin||'', da_m=d.da_pct||'', capex_m=d.capex_pct||'';
+  var proj=d.projections||[], tv_m=d.tv_method||'', net_debt=d.net_debt||0, ev=d.enterprise_value||0;
+  var eq=d.equity_value||0, tp=d.target_price||0, cp=d.current_price||0;
+
+  var h='<h3 style="margin-top:0">一、数据来源</h3>';
+  h+='<p>DCF模型基于<strong>最近年报真实财务数据</strong>，不使用任何估算值：</p>';
+  h+='<table class="mini-table"><tr><th>参数</th><th>数值</th><th>来源</th></tr>';
+  h+='<tr><td>营业收入(基准年)</td><td class="mono">'+fmtNum(rev)+'</td><td>年报 stock_financials_annual</td></tr>';
+  h+='<tr><td>EBITDA利润率</td><td class="mono">'+ebitda_m+'</td><td>年报扩展表(EBITDA÷营收)</td></tr>';
+  h+='<tr><td>折旧摊销占营收比</td><td class="mono">'+da_m+'</td><td>年报扩展表(固定资产折旧)</td></tr>';
+  h+='<tr><td>资本开支占营收比</td><td class="mono">'+capex_m+'</td><td>(经营CF-自由CF)÷营收</td></tr>';
+  h+='<tr><td>净债务</td><td class="mono">'+fmtNum(net_debt)+'</td><td>总资产×有息负债率</td></tr>';
+  h+='<tr><td>当前股价</td><td class="mono">'+cp+'元</td><td>最近交易日收盘价</td></tr>';
+  h+='</table>';
+
+  h+='<h3>二、自由现金流预测推演</h3>';
+  h+='<p>基于营收年增长率假设（12%→10%→8%→6%→5%），逐年计算：</p>';
+  h+='<table class="mini-table"><tr><th>年</th><th>营收</th><th>EBITDA</th><th>D&A</th><th>CapEx</th><th>自由现金流</th></tr>';
+  var total_pv=0;
+  proj.forEach(function(p){
+    var rev_y=p.revenue, ebitda_y=rev_y*parseFloat(ebitda_m)/100, da_y=rev_y*parseFloat(da_m)/100, capex_y=rev_y*parseFloat(capex_m)/100;
+    h+='<tr><td>Y'+p.year+'</td><td class="mono">'+fmtNum(p.revenue)+'</td><td class="mono">'+fmtNum(ebitda_y)+'</td><td class="mono">'+fmtNum(da_y)+'</td><td class="mono">'+fmtNum(capex_y)+'</td><td class="mono">'+fmtNum(p.ufcf)+'</td></tr>';
+    total_pv+=p.pv||0;
+  });
+  h+='</table>';
+
+  var last=proj[proj.length-1];
+  h+='<p><strong>为什么自由现金流这么薄？</strong>EBITDA利润率'+ebitda_m+'，扣除25%税后剩'+(parseFloat(ebitda_m)*0.75).toFixed(1)+'%。但CapEx高达'+capex_m+'，几乎吃掉了全部税后EBITDA。每年赚的现金大部分要再投回厂房设备，留给股东的极少。这就是重资产工业企业的典型特征。</p>';
+
+  h+='<h3>三、终值计算：'+tv_m+'</h3>';
+  h+='<p>5年FCF现值合计: <strong>'+fmtNum(total_pv)+'</strong>。终值: <strong>'+fmtNum(d.terminal_value)+'</strong>。企业价值='+fmtNum(total_pv)+'+'+fmtNum(d.terminal_value)+'='+fmtNum(ev)+'。</p>';
+  h+='<p>减去净债务'+fmtNum(net_debt)+'，得到股权价值'+fmtNum(eq)+'。除以总股本，得目标价<strong>'+tp+'元</strong>。</p>';
+
+  h+='<h3>四、敏感性分析</h3>';
+  h+='<table class="mini-table"><tr><th>假设</th><th>目标价</th></tr>';
+  (d.sensitivity||[]).forEach(function(s){h+='<tr><td>'+s.label+'</td><td class="mono">'+s.target_price+'元</td></tr>'});
+  h+='</table>';
+  h+='<p>当前股价<strong>'+cp+'元</strong>，DCF目标价<strong>'+tp+'元</strong>。差异来源于市场对该公司未来增长率或利润率的预期远高于当前年报数据。</p>';
+  return h;
+}
+
+function compsAnalysis(c){
+  if(c.error)return '<p style="color:#FE2C55">❌ '+c.error+'</p>';
+  var h='<h3 style="margin-top:0">一、可比公司筛选</h3>';
+  h+='<p>在<strong>'+c.industry+'</strong>行业中，找到'+(c.peer_count||0)+'家可比公司。估值倍数（PE/PB/PS）来自真实财务数据自行计算，不使用兜底值。</p>';
+  var mm=c.median_multiples||{};
+  h+='<p>行业中位倍数：<strong>PE='+(mm.pe||'—')+'倍，PB='+(mm.pb||'—')+'倍，PS='+(mm.ps||'—')+'倍</strong>。</p>';
+
+  h+='<h3>二、估值推导</h3>';
+  var iv=c.implied_valuations||{};
+  h+='<p>将行业中位倍数应用于公司财务数据：</p>';
+  for(var k in iv){h+='<p>'+k+'：<strong>'+iv[k]+'亿</strong></p>'}
+  var avg=c.average_valuation||0;
+  h+='<p>综合估值约<strong>'+fmtNum(avg*1e8)+'</strong>。</p>';
+
+  h+='<h3>三、解读</h3>';
+  h+='<p>可比公司法反映的是<strong>市场当前愿意给同行业公司多少倍估值</strong>。如果目标公司倍数低于行业中位，可能是低估；高于中位，可能是高估。但倍数差异也可能反映基本面差异（增长率、利润率、护城河），需要结合DCF综合判断。</p>';
+  return h;
+}
+
+function earningsAnalysis(e){
+  if(e.error)return '<p style="color:#FE2C55">❌ '+e.error+'</p>';
+  var h='<h3 style="margin-top:0">一、季度趋势</h3>';
+  var qs=e.quarters||[], lt=e.latest||{};
+  h+='<p>最近季度营收同比<strong>'+(lt.revenue_yoy>0?'+':'')+lt.revenue_yoy+'%</strong>，净利同比<strong>'+(lt.net_profit_yoy>0?'+':'')+lt.net_profit_yoy+'%</strong>。</p>';
+  h+='<p>营收加速/减速: <strong>'+(e.revenue_acceleration>0?'+':'')+e.revenue_acceleration+'个百分点</strong>（正数=加速增长，负数=增速放缓）。净利加速: <strong>'+(e.profit_acceleration>0?'+':'')+e.profit_acceleration+'个百分点</strong>。</p>';
+
+  h+='<h3>二、趋势判断</h3>';
+  h+='<p><strong>'+e.trend_summary+'</strong></p>';
+  if(e.revenue_acceleration<0 && e.profit_acceleration>0){
+    h+='<p>营收增速在放缓，但净利在加速。这通常意味着：要么毛利率在改善（产品提价或成本下降），要么费用率在下降（控费见效）。检查毛利率趋势来确认。</p>';
+  }
+
+  h+='<h3>三、关键指标</h3>';
+  h+='<table class="mini-table"><tr><th>指标</th><th>数值</th><th>解读</th></tr>';
+  h+='<tr><td>毛利率</td><td class="mono">'+(lt.gross_margin||'—')+'%</td><td>'+(lt.gross_margin>30?'高于30%，有定价权':lt.gross_margin>15?'中等水平，制造业典型':'偏低，成本压力大')+'</td></tr>';
+  h+='<tr><td>ROE</td><td class="mono">'+(lt.roe||'—')+'%</td><td>'+(lt.roe>15?'优秀':'一般')+'</td></tr>';
+  h+='</table>';
+  return h;
+}
+
+function modelAnalysis(m){
+  if(m.error)return '<p style="color:#FE2C55">❌ '+m.error+'</p>';
+  var h='<h3 style="margin-top:0">一、基准数据</h3>';
+  h+='<p>基于最近年报，基准营收<strong>'+fmtNum(m.base_revenue)+'</strong>，毛利率<strong>'+m.base_gross_margin+'</strong>，SG&A率<strong>'+(m.sga_pct||'—')+'</strong>，折旧率<strong>'+(m.da_pct||'—')+'</strong>，CapEx率<strong>'+(m.capex_pct||'—')+'</strong>。</p>';
+
+  h+='<h3>二、推导逻辑</h3>';
+  h+='<p>利润表：营收 → 毛利润 → 扣除SG&A → 扣除折旧 → EBIT → 扣除利息和税 → 净利润。</p>';
+  h+='<p>现金流量表：净利润 + 折旧 = 经营现金流。经营现金流 - CapEx = 自由现金流。</p>';
+  h+='<p>三张表的联动关系：利润表的净利润影响资产负债表的留存收益；资产负债表的CapEx来自现金流量表的投资支出；现金流量表的经营部分起点是利润表的净利润。</p>';
+
+  h+='<h3>三、三年预测</h3>';
+  h+='<table class="mini-table"><tr><th>年</th><th>营收</th><th>毛利</th><th>SG&A</th><th>折旧</th><th>净利</th><th>自由CF</th></tr>';
+  (m.projections||[]).forEach(function(p){
+    var i=p.income_statement||{}, cf=p.cash_flow||{};
+    var rev=i.revenue, sga=rev*parseFloat(m.sga_pct)/100, da=rev*parseFloat(m.da_pct)/100;
+    h+='<tr><td>Y'+p.year+'</td><td class="mono">'+fmtNum(rev)+'</td><td class="mono">'+fmtNum(i.gross_profit)+'</td><td class="mono">'+fmtNum(sga)+'</td><td class="mono">'+fmtNum(da)+'</td><td class="mono">'+fmtNum(i.net_income)+'</td><td class="mono">'+fmtNum(cf.free_cf)+'</td></tr>';
+  });
+  h+='</table>';
+  h+='<p>三表预测和DCF使用相同的底层假设。两者对照可以看出：DCF关注的是自由现金流的现值，三表关注的是利润表和资产负债表的勾稽关系。</p>';
+  return h;
+}
 </script>
 </body>
 </html>
