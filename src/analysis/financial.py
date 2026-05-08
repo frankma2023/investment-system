@@ -39,21 +39,21 @@ def dcf_valuation(stock_code, assumptions=None):
 
     if assumptions is None:
         assumptions = {}
-    # 用最近一期营收同比作为默认基准增速，逐年递减至永续增长
-    rev_yoy = annual['revenue_yoy'] or 12
-    base_g = max(rev_yoy * 0.7, 5)  # 取历史增速的70%，不低于5%
-    g = assumptions.get('growth_rates', [base_g, max(base_g-2,5), max(base_g-4,5), max(base_g-5,4), max(base_g-6,3)])
-    g = [x/100.0 for x in g]  # 转为小数
-    wacc = assumptions.get('wacc', 0.10)
-    t_g = assumptions.get('terminal_growth', 0.025)
-    exit_multiple = assumptions.get('exit_multiple', None)  # EV/EBITDA退出倍数, None=用永续增长
-    tax = assumptions.get('tax_rate', 0.25)
 
     annual = db.execute('''SELECT * FROM stock_financials_annual
         WHERE stock_code = ? ORDER BY report_date DESC LIMIT 1''',
         (stock_code,)).fetchone()
     if not annual or not annual['revenue']:
         db.close(); return {'error': f'{stock_code} 无年报数据'}
+
+    t_g = assumptions.get('terminal_growth', 0.025)
+    exit_multiple = assumptions.get('exit_multiple', None)
+    tax = assumptions.get('tax_rate', 0.25)
+    rev_yoy = annual['revenue_yoy'] or 12
+    base_g = max(rev_yoy * 0.7, 5)
+    g = assumptions.get('growth_rates', [base_g, max(base_g-2,5), max(base_g-4,5), max(base_g-5,4), max(base_g-6,3)])
+    g = [x/100.0 for x in g]
+    wacc = assumptions.get('wacc', 0.10)
 
     ext = db.execute('''SELECT * FROM stock_financials_annual_ext
         WHERE stock_code = ? AND report_date = ?''',
