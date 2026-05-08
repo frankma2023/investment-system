@@ -485,12 +485,6 @@ def three_statement_projection(stock_code, assumptions=None):
 
     if assumptions is None:
         assumptions = {}
-    rev_yoy = annual['revenue_yoy'] or 12
-    base_g = max(rev_yoy * 0.7, 5)
-    g_list_assume = assumptions.get('growth_rates', [base_g, max(base_g-2,5), max(base_g-4,5)])
-    g_list = [x/100.0 for x in g_list_assume]
-    tax = assumptions.get('tax_rate', 0.25)
-    nwc_pct = assumptions.get('nwc_pct', 0.12)
 
     annual = db.execute('''SELECT * FROM stock_financials_annual
         WHERE stock_code = ? ORDER BY report_date DESC LIMIT 1''',
@@ -498,6 +492,12 @@ def three_statement_projection(stock_code, assumptions=None):
     if not annual or not annual['revenue']:
         db.close(); return {'error': f'{stock_code} 无年报数据'}
 
+    rev_yoy = annual['revenue_yoy'] or 12
+    base_g = max(rev_yoy * 0.7, 5)
+    g_list_assume = assumptions.get('growth_rates', [base_g, max(base_g-2,5), max(base_g-4,5)])
+    g_list = [x/100.0 for x in g_list_assume]
+    tax = assumptions.get('tax_rate', 0.25)
+    nwc_pct = assumptions.get('nwc_pct', 0.12)
     ext = db.execute('''SELECT * FROM stock_financials_annual_ext
         WHERE stock_code = ? AND report_date = ?''',
         (stock_code, annual['report_date'])).fetchone()
