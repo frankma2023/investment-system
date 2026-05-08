@@ -133,6 +133,9 @@ def dcf_valuation(stock_code, assumptions=None):
 
     market_cap = shares * current_price
 
+    # ── 确定基准年 ──
+    base_year = int(annual['report_date'][:4]) if annual.get('report_date') else 2025
+
     # ── FCF预测 ──
     rev = revenue
     pv_fcfs = []
@@ -150,7 +153,7 @@ def dcf_valuation(stock_code, assumptions=None):
         period = yr + 0.5
         pv = ufcf / ((1 + wacc) ** period)
         pv_fcfs.append(pv)
-        fcf_details.append({'year': yr+1, 'revenue': round(rev,1), 'ufcf': round(ufcf,1), 'pv': round(pv,1)})
+        fcf_details.append({'year': base_year + yr + 1, 'revenue': round(rev,1), 'ufcf': round(ufcf,1), 'pv': round(pv,1)})
 
     last_fcf = fcf_details[-1]['ufcf']
     last_ebitda = fcf_details[-1]['revenue'] * ebitda_margin
@@ -532,6 +535,9 @@ def three_statement_projection(stock_code, assumptions=None):
 
     db.close()
 
+    # 确定基准年份
+    base_year = int(annual['report_date'][:4]) if annual.get('report_date') else 2025
+
     if sga_pct is None or da_pct is None or capex_pct is None:
         return {'stock_code': stock_code, 'name': name, 'method': '3-Statement Projection',
                 'error': '必要财务数据缺失', 'warnings': warnings}
@@ -554,7 +560,7 @@ def three_statement_projection(stock_code, assumptions=None):
         fcf_proj = ocf_proj - capex
 
         projections.append({
-            'year': yr + 1,
+            'year': base_year + yr + 1,
             'income_statement': {
                 'revenue': round(rev, 1),
                 'gross_profit': round(gross_profit, 1),
@@ -572,6 +578,7 @@ def three_statement_projection(stock_code, assumptions=None):
 
     return {
         'stock_code': stock_code, 'name': name, 'method': '3-Statement Projection',
+        'base_year': base_year,
         'base_revenue': round(base_revenue, 1),
         'base_gross_margin': f'{gm*100:.1f}%',
         'sga_pct': f'{sga_pct*100:.1f}%',

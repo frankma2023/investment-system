@@ -105,8 +105,8 @@ function renderResults(data){
   html+='<div class="metric-item"><div class="val">'+d.wacc+'</div><div class="lbl">WACC</div></div>';
   html+='</div>';
   if(d.projections){
-    html+='<table class="mini-table"><tr><th>年</th><th>营收到</th><th>FCF到</th><th>现值</th></tr>';
-    d.projections.forEach(function(p){html+='<tr><td>Y'+p.year+'</td><td class="mono">'+fmtNum(p.revenue)+'</td><td class="mono">'+fmtNum(p.ufcf)+'</td><td class="mono">'+fmtNum(p.pv)+'</td></tr>'});
+    html+='<table class="mini-table"><tr><th>年份</th><th>营收</th><th>FCF</th><th>现值</th></tr>';
+    d.projections.forEach(function(p){html+='<tr><td>'+p.year+'年</td><td class="mono">'+fmtNum(p.revenue)+'</td><td class="mono">'+fmtNum(p.ufcf)+'</td><td class="mono">'+fmtNum(p.pv)+'</td></tr>'});
     html+='</table>';
   }
   if(d.sensitivity){
@@ -161,12 +161,12 @@ function renderResults(data){
   html+='</div>';
 
   // ═══ 3-Statement ═══
-  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 三表预测</span><span style="font-size:0.65rem;color:var(--text-tertiary)">'+m.base_gross_margin+' 基准毛利率</span><button class="btn-analysis" data-type="model" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.65rem;font-family:var(--font-display);">📖 详解</button></div>';
+  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 三表预测</span><span style="font-size:0.65rem;color:var(--text-tertiary)">基准年:'+(m.base_year||'—')+' · '+m.base_gross_margin+'</span><button class="btn-analysis" data-type="model" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.65rem;font-family:var(--font-display);">📖 详解</button></div>';
   if(m.projections){
-    html+='<table class="mini-table"><tr><th>年</th><th>营收</th><th>毛利</th><th>净利</th><th>经营CF</th><th>自由CF</th></tr>';
+    html+='<table class="mini-table"><tr><th>年份</th><th>营收</th><th>毛利</th><th>净利</th><th>经营CF</th><th>自由CF</th></tr>';
     m.projections.forEach(function(p){
       var i=p.income_statement||{}, cf=p.cash_flow||{};
-      html+='<tr><td>Y'+p.year+'</td><td class="mono">'+fmtNum(i.revenue)+'</td><td class="mono">'+fmtNum(i.gross_profit)+'</td><td class="mono">'+fmtNum(i.net_income)+'</td><td class="mono">'+fmtNum(cf.operating_cf)+'</td><td class="mono">'+fmtNum(cf.free_cf)+'</td></tr>';
+      html+='<tr><td>'+p.year+'</td><td class="mono">'+fmtNum(i.revenue)+'</td><td class="mono">'+fmtNum(i.gross_profit)+'</td><td class="mono">'+fmtNum(i.net_income)+'</td><td class="mono">'+fmtNum(cf.operating_cf)+'</td><td class="mono">'+fmtNum(cf.free_cf)+'</td></tr>';
     });
     html+='</table>';
   }
