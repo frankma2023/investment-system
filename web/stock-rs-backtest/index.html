@@ -249,7 +249,8 @@ function toggleSwitch(id){
 }
 
 // ══════ INIT ══════
-(function(){
+(async function(){
+  await loadConfig();
   var d=new Date();d.setDate(d.getDate()-1);
   document.getElementById('target-date').value=d.toISOString().slice(0,10);
 })();
@@ -385,23 +386,38 @@ function sortBy(col){
   applyFilter();
 }
 
+// ══════ CONFIG LOAD / SAVE ══════
+async function loadConfig(){
+  try{
+    var resp=await fetch(API+'/api/config?signal_type=stock_rs');
+    var cfg=await resp.json();
+    if(cfg.robust_rps_250!=null)document.getElementById('robust-250').value=cfg.robust_rps_250;
+    if(cfg.robust_rps_20!=null)document.getElementById('robust-20').value=cfg.robust_rps_20;
+    if(cfg.burst_rps_250!=null)document.getElementById('burst-250').value=cfg.burst_rps_250;
+    if(cfg.burst_rps_20!=null)document.getElementById('burst-20').value=cfg.burst_rps_20;
+    if(cfg.exclude_st!=null){
+      var sw=document.getElementById('switch-st');
+      if(cfg.exclude_st){sw.classList.add('on');sw.classList.remove('off')}
+      else{sw.classList.add('off');sw.classList.remove('on')}
+    }
+    if(cfg.min_amount_20d!=null)document.getElementById('filter-amount').value=cfg.min_amount_20d;
+    if(cfg.top_n!=null)document.getElementById('display-top').value=cfg.top_n;
+    syncS('robust-250');syncS('robust-20');syncS('burst-250');syncS('burst-20');
+    syncSAmount('filter-amount');syncSI('display-top');
+  }catch(e){console.error('Load config:',e)}
+}
+
 // ══════ SAVE ══════
 async function saveConfig(){
-  var yaml='double_strong:\n';
-  yaml+='  稳健龙头:\n';
-  yaml+='    rps_250: '+document.getElementById('robust-250').value+'\n';
-  yaml+='    rps_20: '+document.getElementById('robust-20').value+'\n';
-  yaml+='  加速爆发:\n';
-  yaml+='    rps_250: '+document.getElementById('burst-250').value+'\n';
-  yaml+='    rps_20: '+document.getElementById('burst-20').value+'\n';
-  yaml+='filters:\n';
-  yaml+='  exclude_st: '+(document.getElementById('switch-st').classList.contains('on')?'true':'false')+'\n';
-  yaml+='  min_amount_20d: '+document.getElementById('filter-amount').value+'\n';
-  yaml+='display:\n';
-  yaml+='  top_n: '+document.getElementById('display-top').value+'\n';
-
+  var yaml='robust_rps_250: '+document.getElementById('robust-250').value+'\n';
+  yaml+='robust_rps_20: '+document.getElementById('robust-20').value+'\n';
+  yaml+='burst_rps_250: '+document.getElementById('burst-250').value+'\n';
+  yaml+='burst_rps_20: '+document.getElementById('burst-20').value+'\n';
+  yaml+='exclude_st: '+(document.getElementById('switch-st').classList.contains('on')?'true':'false')+'\n';
+  yaml+='min_amount_20d: '+document.getElementById('filter-amount').value+'\n';
+  yaml+='top_n: '+document.getElementById('display-top').value+'\n';
   try{
-    await fetch(API+'/api/crowding/config',{method:'POST',headers:{'Content-Type':'text/yaml'},body:yaml});
+    await fetch(API+'/api/config?signal_type=stock_rs',{method:'POST',body:yaml});
     var btn=document.getElementById('btn-save');
     btn.textContent='✓ 已保存';setTimeout(function(){btn.textContent='💾 保存配置'},2000);
   }catch(e){console.error(e)}

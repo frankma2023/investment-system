@@ -1,16 +1,7 @@
-# stock_rs.yaml — 个股RS强度回测配置
-
-double_strong:
-  稳健龙头:
-    rps_250: 90
-    rps_20: 85
-  加速爆发:
-    rps_250: 80
-    rps_20: 95
-
-filters:
-  exclude_st: true
-  min_amount_20d: 5000   # 万元
-
-display:
-  top_n: 100
+robust_rps_250: 90
+robust_rps_20: 85
+burst_rps_250: 85
+burst_rps_20: 95
+exclude_st: true
+min_amount_20d: 5000
+top_n: 100

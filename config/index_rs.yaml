@@ -1,32 +1,30 @@
 # index_rs.yaml — 指数RS强度扫描参数配置
-# 三层强势池阈值（可通过回测看板调整并保存）
 
 tiers:
   L1:
-    RS_120: 90     # 长期强度
-    RS_250: 85     # 年度强度
-    RS_60: 80      # 中期强度
+    RS_120: 90
+    RS_250: 85
+    RS_60: 80
   L2:
-    RS_20: 95      # 短期极度强势
+    RS_20: 95
     RS_60: 85
-    RS_120: 70     # 长期尚可
+    RS_120: 70
   L3:
-    RS_60: 85
+    RS_60: 92
     RS_120: 80
-    RS_20_max: 90  # 短期尚未过热（RS_20 < 此值）
-    ma_days: 20    # 收盘价站上N日均线（0=不检查，范围10~60）
+    RS_20_max: 90
+    ma_days: 20
 
-# 指数共振判断阈值（v1默认关闭，待个股RS引擎就绪后启用）
 resonance:
-  enabled: false           # v1: false
-  strong_stock_rs: 80      # 个股 RS_120 >= 此值视为强势股
+  enabled: false
+  strong_stock_rs: 80
   strong_resonance:
-    strong_ratio: 40       # 强势股占比 ≥ 40%
-    median_rs: 75          # 且 成分股RS中位数 ≥ 75
+    strong_ratio: 40
+    median_rs: 75
   medium_resonance:
-    strong_ratio_min: 20   # 20% ≤ 强势股占比 < 40%
+    strong_ratio_min: 20
     strong_ratio_max: 40
     median_rs: 65
   weak_resonance:
-    strong_ratio: 20       # 强势股占比 < 20%
-    median_rs: 60          # 或 成分股RS中位数 < 60
+    strong_ratio: 20
+    median_rs: 60

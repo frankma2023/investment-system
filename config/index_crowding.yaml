@@ -3,7 +3,7 @@ double_strong:
     rps_250: 90
     rps_20: 85
   加速爆发:
-    rps_250: 85
+    rps_250: 89
     rps_20: 95
 filters:
   exclude_st: true
