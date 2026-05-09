@@ -592,7 +592,7 @@ def three_statement_projection(stock_code, assumptions=None):
         interest_pct = ext['interest_expense'] / base_revenue
     else:
         warnings.append('利息支出: 缺失')
-        interest_pct = None
+        interest_pct = 0
 
     db.close()
 

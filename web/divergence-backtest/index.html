@@ -58,6 +58,12 @@ th.sortable[data-indicator="desc"]::after { content:'↓'; opacity:1; color:#FE2
 .clickable-code { cursor:pointer; text-decoration:underline; text-decoration-color:transparent; transition:all 0.15s; }
 .clickable-code:hover { color:#FE2C55; text-decoration-color:#FE2C55; }
 @media (max-width:900px) { .bt-layout { flex-direction:column; } .bt-left { width:100%; } }
+.nav-dropdown { position:relative; display:inline-flex; }
+.nav-dropdown-menu { display:none; position:absolute; top:100%; left:0; background:var(--card-bg); border:1px solid var(--divider); border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); min-width:150px; padding:6px 0; z-index:200; white-space:nowrap; }
+.nav-dropdown:hover .nav-dropdown-menu { display:block; }
+.nav-dropdown-menu a { display:block; padding:7px 16px; font-size:0.72rem; color:var(--text-secondary); text-decoration:none; transition:background 0.15s; font-family:var(--font-display); }
+.nav-dropdown-menu a:hover { background:var(--color-accent-subtle); color:var(--color-accent); }
+.nav-dropdown-menu a.active { color:var(--color-accent); font-weight:700; }
 </style>
 </head>
 <body>
@@ -65,7 +71,7 @@ th.sortable[data-indicator="desc"]::after { content:'↓'; opacity:1; color:#FE2
 <div class="app-container">
 <nav class="top-nav">
   <div class="nav-brand"><span class="nav-fox">🦊</span><span>指数背离检测</span><span class="nav-greeting">Divergence Detection</span></div>
-        <div class="nav-links">
+      <div class="nav-links">
         <a href="../" class="nav-item">🏠 看板</a>
         <div class="nav-dropdown">
           <a href="#" class="nav-item active">回测 ▾</a>
@@ -82,7 +88,8 @@ th.sortable[data-indicator="desc"]::after { content:'↓'; opacity:1; color:#FE2
         <a href="../index-scan/" class="nav-item">🔬 指数扫描</a>
         <a href="../stock-analysis/" class="nav-item">📋 个股财务</a>
         <a href="#" class="nav-item">📊 大盘扫描</a>
-        <a href="#" class="nav-item">💰 仓位管理</a><button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        <a href="#" class="nav-item">💰 仓位管理</a>
+        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
   </div>
 </nav>
 <div class="bt-layout">
