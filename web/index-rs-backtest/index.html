@@ -101,6 +101,12 @@
     .clickable-name:hover { color:#FE2C55; text-decoration-color:#FE2C55; }
 
     @media (max-width:900px) { .bt-layout { flex-direction:column; } .bt-left { width:100%; } }
+    .nav-dropdown { position:relative; display:inline-flex; }
+    .nav-dropdown-menu { display:none; position:absolute; top:100%; left:0; background:var(--card-bg); border:1px solid var(--divider); border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); min-width:150px; padding:6px 0; z-index:200; white-space:nowrap; }
+    .nav-dropdown:hover .nav-dropdown-menu { display:block; }
+    .nav-dropdown-menu a { display:block; padding:7px 16px; font-size:0.72rem; color:var(--text-secondary); text-decoration:none; transition:background 0.15s; font-family:var(--font-display); }
+    .nav-dropdown-menu a:hover { background:var(--color-accent-subtle); color:var(--color-accent); }
+    .nav-dropdown-menu a.active { color:var(--color-accent); font-weight:700; }
   </style>
 </head>
 <body>
@@ -111,16 +117,24 @@
   <div class="app-container">
     <nav class="top-nav">
       <div class="nav-brand"><span class="nav-fox">🦊</span><span>指数强度回测</span><span class="nav-greeting">O'Neil Index RS Backtest</span></div>
-      <div class="nav-links">
+            <div class="nav-links">
         <a href="../" class="nav-item">🏠 看板</a>
-        <a href="../distribution-day/" class="nav-item">📉 抛盘日</a>
-        <a href="../follow-through-day/" class="nav-item">📈 追盘日</a>
-        <a href="#" class="nav-item active">🏆 指数强度</a>
-        <a href="../index-crowdedness/" class="nav-item">📊 拥挤度</a>
-        <a href="../index-ad-backtest/" class="nav-item">🔍 A/D评级</a>
-        <a href="../divergence-backtest/" class="nav-item">⚠️ 背离</a>
-        <a href="../index-scan/" class="nav-item">🔬 扫描</a>
-        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        <div class="nav-dropdown">
+          <a href="#" class="nav-item active">回测 ▾</a>
+          <div class="nav-dropdown-menu">
+            <a href="../distribution-day/">📉 抛盘日</a>
+            <a href="../follow-through-day/">📈 追盘日</a>
+            <a href="../index-rs-backtest/" class="active">🏆 指数RS强度</a>
+            <a href="../index-crowdedness/">📊 指数拥挤度</a>
+            <a href="../stock-rs-backtest/">💪 个股RS强度</a>
+            <a href="../index-ad-backtest/">🔍 机构吸筹/出货</a>
+            <a href="../divergence-backtest/">⚠️ 指数背离</a>
+          </div>
+        </div>
+        <a href="../index-scan/" class="nav-item">🔬 指数扫描</a>
+        <a href="../stock-analysis/" class="nav-item">📋 个股财务</a>
+        <a href="#" class="nav-item">📊 大盘扫描</a>
+        <a href="#" class="nav-item">💰 仓位管理</a><button class="theme-toggle" onclick="toggleTheme()">🌙</button>
       </div>
     </nav>
 

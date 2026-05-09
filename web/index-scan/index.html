@@ -72,13 +72,22 @@
 <nav class="neo-nav">
   <span class="neo-nav-brand">INDEX SCAN //</span>
   <div class="neo-nav-links">
-    <a href="../distribution-day/" class="neo-nav-link">抛盘日</a>
-    <a href="../follow-through-day/" class="neo-nav-link">追盘日</a>
-    <a href="../index-rs-backtest/" class="neo-nav-link">RS强度</a>
-    <a href="../index-crowdedness/" class="neo-nav-link">拥挤度</a>
-    <a href="../index-ad-backtest/" class="neo-nav-link">A/D评级</a>
-    <a href="../divergence-backtest/" class="neo-nav-link">背离</a>
-    <a href="#" class="neo-nav-link active">[SCAN]</a>
+    <div class="nav-dropdown" style="position:relative;display:inline-flex">
+      <a href="#" class="neo-nav-link active">[回测 ▾]</a>
+      <div class="nav-dropdown-menu" style="display:none;position:absolute;top:100%;left:0;background:var(--bg-card);border:1px solid var(--border-glow);border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,0.3);min-width:155px;padding:4px 0;z-index:200;white-space:nowrap" onmouseover="this.style.display='block'" onmouseout="this.style.display='none'">
+        <a href="../distribution-day/" style="display:block;padding:6px 14px;font-size:0.65rem;color:var(--text-secondary);text-decoration:none;font-family:var(--font-display);letter-spacing:0.04em" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color=''">📉 抛盘日</a>
+        <a href="../follow-through-day/" style="display:block;padding:6px 14px;font-size:0.65rem;color:var(--text-secondary);text-decoration:none;font-family:var(--font-display);letter-spacing:0.04em" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color=''">📈 追盘日</a>
+        <a href="../index-rs-backtest/" style="display:block;padding:6px 14px;font-size:0.65rem;color:var(--text-secondary);text-decoration:none;font-family:var(--font-display);letter-spacing:0.04em" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color=''">🏆 指数RS强度</a>
+        <a href="../index-crowdedness/" style="display:block;padding:6px 14px;font-size:0.65rem;color:var(--text-secondary);text-decoration:none;font-family:var(--font-display);letter-spacing:0.04em" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color=''">📊 指数拥挤度</a>
+        <a href="../stock-rs-backtest/" style="display:block;padding:6px 14px;font-size:0.65rem;color:var(--text-secondary);text-decoration:none;font-family:var(--font-display);letter-spacing:0.04em" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color=''">💪 个股RS强度</a>
+        <a href="../index-ad-backtest/" style="display:block;padding:6px 14px;font-size:0.65rem;color:var(--text-secondary);text-decoration:none;font-family:var(--font-display);letter-spacing:0.04em" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color=''">🔍 机构吸筹/出货</a>
+        <a href="../divergence-backtest/" style="display:block;padding:6px 14px;font-size:0.65rem;color:var(--text-secondary);text-decoration:none;font-family:var(--font-display);letter-spacing:0.04em" onmouseover="this.style.color='var(--neon-cyan)'" onmouseout="this.style.color=''">⚠️ 指数背离</a>
+      </div>
+    </div>
+    <a href="../index-scan/" class="neo-nav-link active">[指数扫描]</a>
+    <a href="../stock-analysis/" class="neo-nav-link">[个股财务]</a>
+    <a href="#" class="neo-nav-link">[大盘扫描]</a>
+    <a href="#" class="neo-nav-link">[仓位管理]</a>
   </div>
   <div class="nav-actions">
     <span class="neo-sync-pulse" id="sync-indicator"></span>

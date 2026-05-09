@@ -558,6 +558,76 @@ def api_crowding_latest():
 
 
 # ═══════════════════════════════════════════════
+# API: 个股RS强度
+# ═══════════════════════════════════════════════
+
+@app.route('/api/stock-rs', methods=['GET'])
+def api_stock_rs():
+    date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    try:
+        from scanners.stock_rs import compute
+        import polars as pl
+        df = compute(target_date=date, start_date=None)
+        latest_date = df["date"].max()
+        # 过滤到最新日期，并把 null rps 和有效 rps 分开——防止排序参数导致 null 排前面
+        latest = df.filter(pl.col("date") == latest_date)
+        valid_rps = latest.filter(pl.col("rps_250").is_not_null()).sort("rps_250", descending=True)
+        invalid_rps = latest.filter(pl.col("rps_250").is_null())
+
+        top = valid_rps.head(200)
+        results = []
+        for row in top.iter_rows(named=True):
+            results.append({
+                'stock_code': row['stock_code'],
+                'name': row.get('name', ''),
+                'close': row['adj_close'],
+                'rps_250': row['rps_250'],
+                'rps_120': row['rps_120'],
+                'rps_60': row['rps_60'],
+                'rps_20': row['rps_20'],
+                'double_strong': row['double_strong'],
+                'rs_line': round(row['rs_line_norm'], 2) if row['rs_line_norm'] is not None else None,
+            })
+
+        stats = {
+            'total': len(latest),
+            'valid_rps250': len(valid_rps),
+            'double_strong_count': latest.filter(pl.col("double_strong").is_not_null()).shape[0],
+        }
+
+        return jsonify({'date': str(latest_date), 'results': results, 'stats': stats})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/stock-rs/double-strong', methods=['GET'])
+def api_stock_rs_double_strong():
+    date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    try:
+        from scanners.stock_rs import compute, get_double_strong
+        import polars as pl
+        df = compute(target_date=date, start_date=None)
+        ds = get_double_strong(df)
+        latest_date = df["date"].max()
+        ds = ds.filter(pl.col("date") == latest_date).filter(pl.col("rps_250").is_not_null()).sort("rps_250", descending=True)
+
+        results = []
+        for row in ds.iter_rows(named=True):
+            results.append({
+                'stock_code': row['stock_code'],
+                'name': row.get('name', ''),
+                'close': row['adj_close'],
+                'rps_250': row['rps_250'],
+                'rps_20': row['rps_20'],
+                'pattern': row['double_strong'],
+            })
+
+        return jsonify({'date': str(latest_date), 'results': results, 'count': len(results)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ═══════════════════════════════════════════════
 # API: GET /api/index-rs
 # ═══════════════════════════════════════════════
 
@@ -837,10 +907,13 @@ def api_stock_analysis():
         return jsonify({'error': 'code required'}), 400
     try:
         from analysis.financial import dcf_valuation, comps_analysis, earnings_analysis, three_statement_projection
-        dcf = dcf_valuation(stock_code, {'exit_multiple': 8})
-        comps = comps_analysis(stock_code)
-        earnings = earnings_analysis(stock_code)
-        model = three_statement_projection(stock_code)
+        def safe(fn, *args):
+            try: return fn(*args)
+            except Exception as e: return {'error': str(e)}
+        dcf = safe(dcf_valuation, stock_code, {'exit_multiple': 8})
+        comps = safe(comps_analysis, stock_code)
+        earnings = safe(earnings_analysis, stock_code)
+        model = safe(three_statement_projection, stock_code)
         return jsonify({'dcf': dcf, 'comps': comps, 'earnings': earnings, 'model': model})
     except Exception as e:
         return jsonify({'error': str(e)}), 500

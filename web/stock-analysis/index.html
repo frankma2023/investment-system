@@ -11,6 +11,13 @@
 .search-bar { display:flex; gap:8px; margin-bottom:16px; }
 .search-bar input { flex:1; padding:12px 16px; border:2px solid var(--divider); border-radius:14px; font-family:var(--font-display); font-size:1rem; background:var(--card-bg); color:var(--text-primary); }
 .search-bar input:focus { outline:none; border-color:#FE2C55; }
+
+.nav-dropdown { position:relative; display:inline-flex; }
+.nav-dropdown-menu { display:none; position:absolute; top:100%; left:0; background:var(--card-bg); border:1px solid var(--divider); border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); min-width:150px; padding:6px 0; z-index:200; white-space:nowrap; }
+.nav-dropdown:hover .nav-dropdown-menu { display:block; }
+.nav-dropdown-menu a { display:block; padding:7px 16px; font-size:0.72rem; color:var(--text-secondary); text-decoration:none; transition:background 0.15s; font-family:var(--font-display); }
+.nav-dropdown-menu a:hover { background:var(--color-accent-subtle); color:var(--color-accent); }
+
 .search-bar button { padding:12px 24px; background:#FE2C55; color:#FFF; border:none; border-radius:14px; font-size:1rem; font-weight:800; cursor:pointer; font-family:var(--font-display); }
 .search-bar button:hover { opacity:0.88; }
 .search-bar button:disabled { background:#CCC; cursor:not-allowed; }
@@ -47,10 +54,21 @@
   <div class="nav-brand"><span class="nav-fox">🦊</span><span>个股财务分析</span><span class="nav-greeting">Stock Analysis</span></div>
   <div class="nav-links">
     <a href="../" class="nav-item">🏠 看板</a>
-    <a href="../distribution-day/" class="nav-item">📉 抛盘日</a>
-    <a href="../index-rs-backtest/" class="nav-item">🏆 指数强度</a>
-    <a href="../index-scan/" class="nav-item">🔬 扫描</a>
-    <a href="#" class="nav-item active">📊 财务分析</a>
+    <div class="nav-dropdown">
+      <a href="#" class="nav-item">回测 ▾</a>
+      <div class="nav-dropdown-menu">
+        <a href="../distribution-day/">📉 抛盘日</a>
+        <a href="../follow-through-day/">📈 追盘日</a>
+        <a href="../index-rs-backtest/">🏆 指数RS强度</a>
+        <a href="../index-crowdedness/">📊 指数拥挤度</a>
+        <a href="../stock-rs-backtest/">💪 个股RS强度</a>
+        <a href="../index-ad-backtest/">🔍 机构吸筹/出货</a>
+        <a href="../divergence-backtest/">⚠️ 指数背离</a>
+      </div>
+    </div>
+    <a href="../stock-analysis/" class="nav-item active">📋 个股财务</a>
+    <a href="#" class="nav-item">📊 大盘扫描</a>
+    <a href="#" class="nav-item">💰 仓位管理</a>
     <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
   </div>
 </nav>
