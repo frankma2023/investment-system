@@ -628,6 +628,84 @@ def api_stock_rs_double_strong():
 
 
 # ═══════════════════════════════════════════════
+# API: GET /api/valuation — 指数估值分位数据
+# ═══════════════════════════════════════════════
+
+@app.route('/api/valuation')
+def api_valuation():
+    code = request.args.get('code', '000300')
+    start = request.args.get('start', '2016-01-01')
+    end = request.args.get('end', datetime.now().strftime('%Y-%m-%d'))
+    db = get_db()
+    rows = db.execute('''
+        SELECT date, pe_ttm, pe_ttm_pct, pb, pb_pct, dyr, dyr_pct
+        FROM index_fundamental_daily
+        WHERE stock_code = ? AND date >= ? AND date <= ?
+        ORDER BY date
+    ''', (code, start, end)).fetchall()
+    return jsonify({
+        'code': code,
+        'dates': [r['date'] for r in rows],
+        'pe': [r['pe_ttm'] for r in rows],
+        'pe_pct': [r['pe_ttm_pct'] for r in rows],
+        'pb': [r['pb'] for r in rows],
+        'pb_pct': [r['pb_pct'] for r in rows],
+        'dyr': [r['dyr'] for r in rows],
+        'dyr_pct': [r['dyr_pct'] for r in rows],
+    })
+
+
+@app.route('/api/valuation/fs')
+def api_valuation_fs():
+    """指数财务数据（年报）"""
+    code = request.args.get('code', '000300')
+    try:
+        import sys, os
+        sys.path.insert(0, os.path.join(PROJECT_DIR, 'scripts'))
+        from common import api_post
+        metrics = [
+            'y.m.npatoshopc_ps.t', 'y.m.roe.t',
+            'y.ps.oi.t', 'y.ps.op.t', 'y.ps.op_s_r.t',
+            'y.ps.np.t', 'y.ps.np_s_r.t',
+            'y.ps.da_om.t', 'y.ps.tas.t',
+        ]
+        raw = api_post('/index/fs/hybrid', {
+            'stockCodes': [code], 'metricsList': metrics,
+            'startDate': '2016-01-01',
+            'endDate': datetime.now().strftime('%Y-%m-%d'),
+        })
+        raw_sorted = sorted(raw, key=lambda x: x.get('date', ''))
+        result = {'code': code, 'dates': [],
+            'eps': [], 'roe': [], 'revenue': [], 'op_profit': [],
+            'op_margin': [], 'net_profit': [], 'net_margin': [],
+            'dividend': [], 'tax': [], 'peg': []}
+        for item in raw_sorted:
+            dt = item.get('date', '')[:10]
+            result['dates'].append(dt[:4] if len(dt)>4 else dt)
+            y = item.get('y', {})
+            ps = y.get('ps', {})
+            m = y.get('m', {})
+            def get_nested(d, path):
+                for k in path:
+                    if not isinstance(d, dict): return d
+                    d = d.get(k, {})
+                return d if not isinstance(d, dict) else None
+            result['eps'].append(get_nested(m, ['npatoshopc_ps','t']))
+            result['roe'].append(get_nested(m, ['roe','t']))
+            result['revenue'].append(get_nested(ps, ['oi','t']))
+            result['op_profit'].append(get_nested(ps, ['op','t']))
+            result['op_margin'].append(get_nested(ps, ['op_s_r','t']))
+            result['net_profit'].append(get_nested(ps, ['np','t']))
+            result['net_margin'].append(get_nested(ps, ['np_s_r','t']))
+            result['dividend'].append(get_nested(ps, ['da_om','t']))
+            result['tax'].append(get_nested(ps, ['tas','t']))
+            result['peg'].append(None)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ═══════════════════════════════════════════════
 # API: GET /api/index-rs
 # ═══════════════════════════════════════════════
 
