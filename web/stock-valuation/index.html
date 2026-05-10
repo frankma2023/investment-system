@@ -72,6 +72,7 @@
     <button class="tab" onclick="switchTab('profit')">💰 盈利质量</button>
     <button class="tab" onclick="switchTab('health')">🏥 财务健康</button>
     <button class="tab" onclick="switchTab('strength')">📈 市场强度</button>
+    <button class="tab" onclick="switchTab('eval')">📋 财务评估</button>
   </div>
 
   <!-- Tab1: 估值仪表 -->
@@ -118,6 +119,9 @@
       📈 市场强度模块开发中<br><span style="font-size:0.7rem">将展示 RPS 走势、价格 vs MA50/200、RS线、成交量趋势</span>
     </div>
   </div>
+  <div class="tab-content" id="tab-eval">
+    <div id="eval-content" style="text-align:center;padding:40px;color:var(--text-tertiary)">⏳ 点击「财务评估」标签加载分析...</div>
+  </div>
 </div>
 
 <script>
@@ -132,6 +136,7 @@ function switchTab(tab){
   document.getElementById('tab-'+tab).classList.add('active');
   event.target.classList.add('active');
   if(tab!=='strength')setTimeout(function(){resizeCharts()},300);
+  if(tab==='eval')loadEval();
 }
 
 function resizeCharts(){
@@ -284,6 +289,42 @@ function genFText(id,name,vals,unit){
 
 document.getElementById('stock-input').value='600519';
 loadAll();
+
+var evalLoaded=false;
+async function loadEval(){
+  if(evalLoaded)return;
+  var code=document.getElementById('stock-input').value||'600519';
+  var el=document.getElementById('eval-content');
+  el.innerHTML='<div style="padding:40px;color:var(--text-tertiary)">⏳ 正在运行 DCF / Comps / Earnings / 3-Statement...</div>';
+  try{
+    var resp=await fetch(API+'/api/stock-analysis?code='+code);
+    var data=await resp.json();
+    if(data.error){el.innerHTML='<div style="padding:40px;color:#FE2C55">❌ '+data.error+'</div>';return}
+    renderEvalCards(data);
+    evalLoaded=true;
+  }catch(e){el.innerHTML='<div style="padding:40px;color:#FE2C55">❌ '+e.message+'</div>'}
+}
+function renderEvalCards(data){
+  var d=data.dcf||{}, c=data.comps||{}, e2=data.earnings||{}, m=data.model||{};
+  var upside=d.upside_pct, t=upside>20?'低估':(upside<-10?'高估':'合理'), tc=upside>20?'#4CAF50':(upside<-10?'#FE2C55':'#E8A838');
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">💰 DCF估值</span><span style="color:'+tc+';font-weight:700">'+t+' '+(d.upside_pct||0)+'%</span></div>';
+  html+='<div style="padding:12px;font-size:0.75rem"><p>当前价: <b>'+d.current_price+'</b> | DCF目标: <b>'+d.target_price+'</b></p><p>'+d.tv_method+' | EBITDA: '+d.ebitda_margin+' | WACC: '+d.wacc+'</p></div></div>';
+  var mm=c.median_multiples||{};
+  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📊 可比公司</span><span style="font-size:0.65rem;color:var(--text-tertiary)">'+(c.industry||'')+'</span></div>';
+  html+='<div style="padding:12px;font-size:0.75rem"><p>PE <b>'+(mm.pe||'—')+'</b> | PB <b>'+(mm.pb||'—')+'</b> | PS <b>'+(mm.ps||'—')+'</b></p><p>'+c.peer_count+'家可比 | 估值: <b>'+fbn(c.average_valuation*1e8)+'</b></p></div></div>';
+  var lt=e2.latest||{};
+  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📈 盈利趋势</span></div>';
+  html+='<div style="padding:12px;font-size:0.75rem"><p>营收: <b>'+(lt.revenue_yoy>0?'+':'')+lt.revenue_yoy+'%</b> | 净利: <b>'+(lt.net_profit_yoy>0?'+':'')+lt.net_profit_yoy+'%</b></p><p>毛利率: <b>'+lt.gross_margin+'%</b> | ROE: <b>'+lt.roe+'%</b></p><p>'+e2.trend_summary+'</p></div></div>';
+  html+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 三表预测</span></div>';
+  html+='<div style="padding:12px;font-size:0.75rem"><p>基准: <b>'+fbn(m.base_revenue)+'</b> | SG&A: '+m.sga_pct+' | CapEx: '+m.capex_pct+'</p>';
+  var proj=m.projections||[];
+  if(proj.length)html+='<p>'+proj[0].year+'年 → 营收 <b>'+fbn(proj[0].income_statement.revenue)+'</b></p>';
+  html+='</div></div></div>';
+  html+='<p style="text-align:center;margin-top:12px;font-size:0.65rem"><a href="../stock-analysis/" target="_blank" style="color:var(--color-accent)">📖 打开完整分析（含详细推演）</a></p>';
+  document.getElementById('eval-content').innerHTML=html;
+}
+function fbn(v){if(v==null)return'—';var n=Math.abs(v);if(n>=1e8)return(v/1e8).toFixed(1)+'亿';if(n>=1e4)return(v/1e4).toFixed(1)+'万';return v.toFixed(1)}
 </script>
 </body>
 </html>
