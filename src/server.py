@@ -706,6 +706,86 @@ def api_valuation_fs():
 
 
 # ═══════════════════════════════════════════════
+# API: 个股全维度看板
+# ═══════════════════════════════════════════════
+
+@app.route('/api/stock-valuation')
+def api_stock_valuation():
+    """个股估值指标历史：PE/PB/PS/股息率/市值"""
+    code = request.args.get('code', '600519')
+    start = request.args.get('start', '2016-01-01')
+    end = request.args.get('end', datetime.now().strftime('%Y-%m-%d'))
+    db = get_db()
+    metrics = ['pe_ttm','pb','ps_ttm','dyr','mc']
+    result = {'code': code, 'dates': [], 'pe': [], 'pb': [], 'ps': [], 'dyr': [], 'mc': []}
+    rows = db.execute('''
+        SELECT date, metric_code, value FROM fundamental_indicator
+        WHERE stock_code=? AND date>=? AND date<=?
+        AND metric_code IN (?,?,?,?,?)
+        ORDER BY date, metric_code
+    ''', (code, start, end, *metrics)).fetchall()
+    # 按日期聚合
+    by_date = {}
+    for r in rows:
+        d = r['date']
+        if d not in by_date: by_date[d] = {}
+        by_date[d][r['metric_code']] = r['value']
+    for d in sorted(by_date.keys()):
+        v = by_date[d]
+        result['dates'].append(d)
+        result['pe'].append(v.get('pe_ttm'))
+        result['pb'].append(v.get('pb'))
+        result['ps'].append(v.get('ps_ttm'))
+        result['dyr'].append(v.get('dyr'))
+        result['mc'].append(v.get('mc'))
+    return jsonify(result)
+
+
+@app.route('/api/stock-financials')
+def api_stock_financials():
+    """个股年度财务数据：ROE/毛利率/净利率/EPS/营收增速/净利增速/FCF/资产负债率等"""
+    code = request.args.get('code', '600519')
+    db = get_db()
+    rows = db.execute('''
+        SELECT report_date, revenue, revenue_yoy, net_profit, net_profit_yoy,
+               gross_margin, roe,
+               free_cash_flow, asset_liability_ratio, interest_bearing_debt_ratio,
+               current_ratio, quick_ratio, receivables_turnover, inventory_turnover
+        FROM stock_financials_annual
+        WHERE stock_code=? AND report_date >= '2016-12-31'
+        ORDER BY report_date
+    ''', (code,)).fetchall()
+    result = {'code': code, 'dates': [], 'revenue': [], 'revenue_yoy': [],
+              'net_profit': [], 'net_profit_yoy': [], 'gross_margin': [],
+              'roe': [], 'eps': [], 'fcf': [], 'debt_ratio': [],
+              'interest_debt_ratio': [], 'current_ratio': [], 'quick_ratio': [],
+              'receivables_turnover': [], 'inventory_turnover': []}
+    for r in rows:
+        result['dates'].append(r['report_date'][:4])
+        result['revenue'].append(r['revenue'])
+        result['revenue_yoy'].append(r['revenue_yoy'])
+        result['net_profit'].append(r['net_profit'])
+        result['net_profit_yoy'].append(r['net_profit_yoy'])
+        result['gross_margin'].append(r['gross_margin'])
+        result['roe'].append(r['roe'])
+        # EPS = 净利润 / 总股本
+        cap_row = db.execute('''SELECT capitalization FROM stock_equity_change
+            WHERE stock_code=? AND date <= ? ORDER BY date DESC LIMIT 1''',
+            (code, r['report_date'])).fetchone()
+        cap = cap_row['capitalization'] if cap_row and cap_row['capitalization'] else None
+        eps = (r['net_profit'] / cap) if (r['net_profit'] and cap) else None
+        result['eps'].append(eps)
+        result['fcf'].append(r['free_cash_flow'])
+        result['debt_ratio'].append(r['asset_liability_ratio'])
+        result['interest_debt_ratio'].append(r['interest_bearing_debt_ratio'])
+        result['current_ratio'].append(r['current_ratio'])
+        result['quick_ratio'].append(r['quick_ratio'])
+        result['receivables_turnover'].append(r['receivables_turnover'])
+        result['inventory_turnover'].append(r['inventory_turnover'])
+    return jsonify(result)
+
+
+# ═══════════════════════════════════════════════
 # API: GET /api/index-rs
 # ═══════════════════════════════════════════════
 
