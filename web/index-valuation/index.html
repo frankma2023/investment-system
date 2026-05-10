@@ -136,15 +136,13 @@ async function loadData(){
   genText('text-pe','PE-TTM',data.pe,data.pe_pct,hs.pe,'倍',clr(pePct));
   genText('text-pb','PB',data.pb,data.pb_pct,hs.pb,'倍',clr(pbPct));
   loadFS(code);
-  console.log('loadFS called with code:', code);
 }
 
 async function loadFS(code){
   try{
     var resp=await fetch(API+'/api/valuation/fs?code='+code);
     var fs=await resp.json();
-    console.log('FS data:', fs.dates?fs.dates.length:0, 'years, fields:', Object.keys(fs));
-    if(!fs.dates||!fs.dates.length){console.log('FS: no dates');return;}
+    if(!fs.dates||!fs.dates.length)return;
     var isDark=document.documentElement.dataset.theme==='dark';
     var up=isDark?'#FF6B6B':'#E8553D',dn=isDark?'#4ECDC4':'#2D9D5A';
     buildBar('chart-roe','ROE %',fs.dates,fs.roe,dn);genFsText('text-roe','ROE',fs.roe,'%',fs.dates);
