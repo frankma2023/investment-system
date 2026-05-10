@@ -561,22 +561,33 @@ def api_crowding_latest():
 # API: 个股RS强度
 # ═══════════════════════════════════════════════
 
+# ── 个股RS计算缓存 ──
+_rs_cache = {}  # {date: polars DataFrame}
+
 @app.route('/api/stock-rs', methods=['GET'])
 def api_stock_rs():
     date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    page = int(request.args.get('page', 1))
+    page_size = int(request.args.get('page_size', 200))
     try:
         from scanners.stock_rs import compute
         import polars as pl
-        df = compute(target_date=date, start_date=None)
+        # 缓存：同一天不重复计算
+        if date not in _rs_cache:
+            _rs_cache.clear()  # 只保留最新一天
+            _rs_cache[date] = compute(target_date=date, start_date=None)
+        df = _rs_cache[date]
         latest_date = df["date"].max()
         # 过滤到最新日期，并把 null rps 和有效 rps 分开——防止排序参数导致 null 排前面
         latest = df.filter(pl.col("date") == latest_date)
         valid_rps = latest.filter(pl.col("rps_250").is_not_null()).sort("rps_250", descending=True)
-        invalid_rps = latest.filter(pl.col("rps_250").is_null())
+        total_valid = len(valid_rps)
+        total_pages = (total_valid + page_size - 1) // page_size if page_size > 0 else 1
+        start = (page - 1) * page_size
+        page_data = valid_rps.slice(start, page_size)
 
-        top = valid_rps.head(200)
         results = []
-        for row in top.iter_rows(named=True):
+        for row in page_data.iter_rows(named=True):
             results.append({
                 'stock_code': row['stock_code'],
                 'name': row.get('name', ''),
@@ -591,8 +602,11 @@ def api_stock_rs():
 
         stats = {
             'total': len(latest),
-            'valid_rps250': len(valid_rps),
+            'valid_rps250': total_valid,
             'double_strong_count': latest.filter(pl.col("double_strong").is_not_null()).shape[0],
+            'page': page,
+            'page_size': page_size,
+            'total_pages': total_pages,
         }
 
         return jsonify({'date': str(latest_date), 'results': results, 'stats': stats})
@@ -606,7 +620,10 @@ def api_stock_rs_double_strong():
     try:
         from scanners.stock_rs import compute, get_double_strong
         import polars as pl
-        df = compute(target_date=date, start_date=None)
+        if date not in _rs_cache:
+            _rs_cache.clear()
+            _rs_cache[date] = compute(target_date=date, start_date=None)
+        df = _rs_cache[date]
         ds = get_double_strong(df)
         latest_date = df["date"].max()
         ds = ds.filter(pl.col("date") == latest_date).filter(pl.col("rps_250").is_not_null()).sort("rps_250", descending=True)
@@ -623,6 +640,36 @@ def api_stock_rs_double_strong():
             })
 
         return jsonify({'date': str(latest_date), 'results': results, 'count': len(results)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/stock-rs/rs-line', methods=['GET'])
+def api_stock_rs_line():
+    """单只股票RS线历史序列"""
+    code = request.args.get('code', '600519')
+    start = request.args.get('start', '2024-01-01')
+    end = request.args.get('end', datetime.now().strftime('%Y-%m-%d'))
+    try:
+        from scanners.stock_rs import compute
+        import polars as pl
+        cache_key = end + '_' + (start or 'full')
+        if cache_key not in _rs_cache:
+            if len(_rs_cache) > 2:
+                _rs_cache.clear()
+            _rs_cache[cache_key] = compute(target_date=end, start_date=start)
+        df = _rs_cache[cache_key]
+        stock = df.filter((pl.col("stock_code")==code) & (pl.col("date")>=start) & (pl.col("date")<=end)).sort("date")
+        if stock.shape[0] == 0:
+            return jsonify({'error': f'{code} 无数据'}), 404
+        return jsonify({
+            'code': code,
+            'dates': stock["date"].to_list(),
+            'rs_line': [round(x, 2) if x else None for x in stock["rs_line_norm"].to_list()],
+            'close': stock["adj_close"].to_list(),
+            'rps_250': stock["rps_250"].to_list(),
+            'rps_20': stock["rps_20"].to_list(),
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

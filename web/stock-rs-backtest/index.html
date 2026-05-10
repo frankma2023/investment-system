@@ -46,8 +46,8 @@
   .badge-burst { background:var(--color-neutral-bg); color:var(--color-neutral); border:1px solid var(--color-neutral-border); padding:2px 8px; border-radius:8px; font-size:0.58rem; font-weight:700; }
 
   /* 表格 */
-  .result-table { min-width:900px; }
-  .result-table td { font-size:0.64rem; }
+  .result-table { min-width:auto; table-layout:auto; }
+  .result-table td { font-size:0.6rem; padding:5px 4px; white-space:nowrap; }
   .rps-high { color:var(--color-up); font-weight:700; }
   .tr-ds { background:rgba(254,44,85,0.03); }
 
@@ -243,7 +243,7 @@ function syncS(id){document.getElementById(id+'-v').textContent=document.getElem
 function syncSI(id){document.getElementById(id+'-v').textContent=document.getElementById(id).value}
 function syncSAmount(id){
   var v=parseInt(document.getElementById(id).value);
-  document.getElementById(id+'-v').textContent=v===0?'不过滤':(v/10000).toFixed(1)+'万';
+  document.getElementById(id+'-v').textContent=v===0?'不过滤':(v/10000).toFixed(1)+'亿';
 }
 function toggleSwitch(id){
   var b=document.getElementById(id);
@@ -258,16 +258,31 @@ function toggleSwitch(id){
 })();
 
 // ══════ RUN ══════
+var currentPage=1,totalPages=1;
 async function runBacktest(){
   var btn=document.getElementById('btn-run'), err=document.getElementById('error-msg');
   btn.disabled=true;btn.textContent='⏳ 计算中...';err.classList.remove('active');
 
   var date=document.getElementById('target-date').value;
   try{
-    var resp=await fetch(API+'/api/stock-rs?date='+date);
+    // 加载第一页（含总数+总页数）
+    var resp=await fetch(API+'/api/stock-rs?date='+date+'&page=1&page_size=200');
     if(!resp.ok)throw new Error('API ' + resp.status);
     var data=await resp.json();
+    currentPage=1;totalPages=data.stats.total_pages||1;
     lastResults=data.results||[];
+
+    // 缓存总分页信息
+    var dsCount=data.stats.double_strong_count||0;
+    var total=data.stats.total||0;
+    var valid250=data.stats.valid_rps250||0;
+
+    // 加载剩余页（缓存命中，秒出）
+    for(var p=2;p<=totalPages;p++){
+      var pr=await fetch(API+'/api/stock-rs?date='+date+'&page='+p+'&page_size=200');
+      var pd=await pr.json();
+      lastResults=lastResults.concat(pd.results||[]);
+    }
 
     // 客户端双强筛选（允许用户调阈值后即时过滤）
     var r250=parseInt(document.getElementById('robust-250').value);
@@ -313,9 +328,10 @@ function setFilter(type, btn){
   applyFilter();
 }
 
+var currentPage=1,pageSize=100;
+
 function applyFilter(){
-  var topN=parseInt(document.getElementById('display-top').value);
-  var data=lastResults.slice(0, topN);
+  var data=lastResults;
 
   if(currentFilter==='robust') data=data.filter(function(r){return r._robust});
   else if(currentFilter==='burst') data=data.filter(function(r){return r._burst});
@@ -324,10 +340,18 @@ function applyFilter(){
   var q=(document.getElementById('search-input').value||'').toUpperCase();
   if(q) data=data.filter(function(r){return (r.stock_code||'').indexOf(q)>=0 || (r.name||'').toUpperCase().indexOf(q)>=0});
 
-  renderTable(data);
+  pageSize=parseInt(document.getElementById('display-top').value);
+  var totalFiltered=data.length;
+  var totalP=Math.ceil(totalFiltered/pageSize)||1;
+  if(currentPage>totalP)currentPage=totalP;
+  var start=(currentPage-1)*pageSize;
+  data=data.slice(start, start+pageSize);
+
+  renderTable(data,currentPage,totalP,start+1,Math.min(start+pageSize,totalFiltered),totalFiltered);
 }
 
-function renderTable(data){
+function renderTable(data,curPg,totalPg,itemStart,itemEnd,totalItems){
+  curPg=curPg||1;totalPg=totalPg||1;
   if(!data.length){
     document.getElementById('results-table').innerHTML='<div style="padding:32px;text-align:center;color:var(--text-tertiary)">暂无匹配结果</div>';
     return;
@@ -358,7 +382,7 @@ function renderTable(data){
   cols.forEach(function(c){
     var cls=sortCol===c.k?' style="color:var(--color-accent);font-weight:700"':' style="color:var(--text-tertiary)"';
     var arrow=sortCol===c.k?(sortDir==='asc'?' ▲':' ▼'):'';
-    h+='<th'+cls+' onclick="sortBy(\''+c.k+'\')">'+c.l+arrow+'</th>';
+    h+='<th style="padding:3px 4px;font-size:0.55rem"'+cls+' onclick="sortBy(\''+c.k+'\')">'+c.l+arrow+'</th>';
   });
   h+='</tr></thead><tbody>';
   data.forEach(function(r){
@@ -366,10 +390,10 @@ function renderTable(data){
     var rps250=r.rps_250!=null?r.rps_250:'—';
     var rps250Cls=rps250>=90?'rps-high':'';
     h+='<tr class="'+dsCls+'">';
-    h+='<td style="color:var(--color-accent);font-weight:600;cursor:pointer">'+r.stock_code+'</td>';
-    h+='<td>'+r.name+'</td>';
-    h+='<td>'+(r.close?r.close.toFixed(2):'—')+'</td>';
-    h+='<td class="'+rps250Cls+'" style="font-weight:700">'+rps250+'</td>';
+    h+='<td style="color:var(--color-accent);font-weight:600;cursor:pointer;padding-right:6px">'+r.stock_code+'</td>';
+    h+='<td style="padding-right:6px">'+r.name+'</td>';
+    h+='<td style="padding-right:6px">'+(r.close?r.close.toFixed(2):'—')+'</td>';
+    h+='<td class="'+rps250Cls+'" style="font-weight:700;padding-right:6px">'+rps250+'</td>';
     h+='<td>'+(r.rps_120!=null?r.rps_120:'—')+'</td>';
     h+='<td>'+(r.rps_60!=null?r.rps_60:'—')+'</td>';
     h+='<td>'+(r.rps_20!=null?r.rps_20:'—')+'</td>';
@@ -378,8 +402,22 @@ function renderTable(data){
     h+='</tr>';
   });
   h+='</tbody></table>';
-  document.getElementById('results-table').innerHTML=h;
+  // 分页导航（表格上方）
+  var pg='<div style="display:flex;gap:4px;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap">';
+  pg+='<div style="display:flex;gap:4px;align-items:center">';
+  pg+='<button onclick="goPage(1)" style="padding:4px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.6rem;font-family:var(--font-display)">⏮</button>';
+  pg+='<button onclick="goPage('+Math.max(1,curPg-1)+')" style="padding:4px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.6rem;font-family:var(--font-display)">◀</button>';
+  var ps=Math.max(1,curPg-2),pe=Math.min(totalPg,curPg+2);
+  for(var i=ps;i<=pe;i++){
+    pg+='<button onclick="goPage('+i+')" style="padding:4px 8px;border:1px solid '+(i===curPg?'var(--color-accent)':'var(--divider)')+';border-radius:8px;background:'+(i===curPg?'var(--color-accent)':'var(--card-bg)')+';color:'+(i===curPg?'#FFF':'var(--text-secondary)')+';cursor:pointer;font-size:0.6rem;font-family:var(--font-display);font-weight:700;min-width:26px">'+i+'</button>';
+  }
+  pg+='<button onclick="goPage('+Math.min(totalPg,curPg+1)+')" style="padding:4px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.6rem;font-family:var(--font-display)">▶</button>';
+  pg+='<button onclick="goPage('+totalPg+')" style="padding:4px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.6rem;font-family:var(--font-display)">⏭</button>';
+  pg+='</div><span style="font-size:0.6rem;color:var(--text-tertiary)">'+itemStart+'-'+itemEnd+' / '+totalItems+'</span></div>';
+  document.getElementById('results-table').innerHTML=pg+h+pg;
 }
+
+function goPage(p){currentPage=p;applyFilter()}
 
 var sortCol='rps_250',sortDir='desc';
 function sortBy(col){
