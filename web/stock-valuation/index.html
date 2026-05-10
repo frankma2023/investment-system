@@ -91,6 +91,7 @@
       <div class="chart-card"><div class="chart-title">ROE (%)</div><div id="chart-roe" style="height:260px"></div><div id="text-roe" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">EPS（元）</div><div id="chart-eps" style="height:260px"></div><div id="text-eps" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">净利增速（%）</div><div id="chart-peg" style="height:260px"></div><div id="text-peg" class="analysis-text"></div></div>
+      <div class="chart-card"><div class="chart-title">营业收入（亿）</div><div id="chart-rev" style="height:260px"></div><div id="text-rev" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">PEG（PE÷净利增速）</div><div id="chart-peg-real" style="height:260px"></div><div id="text-peg-real" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">毛利率 (%)</div><div id="chart-gm" style="height:260px"></div><div id="text-gm" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">营收增速 (%)</div><div id="chart-revyoy" style="height:260px"></div><div id="text-revyoy" class="analysis-text"></div></div>
@@ -145,6 +146,7 @@ async function loadAll(){
   var ey=document.getElementById('year-end').value;
   var endDate=ey==='2026'?'2026-05-07':ey+'-12-31';
   var startDate=sy+'-01-01';
+  console.log('loadAll dates:', startDate, 'to', endDate);
   await loadValuation(code,startDate,endDate);
   await loadFinancials(code);
 }
@@ -212,6 +214,7 @@ async function loadFinancials(code){
   buildBar('chart-roe','ROE %',d.dates,d.roe,'#4ECDC4');genFText('text-roe','ROE',d.roe,'%');
   buildBar('chart-eps','EPS',d.dates,d.eps,'#FF6B6B');genFText('text-eps','EPS',d.eps,'元');
   buildBar('chart-peg','净利增速 %',d.dates,d.net_profit_yoy,'#8B5CF6');genFText('text-peg','净利增速',d.net_profit_yoy,'%');
+  buildBigBar('chart-rev','营业收入',d.dates,d.revenue,'亿');genFText('text-rev','营业收入',d.revenue,'亿');
   buildBar('chart-gm','毛利率 %',d.dates,d.gross_margin,'#539BF5');genFText('text-gm','毛利率',d.gross_margin,'%');
   buildBar('chart-revyoy','营收增速 %',d.dates,d.revenue_yoy,'#E8A838');genFText('text-revyoy','营收增速',d.revenue_yoy,'%');
   buildBar('chart-npyoy','净利增速 %',d.dates,d.net_profit_yoy,'#8B5CF6');genFText('text-npyoy','净利增速',d.net_profit_yoy,'%');
