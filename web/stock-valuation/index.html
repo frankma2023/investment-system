@@ -35,9 +35,10 @@
   .nav-dropdown-menu a:hover{background:var(--color-accent-subtle);color:var(--color-accent)}
   @media(max-width:768px){.chart-grid{grid-template-columns:1fr}.stat-cards{grid-template-columns:repeat(3,1fr)}}
   .xhs-loading{display:block;text-align:center;padding:40px;color:var(--text-tertiary);font-family:var(--font-display)}
-  .mini-table{width:100%;border-collapse:collapse;font-size:0.68rem;margin-top:8px}
-  .mini-table th{text-align:left;padding:6px 8px;color:var(--text-tertiary);font-weight:600;font-size:0.6rem;border-bottom:1px solid var(--divider)}
-  .mini-table td{padding:5px 8px;border-bottom:1px solid var(--border-subtle);font-family:var(--font-mono);font-size:0.65rem}
+  .mini-table{width:100%;border-collapse:collapse;font-size:0.7rem;margin-top:8px}
+  .mini-table th{background:rgba(0,0,0,0.03);padding:6px 8px;text-align:left;font-weight:700;color:var(--text-tertiary);font-size:0.6rem;border-bottom:2px solid var(--divider)}
+  .mini-table td{padding:6px 8px;border-bottom:1px solid var(--divider)}
+  .mini-table .mono{font-family:var(--font-display);font-size:0.7rem}
 
   /* ══ 财务评估复制样式 ══ */
   .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -317,27 +318,10 @@ loadAll();
 // ══════ 财务评估 ══════
 async function loadEval(code){
   if(!code)code=document.getElementById('stock-input').value||'600519';
-  document.getElementById('eval-loading').style.display='block';
-  document.getElementById('eval-content').style.display='none';
-  try{
-    var d=await resp.json();
-    renderSection('eval-dcf','DCF估值',d.dcf);
-    renderSection('eval-comps','可比公司',d.comps);
-    renderSection('eval-earnings','盈利分析',d.earnings);
-    renderSection('eval-model','三表预测',d.model);
-    document.getElementById('eval-content').style.display='block';
-    document.getElementById('eval-loading').style.display='none';
-  }catch(e){
-    document.getElementById('eval-loading').innerHTML='加载失败: '+e.message;
-  }
-}
-
-// ══════ 财务评估 ══════
-async function loadEval(code){
-  if(!code)code=document.getElementById('stock-input').value||'600519';
   var el=document.getElementById('eval-loading');
   el.style.display='block';document.getElementById('eval-results').innerHTML='';
   try{
+    var resp=await fetch(API+'/api/stock-analysis?code='+code);
     var data=await resp.json();
     if(data.error){document.getElementById('eval-results').innerHTML='<div class="xhs-card"><div style="padding:16px;color:var(--color-up)">'+data.error+'</div></div>';return}
     renderEval(data);
@@ -370,7 +354,7 @@ function renderEval(data){
 
   // ═══ Comps ═══
   var mm=c.median_multiples||{};
-  h+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📊 可比公司分析</span><span style="font-size:0.65rem;color:var(--text-tertiary)">'+c.industry+' · '+c.peer_count+'家可比</span><button class="btn-analysis" data-type="dcf" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.62rem;font-family:var(--font-display)">📖 详解</button></div>';
+  h+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📊 可比公司分析</span><span style="font-size:0.65rem;color:var(--text-tertiary)">'+c.industry+' · '+c.peer_count+'家可比</span><button class="btn-analysis" data-type="comps" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.62rem;font-family:var(--font-display)">📖 详解</button></div>';
   h+='<div class="metric-row">';
   h+='<div class="metric-item"><div class="val">'+(mm.pe||'—')+'x</div><div class="lbl">中位PE</div></div>';
   h+='<div class="metric-item"><div class="val">'+(mm.pb||'—')+'x</div><div class="lbl">中位PB</div></div>';
@@ -381,7 +365,7 @@ function renderEval(data){
 
   // ═══ Earnings ═══
   var lt=e.latest||{};
-  h+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📈 盈利趋势</span><button class="btn-analysis" data-type="dcf" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.62rem;font-family:var(--font-display)">📖 详解</button></div>';
+  h+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📈 盈利趋势</span><button class="btn-analysis" data-type="earnings" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.62rem;font-family:var(--font-display)">📖 详解</button></div>';
   h+='<div class="metric-row">';
   h+='<div class="metric-item"><div class="val '+(lt.revenue_yoy>0?'up':'down')+'">'+(lt.revenue_yoy!=null?(lt.revenue_yoy>0?'+':'')+lt.revenue_yoy+'%':'—')+'</div><div class="lbl">营收同比</div></div>';
   h+='<div class="metric-item"><div class="val '+(lt.net_profit_yoy>0?'up':'down')+'">'+(lt.net_profit_yoy!=null?(lt.net_profit_yoy>0?'+':'')+lt.net_profit_yoy+'%':'—')+'</div><div class="lbl">净利同比</div></div>';
@@ -392,7 +376,7 @@ function renderEval(data){
   h+='</div>';
 
   // ═══ 3-Statement ═══
-  h+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 三表预测</span><span style="font-size:0.65rem;color:var(--text-tertiary)">基准年:'+(m.base_year||'—')+' · '+m.base_gross_margin+'</span><button class="btn-analysis" data-type="dcf" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.62rem;font-family:var(--font-display)">📖 详解</button></div>';
+  h+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 三表预测</span><span style="font-size:0.65rem;color:var(--text-tertiary)">基准年:'+(m.base_year||'—')+' · '+m.base_gross_margin+'</span><button class="btn-analysis" data-type="model" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.62rem;font-family:var(--font-display)">📖 详解</button></div>';
   if(m.projections){h+='<table class="mini-table"><tr><th>年份</th><th>营收</th><th>毛利</th><th>净利</th><th>经营CF</th><th>自由CF</th></tr>';m.projections.forEach(function(p){var i=p.income_statement||{},cf=p.cash_flow||{};h+='<tr><td>'+p.year+'年</td><td class="mono">'+fmtNum(i.revenue)+'</td><td class="mono">'+fmtNum(i.gross_profit)+'</td><td class="mono">'+fmtNum(i.net_income)+'</td><td class="mono">'+fmtNum(cf.operating_cf)+'</td><td class="mono">'+fmtNum(cf.free_cf)+'</td></tr>'});h+='</table>'}
   h+='</div>';
 
