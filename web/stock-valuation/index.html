@@ -233,7 +233,8 @@ function buildBar(id,name,dates,vals,color){
     xAxis:{type:'category',data:dates,axisLabel:{color:tx,fontSize:9},axisLine:{lineStyle:{color:sp}}},
     yAxis:{type:'value',axisLabel:{color:tx,fontSize:9},splitLine:{lineStyle:{color:sp}}},
     series:[
-      {name:name,type:'bar',data:vals,itemStyle:{color:color,borderRadius:[4,4,0,0]},barWidth:'50%',label:{show:true,position:'top',color:isDark?'#999':'#6E6E6E',fontSize:9}},
+      {name:name,type:'bar',data:vals,itemStyle:{color:color,borderRadius:[4,4,0,0]},barWidth:'50%',label:{show:true,position:'top',color:isDark?'#999':'#6E6E6E',fontSize:9,
+        formatter:function(p){var v=p.value;if(v==null||v==='—')return'';return v.toFixed(2)}}},
       {name:'均值',type:'line',data:vals.map(function(){return avg}),symbol:'none',lineStyle:{color:'#E8A838',width:1,type:'dashed'}}
     ]
   });dom._echart=ch;
