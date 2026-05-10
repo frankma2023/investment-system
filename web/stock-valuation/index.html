@@ -74,9 +74,8 @@
       </div>
     </div>
     <a href="../index-scan/" class="nav-item">🔬 指数扫描</a>
-    <a href="../index-valuation/" class="nav-item">📈 估值分位</a>
-    <a href="../stock-valuation/" class="nav-item active">💎 个股估值</a>
-    <a href="../stock-analysis/" class="nav-item">📋 个股财务</a>
+    <a href="../index-valuation/" class="nav-item">📈 指数估值</a>
+    <a href="../stock-valuation/" class="nav-item active">💎 个股扫描</a>
     <a href="#" class="nav-item">📊 大盘扫描</a>
     <a href="#" class="nav-item">💰 仓位管理</a>
     <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
@@ -321,7 +320,6 @@ async function loadEval(code){
   document.getElementById('eval-loading').style.display='block';
   document.getElementById('eval-content').style.display='none';
   try{
-    var resp=await fetch(API+'/api/stock-analysis?code='+code);
     var d=await resp.json();
     renderSection('eval-dcf','DCF估值',d.dcf);
     renderSection('eval-comps','可比公司',d.comps);
@@ -340,7 +338,6 @@ async function loadEval(code){
   var el=document.getElementById('eval-loading');
   el.style.display='block';document.getElementById('eval-results').innerHTML='';
   try{
-    var resp=await fetch(API+'/api/stock-analysis?code='+code);
     var data=await resp.json();
     if(data.error){document.getElementById('eval-results').innerHTML='<div class="xhs-card"><div style="padding:16px;color:var(--color-up)">'+data.error+'</div></div>';return}
     renderEval(data);
