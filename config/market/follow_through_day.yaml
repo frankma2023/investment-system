@@ -4,13 +4,13 @@
 rally:
   new_low_days: 20
   close_strength: either
-  protection_days: 5
+  protection_days: 1
 
 ftd:
-  window_start: 5
+  window_start: 4
   window_end: 10
   min_gain_pct: 0
-  min_vol_ratio_prev: 0.96
+  min_vol_ratio_prev: 1
   vol_ratio_ma10_enabled: false
   vol_ratio_ma10: 0
   close_position_min: 50

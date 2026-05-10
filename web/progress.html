@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>项目进展 · 欧奈尔投资系统</title>
   <link rel="stylesheet" href="shared/css/theme.css">
@@ -13,17 +13,15 @@
   <style>
     body { max-width:1100px; margin:0 auto; padding:20px; }
     .stats-row { display:flex; gap:12px; margin:16px 0 24px; flex-wrap:wrap; }
-    .stat-card { flex:1 1 140px; background:var(--card-bg); border-radius:14px; padding:16px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+    .stat-card { flex:1 1 120px; background:var(--card-bg); border-radius:14px; padding:16px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
     .stat-card .num { font-family:var(--font-display); font-size:1.6rem; font-weight:900; }
     .stat-card .lbl { font-size:0.65rem; color:var(--text-tertiary); margin-top:4px; }
-    .module { margin-bottom:28px; }
+    .module { margin-bottom:24px; }
     .module h2 { font-family:var(--font-display); font-size:1rem; font-weight:800; margin:0 0 8px; display:flex; align-items:center; gap:8px; }
-    table { width:100%; border-collapse:collapse; font-size:0.78rem; }
-    th, td { padding:6px 10px; text-align:left; border-bottom:1px solid var(--divider); }
-    th { font-weight:700; color:var(--text-secondary); font-size:0.7rem; }
-    .bar-wrap { background:var(--bg-tertiary); border-radius:6px; height:8px; overflow:hidden; }
-    .bar-fill { height:100%; border-radius:6px; background:#FE2C55; }
-    .status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; }
+    table { width:100%; border-collapse:collapse; font-size:0.75rem; }
+    th, td { padding:5px 8px; text-align:left; border-bottom:1px solid var(--divider); }
+    th { font-weight:700; color:var(--text-secondary); font-size:0.68rem; }
+    .status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; }
     .s-done { background:#4CAF50; } .s-wip  { background:#FF9800; } .s-todo { background:#BDBDBD; }
     .updated { text-align:center; font-size:0.65rem; color:var(--text-tertiary); margin-top:32px; }
   </style>
@@ -31,157 +29,78 @@
 <body>
   <header class="panel-header">
     <h1>📋 欧奈尔投资系统 · 项目进展</h1>
-    <p>最后更新：2026-05-07</p>
+    <p>最后更新：2026-05-12</p>
   </header>
 
   <div class="stats-row">
-    <div class="stat-card"><div class="num" style="color:#4CAF50">8</div><div class="lbl">✅ 已完成</div></div>
-    <div class="stat-card"><div class="num" style="color:#FF9800">1</div><div class="lbl">🔴 进行中</div></div>
-    <div class="stat-card"><div class="num">4</div><div class="lbl">⏳ 下一步</div></div>
-    <div class="stat-card"><div class="num">1</div><div class="lbl">🐛 已知BUG</div></div>
+    <div class="stat-card"><div class="num" style="color:#4CAF50">15</div><div class="lbl">✅ 已完成</div></div>
+    <div class="stat-card"><div class="num" style="color:#FF9800">2</div><div class="lbl">🔴 进行中</div></div>
+    <div class="stat-card"><div class="num">3</div><div class="lbl">⏳ 下一步</div></div>
+    <div class="stat-card"><div class="num">2</div><div class="lbl">🐛 已知问题</div></div>
   </div>
 
-  <!-- ═══ 指数模块 ═══ -->
   <div class="module">
-    <h2>📊 指数分析模块</h2>
+    <h2>📊 指数分析</h2>
     <table>
-      <tr><th>功能</th><th>状态</th><th>产出</th><th>备注</th></tr>
-      <tr>
-        <td>指数RS强度计算 + 回测看板</td>
-        <td><span class="status-dot s-done"></span>✅</td>
-        <td>引擎 + API + 小红书看板</td>
-        <td>4周期RS排名, 三层强势池(L1/L2/L3), Tab切换5池</td>
-      </tr>
-      <tr>
-        <td>指数拥挤度计算 + 回测看板</td>
-        <td><span class="status-dot s-done"></span>✅</td>
-        <td>scanner + API + 看板</td>
-        <td>四维度(热度/资金/估值/机构), index_crowding_daily持久化</td>
-      </tr>
-      <tr>
-        <td>机构吸筹/出货评级(A/D) + 回测看板</td>
-        <td><span class="status-dot s-done"></span>✅</td>
-        <td>引擎 + API + 小红书看板</td>
-        <td>MFV×换手率, raw/zscore双方法, A+~E-十级评级</td>
-      </tr>
-      <tr>
-        <td>指数背离检测 + 回测看板</td>
-        <td><span class="status-dot s-done"></span>✅</td>
-        <td>引擎 + API + 小红书看板</td>
-        <td>量价/RSI/MACD/成分股四背离, 共振预警, 短线/长线模式</td>
-      </tr>
-      <tr>
-        <td>指数扫描看板</td>
-        <td><span class="status-dot s-done"></span>✅</td>
-        <td>NEO风格自动扫描</td>
-        <td>5池Tab, RS/AD/背离三列, 筛选器, 四API并发</td>
-      </tr>
-      <tr>
-        <td>大盘扫描(抛盘日+追盘日)</td>
-        <td><span class="status-dot s-done"></span>✅</td>
-        <td>引擎×2 + 回测看板×2</td>
-        <td>抛盘日4卡, 追盘日4类失效条件, 已完成</td>
-      </tr>
+      <tr><th>功能</th><th>状态</th><th>页面</th></tr>
+      <tr><td>指数RS强度 + 回测看板</td><td><span class="status-dot s-done"></span>完成</td><td>/index-rs-backtest/</td></tr>
+      <tr><td>指数拥挤度 + 回测看板</td><td><span class="status-dot s-done"></span>完成</td><td>/index-crowdedness/</td></tr>
+      <tr><td>机构吸筹/出货评级</td><td><span class="status-dot s-done"></span>完成</td><td>/index-ad-backtest/</td></tr>
+      <tr><td>指数背离检测</td><td><span class="status-dot s-done"></span>完成</td><td>/divergence-backtest/</td></tr>
+      <tr><td>指数扫描看板</td><td><span class="status-dot s-done"></span>完成</td><td>/index-scan/</td></tr>
+      <tr><td>指数估值分位</td><td><span class="status-dot s-done"></span>完成</td><td>/index-valuation/</td></tr>
     </table>
   </div>
 
-  <!-- ═══ 个股模块 ═══ -->
   <div class="module">
-    <h2>🏢 个股分析模块</h2>
+    <h2>💎 个股分析</h2>
     <table>
-      <tr><th>功能</th><th>状态</th><th>产出</th><th>备注</th></tr>
-      <tr>
-        <td>个股财务分析(DCF/Comps/Earnings/3-Statement)</td>
-        <td><span class="status-dot s-done"></span>✅</td>
-        <td>引擎 + API + 小红书看板</td>
-        <td>四大引擎，输入代码一键出报告</td>
-      </tr>
-      <tr>
-        <td>个股CAN SLIM扫描</td>
-        <td><span class="status-dot s-todo"></span>⬜</td>
-        <td>—</td>
-        <td>7维评分, 个股RS, 双强股</td>
-      </tr>
+      <tr><th>功能</th><th>状态</th><th>页面</th></tr>
+      <tr><td>个股RS强度 + 回测看板</td><td><span class="status-dot s-done"></span>完成</td><td>/stock-rs-backtest/</td></tr>
+      <tr><td>个股全维度扫描</td><td><span class="status-dot s-done"></span>完成</td><td>/stock-valuation/</td></tr>
+      <tr><td>个股财务分析（DCF/Comps/Earnings/3-Statement）</td><td><span class="status-dot s-done"></span>完成</td><td>/stock-analysis/</td></tr>
     </table>
   </div>
 
-  <!-- ═══ 基础设施 ═══ -->
   <div class="module">
-    <h2>🏗️ 基础设施</h2>
+    <h2>📉 大盘扫描</h2>
     <table>
-      <tr><th>功能</th><th>状态</th><th>产出</th><th>备注</th></tr>
-      <tr>
-        <td>数据库(lixinger.db) + 数据拉取脚本</td>
-        <td><span class="status-dot s-done"></span>✅</td>
-        <td>~21GB, 408指数, 30M行</td>
-        <td>个股/指数K线, 季报/年报, 估值指标, 成分股权重</td>
-      </tr>
-      <tr>
-        <td>Flask API服务(端口8788)</td>
-        <td><span class="status-dot s-done"></span>✅</td>
-        <td>10+ API端点</td>
-        <td>RS/AD/Divergence/Crowding/Constituents/StockAnalysis</td>
-      </tr>
-      <tr>
-        <td>小红书回测风格指南</td>
-        <td><span class="status-dot s-done"></span>✅</td>
-        <td>XHS-BACKTEST-STYLE-GUIDE.md</td>
-        <td>9组件, 完整HTML骨架, 检查清单, 跨模型一致性</td>
-      </tr>
-      <tr>
-        <td>NEO全息终端风格</td>
-        <td><span class="status-dot s-done"></span>✅</td>
-        <td>neo.css</td>
-        <td>深空网格+霓虹光效, 扫描看板使用</td>
-      </tr>
-      <tr>
-        <td>数据库备份脚本</td>
-        <td><span class="status-dot s-done"></span>✅</td>
-        <td>scripts/backup_db.py</td>
-        <td>WAL安全备份, 进度显示, 自动清理旧备份</td>
-      </tr>
+      <tr><th>功能</th><th>状态</th><th>页面</th></tr>
+      <tr><td>抛盘日引擎 + 回测看板</td><td><span class="status-dot s-done"></span>完成</td><td>/distribution-day/</td></tr>
+      <tr><td>追盘日引擎 + 回测看板</td><td><span class="status-dot s-done"></span>完成</td><td>/follow-through-day/</td></tr>
     </table>
   </div>
 
-  <!-- ═══ 产品文档 ═══ -->
   <div class="module">
-    <h2>📚 产品文档</h2>
+    <h2>🔧 基础设施</h2>
     <table>
-      <tr><th>文档</th><th>状态</th><th>位置</th></tr>
-      <tr><td>指数RS强度计算 v4</td><td><span class="status-dot s-done"></span>✅</td><td>docs/product/</td></tr>
-      <tr><td>指数机构吸筹与出货评级</td><td><span class="status-dot s-done"></span>✅</td><td>docs/product/</td></tr>
-      <tr><td>指数背离检测 v4</td><td><span class="status-dot s-done"></span>✅</td><td>docs/product/</td></tr>
-      <tr><td>指数拥挤度 v1</td><td><span class="status-dot s-done"></span>✅</td><td>docs/product/</td></tr>
-      <tr><td>抛盘日 v3</td><td><span class="status-dot s-done"></span>✅</td><td>docs/product/</td></tr>
-      <tr><td>追盘日 v4</td><td><span class="status-dot s-done"></span>✅</td><td>docs/product/</td></tr>
+      <tr><th>功能</th><th>状态</th><th>说明</th></tr>
+      <tr><td>理杏仁数据拉取脚本</td><td><span class="status-dot s-done"></span>完成</td><td>个股/指数K线、财务、基本面、股本变动</td></tr>
+      <tr><td>看板样式系统</td><td><span class="status-dot s-done"></span>完成</td><td>小红书手账风格 + 导航栏统一</td></tr>
+      <tr><td>回测配置持久化</td><td><span class="status-dot s-done"></span>完成</td><td>所有回测看板 保存/加载 YAML</td></tr>
+      <tr><td>基本面数据补全</td><td><span class="status-dot s-wip"></span>进行中</td><td>fetch_fundamental_nonfinancial.py 增量拉取中</td></tr>
     </table>
   </div>
 
-  <!-- ═══ 已知问题 ═══ -->
   <div class="module">
     <h2>🐛 已知问题</h2>
     <table>
-      <tr><th>问题</th><th>影响</th><th>计划</th></tr>
-      <tr>
-        <td>扫描看板拥挤度列无数据</td>
-        <td>index-scan/ 拥挤度列显示"—"</td>
-        <td>低优先级, 待回头修复</td>
-      </tr>
+      <tr><th>问题</th><th>优先级</th></tr>
+      <tr><td>个股扫描-市场强度Tab RPS_120/RPS_60 折线未显示（引擎已算）</td><td>低</td></tr>
+      <tr><td>fetch_fundamental_nonfinancial 增量模式未检测历史数据缺口（~2528只股票缺2016-2024数据）</td><td>中</td></tr>
     </table>
   </div>
 
-  <!-- ═══ 下一步 ═══ -->
   <div class="module">
-    <h2>⏳ 下一步计划</h2>
+    <h2>⏳ 下一步</h2>
     <table>
-      <tr><th>功能</th><th>优先级</th><th>说明</th></tr>
-      <tr><td>大盘健康评分 (M1.4)</td><td>高</td><td>集成本已有RS/AD/背离/拥挤度, 汇成综合评分</td></tr>
-      <tr><td>指数背离 — 成分股背离完善</td><td>中</td><td>覆盖主题/策略指数前20大权重股</td></tr>
-      <tr><td>个股CAN SLIM扫描 (M2)</td><td>中</td><td>7维评分, 个股RS, 双强股</td></tr>
-      <tr><td>形态与信号识别 (M4)</td><td>后</td><td>杯柄/双底/VCP, 口袋支点, 卖出信号</td></tr>
+      <tr><th>功能</th><th>说明</th></tr>
+      <tr><td>大盘健康评分</td><td>M1.4，综合多指标评分</td></tr>
+      <tr><td>大盘扫描看板整合</td><td>M1.5，整合抛盘日/追盘日</td></tr>
+      <tr><td>买入形态与信号识别</td><td>M4，杯柄/VCP/口袋支点</td></tr>
     </table>
   </div>
 
-  <div class="updated">🔄 最后更新：2026-05-07 · 状态图例：✅完成 ⬜待开始</div>
+  <div class="updated">❤️ 投资手账本 · 项目进展</div>
 </body>
 </html>

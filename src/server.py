@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from detectors.distribution_day import detect as detect_distribution_days
 from detectors.follow_through_day import detect as detect_follow_through_days
+from detectors.accumulation_day import detect as detect_accumulation_days
 from detectors.index_rs import detect as detect_index_rs
 from detectors.index_ad import detect as detect_index_ad
 from detectors.divergence import (
@@ -276,12 +277,16 @@ def api_backtest():
     # Route to detector
     if signal_type == 'follow_through_day':
         dist_signals = detect_distribution_days(klines_in_range, params) if params.get('use_distribution_signals', True) else []
-        # FTD engine needs full klines for N-day new-low check; filter returned signals to range
         rally_attempts, signals, failed_ftds = detect_follow_through_days(klines, params, dist_signals)
-        # Filter: only keep signals/rallies within the requested date range
         signals = [s for s in signals if start <= s.get('date','') <= end]
         failed_ftds = [s for s in failed_ftds if start <= s.get('date','') <= end]
         rally_attempts = [r for r in rally_attempts if start <= r.get('date','') <= end]
+    elif signal_type == 'accumulation_day':
+        dist_signals = detect_distribution_days(klines_in_range, params) if params.get('use_distribution_signals', True) else []
+        rally_attempts, acc_signals = detect_accumulation_days(klines, params, dist_signals)
+        signals = [s for s in acc_signals if start <= s.get('date','') <= end]
+        rally_attempts = [r for r in rally_attempts if start <= r.get('date','') <= end]
+        failed_ftds = []
     else:
         # Default: distribution_day (also works for future signals)
         signals = detect_distribution_days(klines_in_range, params)
@@ -313,6 +318,9 @@ def api_backtest():
             'weighted_count': weighted,
             'rally_count': len(rally_attempts),
             'failed_ftd_count': len(failed_ftds),
+            'rally_attempts_count': len(rally_attempts),
+            'accumulation_count': len(signals) if signal_type == 'accumulation' else 0,
+            'ftd_count': len(signals) if signal_type == 'follow_through_day' else 0,
         }
     })
 
@@ -336,6 +344,93 @@ def api_config():
     # GET
     config = load_config(signal_type)
     return jsonify(config)
+
+# ═══════════════════════════════════════════════
+# API: GET /api/market-health
+# ═══════════════════════════════════════════════
+
+@app.route('/api/market-health')
+def api_market_health():
+    target_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    db = get_db()
+
+    row = db.execute(
+        "SELECT * FROM market_health_daily WHERE date <= ? ORDER BY date DESC LIMIT 1",
+        (target_date,)
+    ).fetchone()
+
+    if not row:
+        return jsonify({'status': 'no_data', 'date': target_date, 'total_score': 0, 'indicators': [], 'rotations': []})
+
+    indicators = [
+        {'key': 'ma50_above',   'value': row['ma50_above_value'],   'score': row['ma50_above_score'],   'detail': ''},
+        {'key': 'hl_ratio',     'value': row['hl_ratio_value'],     'score': row['hl_ratio_score'],     'detail': ''},
+        {'key': 'ad_ratio',     'value': row['ad_ratio_value'],     'score': row['ad_ratio_score'],     'detail': ''},
+        {'key': 'vol_breakout', 'value': row['vol_breakout_value'], 'score': row['vol_breakout_score'],  'detail': ''},
+        {'key': 'margin_5d',    'value': row['margin_5d_value'],    'score': row['margin_5d_score'],     'detail': ''},
+        {'key': 'sector_rot',   'value': row['sector_rot_score'],   'score': row['sector_rot_score'],   'detail': ''},
+        {'key': 'fear_greed',   'value': row['fear_greed_value'],   'score': row['fear_greed_score'],   'detail': ''},
+    ]
+
+    rot_rows = db.execute(
+        "SELECT * FROM market_rotation_daily WHERE date = ?", (row['date'],)
+    ).fetchall()
+
+    rotations = []
+    pool_icons = {"一级行业": "🏭", "二级行业": "🔧", "主题指数": "🎯", "策略指数": "🧩"}
+    for r in rot_rows:
+        rot = {
+            'name': r['pool'],
+            'icon': pool_icons.get(r['pool'], '📦'),
+            'method': r['method'],
+            'value': r['value'],
+            'participates': r['method'] == 'overlap',
+            'count': '',
+        }
+        if r['top5_current']:
+            try:
+                rot['top5_current'] = json.loads(r['top5_current'])
+                rot['top5_last'] = json.loads(r.get('top5_last') or '[]')
+                if r['method'] == 'overlap':
+                    curr_set = set(rot['top5_current'])
+                    last_set = set(rot['top5_last'])
+                    rot['top5_overlap'] = list(curr_set & last_set)
+            except Exception:
+                pass
+        rotations.append(rot)
+
+    return jsonify({
+        'date': row['date'],
+        'total_score': row['total_score'],
+        'rating': row['rating'],
+        'indicators': indicators,
+        'rotations': rotations,
+    })
+
+# ═══════════════════════════════════════════════
+# API: GET /api/market-health/breakouts
+# ═══════════════════════════════════════════════
+
+@app.route('/api/market-health/breakouts')
+def api_market_breakouts():
+    target_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    db = get_db()
+    rows = db.execute("""
+        SELECT mb.*, sb.name
+        FROM market_breakout_daily mb
+        LEFT JOIN stock_basic sb ON mb.stock_code = sb.stock_code
+        WHERE mb.date = (SELECT MAX(date) FROM market_breakout_daily WHERE date <= ?)
+        ORDER BY mb.volume DESC
+    """, (target_date,)).fetchall()
+    stocks = [{
+        'stock_code': r['stock_code'],
+        'name': r['name'] or '',
+        'close': r['close'],
+        'change_pct': r['change_pct'],
+        'volume': r['volume'],
+        'amount': r['amount'],
+    } for r in rows]
+    return jsonify({'date': rows[0]['date'] if rows else target_date, 'count': len(stocks), 'stocks': stocks})
 
 # ═══════════════════════════════════════════════
 # API: POST /api/backtest/save
@@ -1369,5 +1464,5 @@ if __name__ == '__main__':
     init_schema()
     print("🦊 O'Neil Backtest API Server starting on http://localhost:8788")
     print(f"   Config dir: {CONFIG_DIR}")
-    print(f"   Detectors: distribution_day, follow_through_day, index_rs")
+    print(f"   Detectors: distribution_day, follow_through_day, accumulation, index_rs")
     app.run(host='0.0.0.0', port=8788, debug=False)

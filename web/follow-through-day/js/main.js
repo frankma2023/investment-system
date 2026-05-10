@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setDefaultDates();
   bindEvents();
   initChart();
+  await loadConfig();
   setTimeout(runBacktest, 600);
 });
 
@@ -62,7 +63,7 @@ async function loadIndices() {
 function setDefaultDates() {
   const now = new Date();
   const threeMonthsAgo = new Date(now);
-  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  threeMonthsAgo.setFullYear(threeMonthsAgo.getFullYear() - 2);
   document.getElementById('date-end').value = now.toISOString().split('T')[0];
   document.getElementById('date-start').value = threeMonthsAgo.toISOString().split('T')[0];
 }
@@ -292,6 +293,70 @@ function fmtPct(v) {
 }
 
 /* ── Save Config ── */
+async function loadConfig() {
+  try {
+    const resp = await fetch(`${API_BASE}/api/config?signal_type=follow_through_day`, { cache: 'no-store' });
+    const data = await resp.json();
+    if (data && (data.rally || data.ftd)) {
+      console.log('FTD配置已加载:', data);
+      applyConfigDict(data);
+    }
+  } catch (e) { console.log('配置加载失败:', e); }
+}
+
+function applyConfigDict(cfg) {
+  // rally
+  if (cfg.rally) {
+    const rm = { new_low_days: 'c1-new-low', close_strength: 'c1-close-strength', protection_days: 'c1-protection' };
+    for (const [k, id] of Object.entries(rm)) {
+      if (cfg.rally[k] !== undefined) ftdSetField(id, cfg.rally[k]);
+    }
+  }
+  // rally_failure
+  if (cfg.rally_failure) {
+    const fm = { reset_window_start: 'c2-reset-start', reset_window_end: 'c2-reset-end', no_ftd_days: 'c2-no-ftd' };
+    for (const [k, id] of Object.entries(fm)) {
+      if (cfg.rally_failure[k] !== undefined) ftdSetField(id, cfg.rally_failure[k]);
+    }
+  }
+  // ftd
+  if (cfg.ftd) {
+    const tm = { window_start: 'c3-win-start', window_end: 'c3-win-end', min_gain_pct: 'c3-min-gain', min_vol_ratio_prev: 'c3-vol-prev' };
+    for (const [k, id] of Object.entries(tm)) {
+      if (cfg.ftd[k] !== undefined) ftdSetField(id, cfg.ftd[k]);
+    }
+    if (cfg.ftd.vol_ratio_ma10_enabled !== undefined) {
+      const el = document.getElementById('c3-vol-ma10-toggle');
+      if (el) {
+        el.className = 'toggle-switch ' + (cfg.ftd.vol_ratio_ma10_enabled ? 'on' : 'off');
+        const row = document.getElementById('c3-vol-ma10-row');
+        if (row) row.style.display = cfg.ftd.vol_ratio_ma10_enabled ? 'flex' : 'none';
+      }
+    }
+    if (cfg.ftd.vol_ratio_ma10 !== undefined) ftdSetField('c3-vol-ma10', cfg.ftd.vol_ratio_ma10);
+    if (cfg.ftd.close_position_min !== undefined) ftdSetField('c3-close-pos', cfg.ftd.close_position_min);
+  }
+  // failure
+  if (cfg.failure) {
+    const fm2 = { weak_continuation_days: 'c4-weak-days', weak_continuation_min_gain: 'c4-weak-gain', distribution_cover_days: 'c4-dist-days', distribution_cover_count: 'c4-dist-count' };
+    for (const [k, id] of Object.entries(fm2)) {
+      if (cfg.failure[k] !== undefined) ftdSetField(id, cfg.failure[k]);
+    }
+    if (cfg.failure.retracement_enabled !== undefined) {
+      const el = document.getElementById('c4-retracement-toggle');
+      if (el) el.className = 'toggle-switch ' + (cfg.failure.retracement_enabled ? 'on' : 'off');
+    }
+  }
+}
+
+function ftdSetField(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.tagName === 'SELECT') { el.value = String(val); return; }
+  el.value = val;
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 async function saveConfig() {
   const btn = document.getElementById('btn-save');
   btn.textContent = '⏳ 保存中...';
@@ -361,4 +426,72 @@ async function saveConfig() {
     btn.disabled = false;
     setTimeout(() => { btn.textContent = '💾 保存配置'; }, 2000);
   }
+}
+
+function runDiagnostic() {
+  const date = document.getElementById('diag-date').value;
+  const div = document.getElementById('diag-result');
+  if (!date || !currentKlines.length) { div.style.display='none'; return; }
+
+  const params = getParams();
+  const fc = params.ftd;
+  const klineMap = {}; currentKlines.forEach(function(k){ klineMap[k.date] = k; });
+  const k = klineMap[date];
+  if (!k) { div.innerHTML='<div style="font-size:0.7rem;color:#FF6B6B">该日期不在回测范围内</div>'; div.style.display='block'; return; }
+
+  var idx = currentKlines.findIndex(function(r){ return r.date === date; });
+  var prev = idx > 0 ? currentKlines[idx-1] : null;
+
+  var chg = k.change_pct || 0;
+  var c1 = fc.min_gain_pct > 0 ? chg >= fc.min_gain_pct : k.close > prev.close;
+
+  var vrPrev = prev && prev.volume > 0 ? k.volume / prev.volume : 0;
+  var c2a = vrPrev >= fc.min_vol_ratio_prev;
+
+  var c2b = true, vrMA10 = 0, ma10v = 0;
+  if (fc.vol_ratio_ma10_enabled && fc.vol_ratio_ma10 > 0) {
+    var prev10 = currentKlines.slice(Math.max(0, idx-9), idx+1);
+    ma10v = prev10.length ? prev10.reduce(function(s,r){return s+r.volume},0) / prev10.length : 0;
+    vrMA10 = ma10v > 0 ? k.volume / ma10v : 0;
+    c2b = vrMA10 >= fc.vol_ratio_ma10;
+  }
+
+  var pos = k.high !== k.low ? (k.close - k.low) / (k.high - k.low) * 100 : 100;
+  var c3 = pos >= fc.close_position_min;
+
+  var rallyInfo = '';
+  for (var i=0; i<currentRallyAttempts.length; i++) {
+    var ra = currentRallyAttempts[i];
+    var raIdx = currentKlines.findIndex(function(r){ return r.date === ra.date; });
+    if (raIdx < 0) continue;
+    var dist = idx - raIdx;
+    if (dist >= fc.window_start && dist <= fc.window_end) {
+      rallyInfo = '<span style="color:#4CAF50">✅ D+'+dist+' (窗口D+'+fc.window_start+'~'+fc.window_end+')，反弹日='+ra.date+'</span>';
+      break;
+    } else if (dist > 0 && dist < fc.window_start) {
+      rallyInfo = '<span style="color:#FF9800">⚠ D+'+dist+'，窗口未到 (需D+'+fc.window_start+'~'+fc.window_end+')，反弹日='+ra.date+'</span>';
+      break;
+    } else if (dist > fc.window_end && dist <= 10) {
+      rallyInfo = '<span style="color:#FF6B6B">❌ D+'+dist+'，窗口已过 (D+'+fc.window_start+'~'+fc.window_end+')，反弹日='+ra.date+'</span>';
+      break;
+    }
+  }
+  if (!rallyInfo) rallyInfo = '<span style="color:#FF6B6B">❌ 不在任何反弹尝试窗口内</span>';
+
+  function cell(v){ return '<td style="font-weight:700">'+v+'</td>'; }
+  function pass(b, detail){ return b ? '<td style="color:#4CAF50">✅ 通过 · '+detail+'</td>' : '<td style="color:#FF6B6B">❌ 不达标 · '+detail+'</td>'; }
+
+  var tbl = '<table class="data-table" style="margin:0"><thead><tr><th style="width:20%">条件</th><th>实际值</th><th>阈值</th><th style="width:30%">判定</th></tr></thead><tbody>';
+  tbl += '<tr>'+cell('① 涨幅')+'<td>'+(chg>=0?'+':'')+chg.toFixed(2)+'%</td><td>≥'+fc.min_gain_pct.toFixed(2)+'%</td>'+pass(c1, '')+'</tr>';
+  tbl += '<tr>'+cell('② 量比(前日)')+'<td>'+vrPrev.toFixed(2)+'</td><td>≥'+fc.min_vol_ratio_prev.toFixed(2)+'</td>'+pass(c2a, '')+'</tr>';
+  if (fc.vol_ratio_ma10_enabled) {
+    tbl += '<tr>'+cell('② 量比(MA10)')+'<td>'+vrMA10.toFixed(2)+'</td><td>≥'+fc.vol_ratio_ma10.toFixed(2)+'</td>'+pass(c2b, '')+'</tr>';
+  }
+  tbl += '<tr>'+cell('③ 收盘位置')+'<td>'+pos.toFixed(1)+'%</td><td>≥'+fc.close_position_min+'%</td>'+pass(c3, '')+'</tr>';
+  tbl += '<tr>'+cell('④ 反弹窗口')+'<td colspan="2">—</td><td>'+rallyInfo+'</td></tr>';
+  var allPass = c1 && c2a && c2b && c3 && rallyInfo.indexOf('✅')>=0;
+  tbl += '<tr style="border-top:2px solid var(--divider)"><td style="font-weight:900">综合</td><td colspan="2"></td><td style="font-weight:900;font-size:0.85rem;color:'+(allPass?'#4CAF50':'#FF6B6B')+'">'+(allPass?'🎉 应为追盘日':'❌ 不满足')+'</td></tr>';
+  tbl += '</tbody></table>';
+  div.innerHTML = '<div style="font-size:0.65rem;color:var(--text-tertiary);margin-bottom:6px">'+date+' OHLC: '+k.open.toFixed(0)+' / '+k.high.toFixed(0)+' / '+k.low.toFixed(0)+' / '+k.close.toFixed(0)+'</div>'+tbl;
+  div.style.display = 'block';
 }

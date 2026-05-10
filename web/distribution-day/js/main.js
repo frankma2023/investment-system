@@ -38,8 +38,11 @@ async function loadIndices() {
 }
 
 function setDefaultDates() {
-  document.getElementById('date-start').value = '2024-01-01';
-  document.getElementById('date-end').value = '2024-12-31';
+  const now = new Date();
+  const ago = new Date(now);
+  ago.setFullYear(ago.getFullYear() - 2);
+  document.getElementById('date-start').value = ago.toISOString().split('T')[0];
+  document.getElementById('date-end').value = now.toISOString().split('T')[0];
 }
 
 function bindEvents() {
@@ -344,4 +347,75 @@ async function saveConfig() {
     btn.disabled = false;
     setTimeout(() => { btn.textContent = '💾 保存配置'; }, 2000);
   }
+}
+
+function runDiagnostic() {
+  const date = document.getElementById('diag-date').value;
+  const div = document.getElementById('diag-result');
+  if (!date || !currentKlines.length) { div.style.display='none'; return; }
+
+  const klineMap = {}; currentKlines.forEach(function(k){ klineMap[k.date] = k; });
+  const k = klineMap[date];
+  if (!k) { div.innerHTML='<div style="font-size:0.7rem;color:#FF6B6B">该日期不在回测范围内</div>'; div.style.display='block'; return; }
+
+  var idx = currentKlines.findIndex(function(r){ return r.date === date; });
+  var prev = idx > 0 ? currentKlines[idx-1] : null;
+  var params = getParams();
+
+  var chg = k.change_pct || 0;
+  var vrPrev = prev && prev.volume > 0 ? k.volume / prev.volume : 0;
+  var amp = k.close > 0 ? (k.high - k.low) / k.close * 100 : 0;
+  var shadow = k.high !== k.low ? (k.high - Math.max(k.open, k.close)) / (k.high - k.low) * 100 : 0;
+  var pos = k.high !== k.low ? (k.close - k.low) / (k.high - k.low) * 100 : 50;
+
+  function cell(v){ return '<td style="font-weight:700">'+v+'</td>'; }
+  function pass(b){ return b ? '<td style="color:#4CAF50">✅</td>' : '<td style="color:#FF6B6B">❌</td>'; }
+
+  var tbl = '<table class="data-table" style="margin:0"><thead><tr><th style="width:20%">条件</th><th>实际值</th><th>阈值</th><th style="width:10%">判定</th></tr></thead><tbody>';
+  tbl += '<tr>'+cell('涨跌幅')+'<td>'+(chg>=0?'+':'')+chg.toFixed(2)+'%</td><td>—</td><td>'+(chg<0?'<span style="color:#FF6B6B">下跌</span>':'<span style="color:#4CAF50">上涨</span>')+'</td></tr>';
+  tbl += '<tr>'+cell('量比(前日)')+'<td>'+vrPrev.toFixed(2)+'</td><td>—</td><td>—</td></tr>';
+  tbl += '<tr>'+cell('振幅')+'<td>'+amp.toFixed(2)+'%</td><td>—</td><td>—</td></tr>';
+  tbl += '<tr>'+cell('上影线')+'<td>'+shadow.toFixed(1)+'%</td><td>—</td><td>—</td></tr>';
+  tbl += '<tr>'+cell('收盘位置')+'<td>'+pos.toFixed(1)+'%</td><td>—</td><td>—</td></tr>';
+
+  // 按卡片规则检查
+  var cards = params.cards;
+  var rows = [];
+  var matched = [];
+
+  // card1: 标准抛盘
+  if (cards.card1 && cards.card1.enabled) {
+    var c1 = cards.card1;
+    var met = chg <= c1.decline && vrPrev >= c1.vol;
+    matched.push('card1='+met);
+    rows.push('<tr>'+cell('🔴 标准抛盘')+'<td>跌≥'+(-c1.decline).toFixed(0)+'%</td><td>量比≥'+c1.vol.toFixed(2)+'</td>'+pass(met)+'</tr>');
+  }
+  // card2: 冲刺反转
+  if (cards.card2 && cards.card2.enabled) {
+    var c2 = cards.card2;
+    var met2 = chg >= c2.chg_min && chg <= c2.chg_max && vrPrev >= c2.vol && shadow >= c2.shadow;
+    matched.push('card2='+met2);
+    rows.push('<tr>'+cell('🟠 冲刺反转')+'<td>涨跌在['+c2.chg_min+'~'+c2.chg_max+']%</td><td>量比≥'+c2.vol.toFixed(2)+'，上影≥'+c2.shadow+'%</td>'+pass(met2)+'</tr>');
+  }
+  // card3: 巨量反转
+  if (cards.card3 && cards.card3.enabled) {
+    var c3 = cards.card3;
+    var met3 = chg >= c3.surge && vrPrev >= c3.vol && shadow >= c3.shadow && pos <= c3.midpt;
+    matched.push('card3='+met3);
+    rows.push('<tr>'+cell('🟡 巨量反转')+'<td>涨≥'+c3.surge+'%</td><td>量比≥'+c3.vol.toFixed(2)+'，上影≥'+c3.shadow+'%，收≤'+c3.midpt+'%</td>'+pass(met3)+'</tr>');
+  }
+  // card4: 高波动抛盘
+  if (cards.card4 && cards.card4.enabled) {
+    var c4 = cards.card4;
+    var met4 = chg <= c4.decline && amp >= c4.volatility && vrPrev >= c4.vol;
+    matched.push('card4='+met4);
+    rows.push('<tr>'+cell('🟢 高波动抛盘')+'<td>跌≥'+(-c4.decline).toFixed(0)+'%</td><td>振幅≥'+c4.volatility+'%，量比≥'+c4.vol.toFixed(2)+'</td>'+pass(met4)+'</tr>');
+  }
+
+  tbl += rows.join('');
+  var anyMatch = matched.some(function(m){ return m.endsWith('true'); });
+  tbl += '<tr style="border-top:2px solid var(--divider)"><td style="font-weight:900">综合</td><td colspan="2">'+matched.join(' / ')+'</td><td style="font-weight:900;font-size:0.85rem;color:'+(anyMatch?'#FF6B6B':'#4CAF50')+'">'+(anyMatch?'🎯 命中抛盘日规则':'✅ 非抛盘日')+'</td></tr>';
+  tbl += '</tbody></table>';
+  div.innerHTML = '<div style="font-size:0.65rem;color:var(--text-tertiary);margin-bottom:6px">'+date+' OHLC: '+k.open.toFixed(0)+' / '+k.high.toFixed(0)+' / '+k.low.toFixed(0)+' / '+k.close.toFixed(0)+'</div>'+tbl;
+  div.style.display = 'block';
 }

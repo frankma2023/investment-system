@@ -1,0 +1,22 @@
+# 吸筹日 Accumulation Day 参数配置
+# 追盘日的增强变体：更严苛的成交量+收盘强度+抛盘日过滤
+
+rally:
+  new_low_days: 20
+  close_strength: either
+  protection_days: 1
+
+accumulation:
+  window_start: 4
+  window_end: 7
+  min_gain_pct: 1
+  vol_ratio_prev: 1.02
+  vol_ratio_ma20: 1
+  close_position_min: 0.6
+  narrow_range_pct: 0.02
+  require_no_dist: false
+
+rally_failure:
+  reset_window_start: 2
+  reset_window_end: 10
+  no_signal_days: 10
