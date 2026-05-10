@@ -206,11 +206,8 @@ function genVText(id,name,vals,unit){
 async function loadFinancials(code){
   var resp=await fetch(API+'/api/stock-financials?code='+code);
   var d=await resp.json();
-  console.log('Financials data:', d.dates?d.dates.length:0, 'years, keys:', Object.keys(d));
-  if(!d.dates||!d.dates.length){console.log('Financials: no dates');return;}
+  if(!d.dates||!d.dates.length)return;
   buildBar('chart-roe','ROE %',d.dates,d.roe,'#4ECDC4');genFText('text-roe','ROE',d.roe,'%');
-  buildBigBar('chart-np','净利润',d.dates,d.net_profit,'亿');genFText('text-np','净利润',d.net_profit,'亿');
-  buildBar('chart-eps','EPS',d.dates,d.eps,'#FF6B6B');genFText('text-eps','EPS',d.eps,'元');
   buildBar('chart-eps','EPS',d.dates,d.eps,'#FF6B6B');genFText('text-eps','EPS',d.eps,'元');
   buildBar('chart-peg','净利增速 %',d.dates,d.net_profit_yoy,'#8B5CF6');genFText('text-peg','净利增速',d.net_profit_yoy,'%');
   buildBar('chart-gm','毛利率 %',d.dates,d.gross_margin,'#539BF5');genFText('text-gm','毛利率',d.gross_margin,'%');
@@ -226,7 +223,6 @@ async function loadFinancials(code){
 }
 
 function buildBar(id,name,dates,vals,color){
-  console.log('buildBar:', id, vals?vals.length:0);
   var dom=document.getElementById(id);if(dom._echart)dom._echart.dispose();
   var ch=echarts.init(dom),isDark=document.documentElement.dataset.theme==='dark';
   var tx=isDark?'#999':'#6E6E6E',sp=isDark?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.04)';
