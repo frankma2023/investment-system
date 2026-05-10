@@ -62,7 +62,7 @@
 </nav>
 
   <div class="top-bar">
-    <div><label>股票代码</label><input type="text" id="stock-input" placeholder="如 600519" style="width:120px" onchange="loadAll()"></div>
+    <div><label>股票代码</label><input type="text" id="stock-input" placeholder="如 600519" style="width:120px" onchange="loadAll()"><span id="stock-name" style="margin-left:8px;font-weight:700;font-family:var(--font-display);font-size:0.9rem;"></span></div>
     <div><label>起始年</label><select id="year-start" onchange="loadAll()"><option value="2016">2016</option><option value="2018">2018</option><option value="2020">2020</option></select></div>
     <div><label>截止年</label><select id="year-end" onchange="loadAll()"><option value="2026" selected>至今</option></select></div>
   </div>
@@ -154,6 +154,7 @@ async function loadAll(){
 async function loadValuation(code,start,end){
   var resp=await fetch(API+'/api/stock-valuation?code='+code+'&start='+start+'&end='+end);
   var d=await resp.json();
+  if(d.name)document.getElementById('stock-name').textContent='— '+d.name;
   if(!d.dates||!d.dates.length)return;
   var isDark=document.documentElement.dataset.theme==='dark';
   var peC=isDark?'#FF6B6B':'#E8553D',pbC=isDark?'#539BF5':'#3568B8',psC='#E8A838',dnC=isDark?'#4ECDC4':'#2D9D5A',mcC='#8B5CF6';

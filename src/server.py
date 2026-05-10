@@ -738,6 +738,9 @@ def api_stock_valuation():
         result['ps'].append(v.get('ps_ttm'))
         result['dyr'].append(v.get('dyr'))
         result['mc'].append(v.get('mc'))
+    # 股票名称
+    name_row = db.execute('SELECT name FROM stock_basic WHERE stock_code=?', (code,)).fetchone()
+    result['name'] = name_row['name'] if name_row else code
     return jsonify(result)
 
 
