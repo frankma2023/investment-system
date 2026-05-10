@@ -226,13 +226,16 @@ async function loadFinancials(code){
   // 计算真实PEG = PE / 净利增速
   if(window._peData&&window._valDates&&d.net_profit_yoy){
     var pegVals=[], pegDates=[];
-    console.log('PEG: peData len=', window._peData?window._peData.length:0, 'valDates len=', window._valDates?window._valDates.length:0, 'd.dates len=', d.dates.length);
     for(var i=0;i<d.dates.length;i++){
       var yr=d.dates[i];
-      var peIdx=window._valDates.indexOf(yr);
-      var pe=peIdx>=0?window._peData[peIdx]:null;
+      var pe=null;
+      for(var j=window._valDates.length-1;j>=0;j--){
+        if(window._valDates[j]&&window._valDates[j].indexOf(yr)===0){
+          pe=window._peData[j];break;
+        }
+      }
       var g=d.net_profit_yoy[i];
-      if(pe&&g&&g>0)pegVals.push((pe/g).toFixed(2));
+      if(pe&&g&&g>0)pegVals.push(parseFloat((pe/g).toFixed(2)));
       else pegVals.push(null);
       pegDates.push(yr);
     }
