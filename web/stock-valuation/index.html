@@ -145,8 +145,8 @@ async function loadAll(){
   var ey=document.getElementById('year-end').value;
   var endDate=ey==='2026'?'2026-05-07':ey+'-12-31';
   var startDate=sy+'-01-01';
-  loadValuation(code,startDate,endDate);
-  loadFinancials(code);
+  await loadValuation(code,startDate,endDate);
+  await loadFinancials(code);
 }
 
 // ══════ 估值 ══════
@@ -226,6 +226,7 @@ async function loadFinancials(code){
   // 计算真实PEG = PE / 净利增速
   if(window._peData&&window._valDates&&d.net_profit_yoy){
     var pegVals=[], pegDates=[];
+    console.log('PEG: peData len=', window._peData?window._peData.length:0, 'valDates len=', window._valDates?window._valDates.length:0, 'd.dates len=', d.dates.length);
     for(var i=0;i<d.dates.length;i++){
       var yr=d.dates[i];
       var peIdx=window._valDates.indexOf(yr);
