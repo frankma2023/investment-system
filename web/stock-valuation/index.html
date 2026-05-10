@@ -90,7 +90,8 @@
     <div class="chart-grid">
       <div class="chart-card"><div class="chart-title">ROE (%)</div><div id="chart-roe" style="height:260px"></div><div id="text-roe" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">EPS（元）</div><div id="chart-eps" style="height:260px"></div><div id="text-eps" class="analysis-text"></div></div>
-      <div class="chart-card"><div class="chart-title">PEG（PE/净利增速）</div><div id="chart-peg" style="height:260px"></div><div id="text-peg" class="analysis-text"></div></div>
+      <div class="chart-card"><div class="chart-title">净利增速（%）</div><div id="chart-peg" style="height:260px"></div><div id="text-peg" class="analysis-text"></div></div>
+      <div class="chart-card"><div class="chart-title">PEG（PE÷净利增速）</div><div id="chart-peg-real" style="height:260px"></div><div id="text-peg-real" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">毛利率 (%)</div><div id="chart-gm" style="height:260px"></div><div id="text-gm" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">营收增速 (%)</div><div id="chart-revyoy" style="height:260px"></div><div id="text-revyoy" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">净利增速 (%)</div><div id="chart-npyoy" style="height:260px"></div><div id="text-npyoy" class="analysis-text"></div></div>
@@ -152,6 +153,7 @@ async function loadAll(){
 async function loadValuation(code,start,end){
   var resp=await fetch(API+'/api/stock-valuation?code='+code+'&start='+start+'&end='+end);
   var d=await resp.json();
+  window._peData=d.pe; window._valDates=d.dates;
   if(!d.dates||!d.dates.length)return;
   var isDark=document.documentElement.dataset.theme==='dark';
   var peC=isDark?'#FF6B6B':'#E8553D',pbC=isDark?'#539BF5':'#3568B8',psC='#E8A838',dnC=isDark?'#4ECDC4':'#2D9D5A',mcC='#8B5CF6';
@@ -220,6 +222,22 @@ async function loadFinancials(code){
   buildBar('chart-qr','速动比率',d.dates,d.quick_ratio,'#4ECDC4');genFText('text-qr','速动比率',d.quick_ratio,'');
   buildBar('chart-rt','应收周转率',d.dates,d.receivables_turnover,'#E8A838');genFText('text-rt','应收周转率',d.receivables_turnover,'次');
   buildBar('chart-it','存货周转率',d.dates,d.inventory_turnover,'#8B5CF6');genFText('text-it','存货周转率',d.inventory_turnover,'次');
+
+  // 计算真实PEG = PE / 净利增速
+  if(window._peData&&window._valDates&&d.net_profit_yoy){
+    var pegVals=[], pegDates=[];
+    for(var i=0;i<d.dates.length;i++){
+      var yr=d.dates[i];
+      var peIdx=window._valDates.indexOf(yr);
+      var pe=peIdx>=0?window._peData[peIdx]:null;
+      var g=d.net_profit_yoy[i];
+      if(pe&&g&&g>0)pegVals.push((pe/g).toFixed(2));
+      else pegVals.push(null);
+      pegDates.push(yr);
+    }
+    buildBar('chart-peg-real','PEG',pegDates,pegVals,'#E8A838');
+    genFText('text-peg-real','PEG',pegVals,'');
+  }
 }
 
 function buildBar(id,name,dates,vals,color){
