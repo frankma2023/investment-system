@@ -782,6 +782,18 @@ def api_stock_financials():
         result['quick_ratio'].append(r['quick_ratio'])
         result['receivables_turnover'].append(r['receivables_turnover'])
         result['inventory_turnover'].append(r['inventory_turnover'])
+        # 年度PE = 市值 / 净利润 = (股本 × 年末收盘价) / 净利润
+        year_end_price = None
+        if cap and r['net_profit']:
+            yr = r['report_date'][:4]
+            k_row = db.execute('''SELECT close FROM daily_kline
+                WHERE stock_code=? AND date >= ? AND date <= ?
+                ORDER BY date DESC LIMIT 1''',
+                (code, yr+'-12-01', yr+'-12-31')).fetchone()
+            if k_row:
+                year_end_price = k_row['close']
+        annual_pe = (cap * year_end_price / r['net_profit']) if (cap and year_end_price and r['net_profit']) else None
+        result.setdefault('annual_pe', []).append(annual_pe)
     return jsonify(result)
 
 
