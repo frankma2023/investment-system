@@ -433,6 +433,126 @@ def api_market_breakouts():
     return jsonify({'date': rows[0]['date'] if rows else target_date, 'count': len(stocks), 'stocks': stocks})
 
 # ═══════════════════════════════════════════════
+# API: GET /api/market-panorama
+# ═══════════════════════════════════════════════
+
+@app.route('/api/market-panorama')
+def api_market_panorama():
+    """大盘扫描看板全景数据，从 market_snapshot_daily 读取"""
+    db = get_db()
+
+    snap = db.execute("SELECT * FROM market_snapshot_daily WHERE double_strong IS NOT NULL ORDER BY date DESC LIMIT 1").fetchone()
+    if not snap:
+        return jsonify({'status': 'no_data', 'date': datetime.now().strftime('%Y-%m-%d')})
+
+    # 抛盘日
+    dc = snap['dist_30d_count'] or 0
+    dd = snap['dist_30d_dates'] or ''
+    if dc >= 5:
+        dist = {'level': 'danger', 'label': f'{dc}个', 'desc': snap['dist_detail'] or f'近30天{dc}个抛盘日({dd})'}
+    elif dc >= 3:
+        dist = {'level': 'warning', 'label': f'{dc}个', 'desc': snap['dist_detail'] or f'近30天{dc}个抛盘日({dd})'}
+    elif dc >= 1:
+        dist = {'level': 'ok', 'label': f'{dc}个', 'desc': snap['dist_detail'] or f'近30天{dc}个抛盘日({dd})'}
+    else:
+        dist = {'level': 'ok', 'label': '0', 'desc': snap['dist_detail'] or '近30天无抛盘日'}
+    dist['dates'] = dd
+
+    core = {
+        'distribution': dist,
+        'ftd': {'level': 'ok' if (snap['ftd_30d_count'] or 0) > 0 else 'warning',
+                'label': str(snap['ftd_30d_count'] or 0), 'count': snap['ftd_30d_count'] or 0,
+                'dates': snap['ftd_30d_dates'] or '', 'desc': snap['ftd_detail'] or ''},
+        'accumulation': {'level': 'ok' if (snap['acc_30d_count'] or 0) > 0 else 'warning',
+                        'label': str(snap['acc_30d_count'] or 0), 'count': snap['acc_30d_count'] or 0,
+                        'dates': snap['acc_30d_dates'] or '', 'desc': snap['acc_detail'] or ''},
+    }
+
+    ch = snap['crowd_high_count'] or 0
+    ct = snap['crowd_total'] or 0
+    crowd = {
+        'high_count': ch, 'total': ct,
+        'desc': f'拥挤度≥70的指数{ch}个/{ct}个。' + (
+            '多个指数过热，追高风险加大。' if ch>=3 else '指数拥挤度正常。' if ch<=1 else '个别指数偏热，注意区分趋势与泡沫。'
+        ),
+    }
+
+    stocks = {
+        'double_strong': snap['double_strong'] or 0,
+        'steady_leader': snap['steady_leader'] or 0,
+        'burst': snap['burst'] or 0,
+    }
+
+    return jsonify({'date': snap['date'], 'core': core, 'crowding': crowd, 'stocks': stocks,
+                    'ad': {'positive': snap['ad_positive_count'] or 0, 'total': snap['ad_total'] or 0,
+                           'desc': snap['ad_detail'] or ''},
+                    'divergence': {'count': snap['diverge_count'] or 0, 'desc': snap['diverge_detail'] or ''}})
+
+
+@app.route('/api/market-panorama/compute', methods=['POST'])
+def api_market_panorama_compute():
+    """手动触发快照计算"""
+    import subprocess
+    target = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    try:
+        r = subprocess.run(
+            ['python', 'scripts/compute_market_snapshot.py', '--date', target],
+            cwd=PROJECT_DIR, capture_output=True, text=True, timeout=120
+        )
+        return jsonify({'ok': r.returncode == 0, 'output': r.stdout[-500:] if r.stdout else r.stderr[-200:]})
+    except Exception as e:
+        return jsonify({'ok': False, 'output': str(e)})
+
+def _save_ad_snapshot(db, result, as_of_date):
+    """从AD计算结果中提取摘要，存入 market_snapshot_daily"""
+    try:
+        positive = 0; total = 0
+        for pname, pdata in result.get('pools', {}).items():
+            for item in pdata.get('rankings', []):
+                r = item.get('rating', '')
+                if r:
+                    total += 1
+                    if r[0] in ('A', 'B'):
+                        positive += 1
+        if total == 0: return
+        pct = round(positive / total * 100)
+        desc = f'{positive}/{total}个指数AD评级为正(A/B)，' + (
+            '机构资金积极流入，市场支撑强。' if pct >= 60 else
+            '机构资金中性偏多，可适度参与。' if pct >= 30 else
+            '机构资金偏向流出，谨慎操作。')
+        db.execute("""
+            INSERT INTO market_snapshot_daily (date, ad_positive_count, ad_total, ad_detail)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(date) DO UPDATE SET ad_positive_count=excluded.ad_positive_count,
+            ad_total=excluded.ad_total, ad_detail=excluded.ad_detail
+        """, (as_of_date, positive, total, desc))
+        db.commit()
+    except Exception as e:
+        print(f"[AD snapshot] save error: {e}")
+
+
+def _save_divergence_snapshot(db, results, as_of_date):
+    """从背离计算结果中提取摘要，存入 market_snapshot_daily"""
+    try:
+        count = sum(1 for r in results if r.get('resonance'))
+        if count == 0:
+            desc = '当前无指数出现背离共振，市场趋势一致性强。'
+        elif count <= 2:
+            desc = f'{count}个指数出现背离共振，关注趋势转折可能。'
+        else:
+            desc = f'{count}个指数出现背离共振，多项指标预警，建议降低仓位。'
+        db.execute("""
+            INSERT INTO market_snapshot_daily (date, diverge_count, diverge_detail)
+            VALUES (?, ?, ?)
+            ON CONFLICT(date) DO UPDATE SET diverge_count=excluded.diverge_count,
+            diverge_detail=excluded.diverge_detail
+        """, (as_of_date, count, desc))
+        db.commit()
+    except Exception as e:
+        print(f"[Divergence snapshot] save error: {e}")
+
+
+# ═══════════════════════════════════════════════
 # API: POST /api/backtest/save
 # ═══════════════════════════════════════════════
 
@@ -1209,6 +1329,9 @@ def api_index_ad():
                 from detectors.index_ad import RATING_MEANINGS
                 item['meaning'] = RATING_MEANINGS.get(item['rating'], '')
 
+    # ── 保存摘要到 market_snapshot_daily ──
+    _save_ad_snapshot(db, result, as_of_date)
+
     return jsonify(result)
 
 # ═══════════════════════════════════════════════
@@ -1374,10 +1497,10 @@ def api_index_divergence():
             results.append(build_div_result(r, index_names))
 
     results.sort(key=lambda x: x['code'])
+    # ── 保存摘要到 market_snapshot_daily ──
+    _save_divergence_snapshot(db, results, as_of_date)
+
     return jsonify({'as_of_date': as_of_date, 'pool': pool_name, 'indices': results})
-
-
-def build_div_result(r, index_names):
     return {
         'code': r['stock_code'], 'name': index_names.get(r['stock_code'], r['stock_code']),
         'close': r['close'],

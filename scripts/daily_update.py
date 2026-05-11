@@ -112,6 +112,7 @@ TASKS = [
     ("📐 指数拥挤度",      ["python", "src/scanners/index_crowding.py", "--date", today_str]),
     ("🔄 融资融券(新API)", ["python", "scripts/fetch_margin_daily.py"]),
     ("💊 大盘健康度",      ["python", "src/scanners/market_health.py", "--date", today_str]),
+    ("📸 大盘扫描快照",    ["python", "scripts/compute_market_snapshot.py", "--date", today_str]),
 ]
 
 if not SKIP_RS:
