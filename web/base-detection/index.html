@@ -160,12 +160,16 @@
       const vols=currentKlines.map(k=>k.volume);
       const upColor=(currentKlines[0]&&currentKlines[0].close>=currentKlines[0].open)?'#E53935':'#26C6DA';
 
-      // 基部区域
+      // 基部区域 — 多色循环
+      const colors=['rgba(255,152,0,0.15)','rgba(33,150,243,0.15)','rgba(76,175,80,0.15)','rgba(156,39,176,0.15)','rgba(0,188,212,0.15)','rgba(233,30,99,0.15)'];
+      const borders=['#FF9800','#2196F3','#4CAF50','#9C27B0','#00BCD4','#E91E63'];
       const baseAreas=[];
-      currentSignals.forEach(s=>{
+      currentSignals.forEach((s,i)=>{
         const si=dates.indexOf(s.date);
         const hi=dates.indexOf(s.prior_high_date);
-        baseAreas.push([{xAxis:hi>=0?hi:si-20,itemStyle:{color:'rgba(255,152,0,0.15)',borderColor:'#FF9800',borderWidth:1,borderType:'dashed'}},{x:si}]);
+        if(hi>=0&&si>=0){
+          baseAreas.push([{xAxis:hi,itemStyle:{color:colors[i%6],borderColor:borders[i%6],borderWidth:1,borderType:'dashed'}},{x:si}]);
+        }
       });
 
       chart.setOption({

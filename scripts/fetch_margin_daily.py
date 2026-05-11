@@ -27,10 +27,9 @@ def main():
     log.info("🐺 每日融资融券更新（新API）")
     log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-    codes = get_all_stock_codes()
-    log.info(f"活跃股票: {len(codes)} 只")
-
     db = get_db()
+    codes = get_all_stock_codes(db)
+    log.info(f"活跃股票: {len(codes)} 只")
     total_rows = 0
     failed_batches = 0
 

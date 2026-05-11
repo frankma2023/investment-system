@@ -149,14 +149,30 @@ def detect(klines, params=None):
             'vol_ratio': round(vol_ratio, 2),
         })
 
-    # ── 去重：同一个 prior_high_date 只保留最早出现的信号 ──
+    # ── 去重 + 过滤失效基部（信号日后价格跌破前低） ──
     seen = {}
-    deduped = []
+    valid = []
     for s in signals:
         key = s['prior_high_date']
-        if key not in seen:
-            seen[key] = s
-    signals = list(seen.values())
+        if key in seen:
+            continue
+        # 检查是否失效：信号日之后是否有收盘价跌破前低
+        hi_idx = None; lo_idx = None; sig_idx = None
+        for i, k in enumerate(klines):
+            if k['date'] == s['prior_low_date']: lo_idx = i
+            if k['date'] == s['date']: sig_idx = i
+        if lo_idx is not None and sig_idx is not None:
+            prior_low = klines[lo_idx]['low']
+            failed = False
+            for j in range(sig_idx + 1, len(klines)):
+                if klines[j]['close'] is not None and klines[j]['close'] < prior_low:
+                    failed = True
+                    break
+            if failed:
+                continue
+        seen[key] = s
+        valid.append(s)
+    signals = valid
     return signals
 
 

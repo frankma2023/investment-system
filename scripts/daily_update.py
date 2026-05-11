@@ -105,19 +105,19 @@ log(f"🐺 每日盘后更新开始 — {today_str}")
 log(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
 TASKS = [
-    ("📋 股票状态",         ["python", "scripts/fetch_stock_basic.py"]),
-    ("📊 指数日K线",       ["python", "scripts/fetch_index_daily_kline.py", "--start", three_days_ago, "--end", today_str]),
-    ("📈 个股日K线",       ["python", "scripts/fetch_stock_daily_kline.py"]),
-    ("💰 个股基本面",      ["python", "scripts/fetch_fundamental_nonfinancial.py", "--incremental", "--workers", "4"]),
-    ("📐 指数拥挤度",      ["python", "src/scanners/index_crowding.py", "--date", today_str]),
-    ("🔄 融资融券(新API)", ["python", "scripts/fetch_margin_daily.py"]),
-    ("💊 大盘健康度",      ["python", "src/scanners/market_health.py", "--date", today_str]),
-    ("📸 大盘扫描快照",    ["python", "scripts/compute_market_snapshot.py", "--date", today_str]),
+    ("📋 股票状态",         [sys.executable, "scripts/fetch_stock_basic.py"]),
+    ("📊 指数日K线",       [sys.executable, "scripts/fetch_index_daily_kline.py", "--start", three_days_ago, "--end", today_str]),
+    ("📈 个股日K线",       [sys.executable, "scripts/fetch_stock_daily_kline.py"]),
+    ("💰 个股基本面",      [sys.executable, "scripts/fetch_fundamental_nonfinancial.py", "--incremental", "--workers", "4"]),
+    ("📐 指数拥挤度",      [sys.executable, "src/scanners/index_crowding.py", "--date", today_str]),
+    ("🔄 融资融券(新API)", [sys.executable, "scripts/fetch_margin_daily.py"]),
+    ("💊 大盘健康度",      [sys.executable, "src/scanners/market_health.py", "--date", today_str]),
+    ("📸 大盘扫描快照",    [sys.executable, "scripts/compute_market_snapshot.py", "--date", today_str]),
 ]
 
 if not SKIP_RS:
-    TASKS.append(("💪 个股RS强度", ["python", "src/scanners/stock_rs.py", "--date", today_str]))
-    TASKS.append(("📊 指数RS强度", ["python", "src/scanners/index_rs.py", "--date", today_str]))
+    TASKS.append(("💪 个股RS强度", [sys.executable, "src/scanners/stock_rs.py", "--date", today_str]))
+    TASKS.append(("📊 指数RS强度", [sys.executable, "src/scanners/index_rs.py", "--date", today_str]))
 
 for label, cmd in TASKS:
     lbl, ok, elapsed, _ = run_task(label, cmd)
