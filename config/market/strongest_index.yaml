@@ -1,0 +1,27 @@
+# 最强指数参数配置
+# 从五大指数池中按RS强度+均线+AD线筛选最强指数
+
+pools:
+  market:       { name: "全市场指数",  top_n: 3  }
+  sector_l1:    { name: "一级行业",    top_n: 5  }
+  sector_l2:    { name: "二级行业",    top_n: 10 }
+  theme:        { name: "主题指数",    top_n: 50 }
+  strategy:     { name: "策略指数",    top_n: 20 }
+
+conditions:
+  rs_250:
+    enabled: true
+    threshold: 80
+  rs_60:
+    enabled: true
+    threshold: 85
+  rs_20:
+    enabled: true
+    threshold: 90
+  ma_align:
+    enabled: true
+  ad_slope:
+    enabled: true
+
+auto_relax: true
+relax_step: 5

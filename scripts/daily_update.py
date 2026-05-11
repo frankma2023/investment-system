@@ -117,6 +117,7 @@ TASKS = [
 
 if not SKIP_RS:
     TASKS.append(("💪 个股RS强度", ["python", "src/scanners/stock_rs.py", "--date", today_str]))
+    TASKS.append(("📊 指数RS强度", ["python", "src/scanners/index_rs.py", "--date", today_str]))
 
 for label, cmd in TASKS:
     lbl, ok, elapsed, _ = run_task(label, cmd)

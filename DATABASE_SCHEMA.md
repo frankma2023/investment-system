@@ -11,8 +11,10 @@
 | 分类 | 表数 | 说明 |
 |------|------|------|
 | 行情数据 | 4 | 个股日K线、周K线、指数日K线、融资融券 |
+| 指数RS | 1 | 指数RS强度日评（RS_20/60/120/250 + MA + AD线） |
 | 指数基本面 | 1 | 指数估值/量价/融资/分位点（拥挤度计算依赖） |
 | 指数拥挤度 | 1 | 五维度拥挤度指标 + 复合得分 |
+| 大盘扫描 | 3 | 大盘快照、板块轮动、放量突破 |
 | 指数成分 | 2 | 成分股 + 权重（408个指数） |
 | 财务基本面 | 7 | 季报、年报、估值指标（含 CANSLIM 专用表） |
 | 股东数据 | 2 | 股东人数 v1/v2 |
@@ -354,6 +356,29 @@ updated_at
 ```
 **数据量**: 5.27M 行 | **范围**: 2022-02-07 ~ 2026-04-16
 
+### stock_rs_daily — 个股RS日评（新引擎）
+```
+stock_code, date  PRIMARY KEY
+close, adj_close
+ret_20, ret_250
+rps_20, rps_250
+rs_line, amount
+updated_at
+```
+**数据量**: 4,486 行/日 | **来源**: src/scanners/stock_rs.py
+
+### index_rs_daily — 指数RS日评
+```
+stock_code, date  PRIMARY KEY
+close
+ret_20, ret_60, ret_120, ret_250        -- 各周期收益率(%)
+rs_20, rs_60, rs_120, rs_250           -- 池内百分位排名(0-99)
+ma50, ma150, ma200                      -- 均线
+ad_line, ad_slope_20d                   -- Chaikin A/D线 + 20日趋势(±1)
+```
+**数据量**: 407 行/日（408个指数） | **来源**: src/scanners/index_rs.py
+**计算方式**: 池内独立百分位排名(RET排序→beats/(n-1)*99)，A/D线=Chaikin公式首尾对比
+
 ### sector_rs_daily — 行业 RS 日评
 ```
 id  PRIMARY KEY AUTOINCREMENT
@@ -693,20 +718,31 @@ dist_count_20d, dist_count_15d
 
 | 脚本 | 目标表 | 频率 |
 |------|--------|------|
-| `scripts/fetch_stock_basic.py` | stock_basic | 按需 |
-| `scripts/fetch_daily_kline.py` | daily_kline | 每日 |
-| `scripts/build_weekly_kline.py` | weekly_kline | 每日 |
-| `scripts/fetch_index_kline.py` | index_daily_kline | 每日 |
-| `scripts/fetch_index_fundamental.py` | index_fundamental_daily | 每日 |
-| `src/scanners/index_crowding.py` | index_crowding_daily | 每日（依赖上条） |
-| `scripts/fetch_index_constituents.py` | index_constituents, index_constituent_weightings | 每月 |
+| `scripts/daily_update.py` | 统一入口(串行8步) | 每日盘后 |
+| `scripts/fetch_stock_basic.py` | stock_basic | 每日 |
+| `scripts/fetch_stock_daily_kline.py` | daily_kline | 每日 |
+| `scripts/fetch_index_daily_kline.py` | index_daily_kline | 每日 |
 | `scripts/fetch_fundamental_nonfinancial.py` | fundamental_indicator | 每日 |
-| `scripts/fetch_stock_financials.py` | stock_financials_quarterly, stock_financials_annual | 季报后 |
-| `scripts/fetch_margin.py` | stock_margin | 每日 |
-| `scripts/compute_rs.py` | rs_daily | 每日 |
-| `scripts/compute_sector_rs.py` | sector_rs_daily | 每日 |
-| `scripts/market_direction.py` | market_direction_daily, distribution_days_detail, ... | 每日 |
-| `scripts/canslim_*.py` | canslim_* tables | 按需 |
+| `scripts/fetch_margin_daily.py` | stock_margin(新API·npa字段) | 每日 |
+| `scripts/fetch_stock_margin_history.py` | stock_margin(旧API·历史) | 一次性 |
+| `scripts/compute_market_snapshot.py` | market_snapshot_daily | 每日 |
+| `src/scanners/index_crowding.py` | index_crowding_daily | 每日 |
+| `src/scanners/stock_rs.py` | stock_rs_daily | 每日 |
+| `src/scanners/index_rs.py` | index_rs_daily | 每日 |
+| `src/scanners/market_health.py` | market_health_daily, market_rotation_daily, market_breakout_daily | 每日 |
+| `scripts/fetch_index_fundamental.py` | index_fundamental_daily | 每日 |
+| `scripts/fetch_index_constituents.py` | index_constituents | 每月 |
+| `scripts/fetch_stock_financials.py` | stock_financials_quarterly/annual | 季报后 |
+
+### 新增数据表（本次开发）
+
+| 表 | 用途 | 行/日 |
+|------|------|:--:|
+| `index_rs_daily` | 指数RS强度(RS20/60/120/250+MA+AD) | 407 |
+| `market_snapshot_daily` | 大盘扫描快照(核心信号+指数/个股维度) | 1 |
+| `market_rotation_daily` | 板块轮动明细(4池×指标) | 4 |
+| `market_breakout_daily` | 放量突破个股明细 | ~500 |
+| `market_health_daily` | 大盘健康度评分(7指标) | 1 |
 
 ---
 

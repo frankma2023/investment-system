@@ -19,7 +19,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from detectors.distribution_day import detect as detect_distribution_days
 from detectors.follow_through_day import detect as detect_follow_through_days
 from detectors.accumulation_day import detect as detect_accumulation_days
-from detectors.index_rs import detect as detect_index_rs
 from detectors.index_ad import detect as detect_index_ad
 from detectors.divergence import (
     compute_rsi, compute_macd,
@@ -431,6 +430,89 @@ def api_market_breakouts():
         'amount': r['amount'],
     } for r in rows]
     return jsonify({'date': rows[0]['date'] if rows else target_date, 'count': len(stocks), 'stocks': stocks})
+
+# ═══════════════════════════════════════════════
+# API: GET /api/strongest-index
+# ═══════════════════════════════════════════════
+
+@app.route('/api/strongest-index')
+def api_strongest_index():
+    target_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    params_str = request.args.get('params', '{}')
+    try: params = json.loads(params_str)
+    except: params = {}
+
+    db = get_db()
+    pools_cfg = load_index_pools()
+    conditions = params.get('conditions', {})
+    auto_relax = params.get('auto_relax', True)
+    relax_step = params.get('relax_step', 5)
+    pool_top_n = {'market': 3, 'sector_l1': 5, 'sector_l2': 10, 'thematic': 50, 'strategy': 20}
+    pool_labels = {'market': '市场指数', 'sector_l1': '一级行业', 'sector_l2': '二级行业', 'thematic': '主题指数', 'strategy': '策略指数'}
+
+    def check(r, rs20_thr):
+        if conditions.get('rs_250',{}).get('enabled',True) and (r['rs_20']or 0) >= 0 and (r['rs_250']or 0) < conditions['rs_250'].get('threshold',80): return False
+        if conditions.get('rs_60',{}).get('enabled',True) and (r['rs_60']or 0) < conditions['rs_60'].get('threshold',85): return False
+        if conditions.get('rs_20',{}).get('enabled',True) and (r['rs_20']or 0) < rs20_thr: return False
+        if conditions.get('ma_align',{}).get('enabled',True) and not ((r['ma50']or 0) > (r['ma150']or 0) > (r['ma200']or 0)): return False
+        if conditions.get('ad_slope',{}).get('enabled',True) and (r['ad_slope_20d']or 0) <= 0: return False
+        return True
+
+    result_pools = {}
+    for pn, codes in pools_cfg.items():
+        if pn not in pool_top_n: continue
+        tn = pool_top_n[pn]
+        ph = ','.join(['?' for _ in codes])
+        # 先取最新有数据的日期
+        latest = db.execute("SELECT MAX(date) as d FROM index_rs_daily WHERE date <= ?", (target_date,)).fetchone()
+        if not latest or not latest['d']: continue
+        ldate = latest['d']
+        rows = db.execute(f"SELECT * FROM index_rs_daily WHERE date = ? AND stock_code IN ({ph})", [ldate] + codes).fetchall()
+
+        rs20_thr = conditions.get('rs_20',{}).get('threshold', 90)
+        flt = [r for r in rows if check(r, rs20_thr)]
+        relaxed = False
+        if auto_relax and len(flt) < tn:
+            r2 = rs20_thr - relax_step
+            if r2 >= 60:
+                flt = [r for r in rows if check(r, r2)]
+                rs20_thr = r2; relaxed = True
+        flt.sort(key=lambda x: (x['rs_20']or 0, x['rs_60']or 0, x['rs_250']or 0), reverse=True)
+        flt = flt[:tn]
+        result_pools[pn] = {'top_n': tn, 'total': len(rows), 'relaxed': relaxed, 'applied_rs20': int(rs20_thr),
+            'indices': [{'code': r['stock_code'], 'name': '', 'rs_20': r['rs_20'], 'rs_60': r['rs_60'],
+            'rs_250': r['rs_250'], 'ma50': r['ma50'], 'ma150': r['ma150'], 'ma200': r['ma200'],
+            'ad_slope': round(r['ad_slope_20d']or 0,1)} for r in flt]}
+
+    idx_names = load_index_names()
+    for pd in result_pools.values():
+        for s in pd['indices']: s['name'] = idx_names.get(s['code'], s['code'])
+
+    # ── 全量指数数据（供复核表格） ──
+    # ── 全量指数数据（供复核表格） ──
+    all_rows = db.execute(f"""
+        SELECT * FROM index_rs_daily
+        WHERE date = (SELECT MAX(date) FROM index_rs_daily WHERE date <= ?)
+        ORDER BY rs_20 DESC
+    """, (target_date,)).fetchall()
+
+    # code→pool_type 映射
+    code_pool = {}
+    for pn, codes in pools_cfg.items():
+        for c in codes: code_pool[c] = pool_labels.get(pn, pn)
+
+    all_indices = []
+    for r in all_rows:
+        all_indices.append({
+            'code': r['stock_code'], 'name': idx_names.get(r['stock_code'], r['stock_code']),
+            'pool': code_pool.get(r['stock_code'], ''),
+            'rs_20': r['rs_20'], 'rs_60': r['rs_60'], 'rs_250': r['rs_250'],
+            'ret_20': round(r['ret_20'] or 0, 2), 'ret_60': round(r['ret_60'] or 0, 2),
+            'ma50': round(r['ma50'] or 0, 0), 'ma150': round(r['ma150'] or 0, 0), 'ma200': round(r['ma200'] or 0, 0),
+            'ad_slope': round(r['ad_slope_20d'] or 0, 1),
+        })
+
+    return jsonify({'date': target_date, 'pools': result_pools, 'all_indices': all_indices})
 
 # ═══════════════════════════════════════════════
 # API: GET /api/market-panorama
@@ -1132,77 +1214,69 @@ def load_index_names():
 
 @app.route('/api/index-rs')
 def api_index_rs():
+    """指数RS强度 — 从 index_rs_daily 读取预计算结果"""
     as_of_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
-    pool_name = request.args.get('pool', None)  # None = 全部
+    pool_name = request.args.get('pool', None)
 
     db = get_db()
-
-    # 加载指数分类池
     all_pools = load_index_pools()
     if not all_pools:
-        return jsonify({'error': 'index_style.yaml not found or empty'}), 500
+        return jsonify({'error': 'index_style.yaml not found'}), 500
 
-    # 如果指定了pool，只加载该pool
     if pool_name and pool_name in all_pools:
         pools = {pool_name: all_pools[pool_name]}
     else:
         pools = all_pools
 
-    # 加载指数名称映射
     index_names = load_index_names()
+    tier_config = load_config('index_rs') or {}
+    tier_params = tier_config.get('tiers', {})
 
-    # 收集所有需要的指数代码
-    all_codes = set()
-    for codes in pools.values():
-        all_codes.update(codes)
+    result = {'pools': {}}
 
-    # 批量查询K线数据（拉取足够长的历史以保证250日计算）
-    code_list = list(all_codes)
-    if not code_list:
-        return jsonify({'error': 'no indices in pool'}), 400
+    for pname, codes in pools.items():
+        ph = ','.join(['?' for _ in codes])
+        rows = db.execute(f"""
+            SELECT * FROM index_rs_daily WHERE date <= ? AND stock_code IN ({ph})
+            AND date = (SELECT MAX(date) FROM index_rs_daily WHERE date <= ?)
+        """, [as_of_date] + codes + [as_of_date]).fetchall()
 
-    # 用 IN 查询（SQLite 支持，参数占位符）
-    placeholders = ','.join(['?' for _ in code_list])
-    rows = db.execute(f"""SELECT stock_code, date, open, high, low, close, volume, amount, change
-        FROM index_daily_kline WHERE kline_type='normal'
-        AND stock_code IN ({placeholders})
-        AND date >= date(?,'-400 days')
-        ORDER BY stock_code, date""",
-        code_list + [as_of_date]).fetchall()
+        rankings = []
+        for r in rows:
+            rankings.append({
+                'code': r['stock_code'], 'name': index_names.get(r['stock_code'], r['stock_code']),
+                'close': r['close'], 'change_pct': round(r['ret_20'] or 0, 2),
+                'RET_20': r['ret_20'], 'RET_60': r['ret_60'], 'RET_120': r['ret_120'], 'RET_250': r['ret_250'],
+                'RS_20': r['rs_20'], 'RS_60': r['rs_60'], 'RS_120': r['rs_120'], 'RS_250': r['rs_250'],
+            })
 
-    # 按指数代码分组
-    pool_klines = {}
-    for r in rows:
-        code = r['stock_code']
-        if code not in pool_klines:
-            pool_klines[code] = []
-        pool_klines[code].append({
-            'date': r['date'],
-            'open': r['open'],
-            'high': r['high'],
-            'low': r['low'],
-            'close': r['close'],
-            'volume': r['volume'],
-            'amount': r['amount'],
-            'change': r['change'],
-        })
+        # L1/L2/L3 筛选
+        l1, l2, l3 = [], [], []
+        l1_cfg = tier_params.get('L1', {}) if tier_params else {}
+        l2_cfg = tier_params.get('L2', {}) if tier_params else {}
+        l3_cfg = tier_params.get('L3', {}) if tier_params else {}
 
-    # 加载层级阈值
-    tier_config = load_config('index_rs')
-    tier_params = tier_config.get('tiers', {}) if tier_config else {}
+        for item in rankings:
+            if l1_cfg:
+                if (item['RS_120'] or 0) >= l1_cfg.get('rs_120', 90) and \
+                   (item['RS_250'] or 0) >= l1_cfg.get('rs_250', 85) and \
+                   (item['RS_60'] or 0) >= l1_cfg.get('rs_60', 80):
+                    l1.append(item)
+            if l2_cfg:
+                if (item['RS_20'] or 0) >= l2_cfg.get('rs_20', 90):
+                    l2.append(item)
+            if l3_cfg:
+                if (item['RS_60'] or 0) >= l3_cfg.get('rs_60', 70):
+                    l3.append(item)
 
-    # 调用检测引擎
-    result = detect_index_rs(pool_klines, pools, as_of_date, tier_params if tier_params else None)
+        rankings.sort(key=lambda x: x['RS_120'] or 0, reverse=True)
+        top10 = rankings[:10]
 
-    # 补充指数名称
-    for pname, pdata in result['pools'].items():
-        for item in pdata.get('rankings', []):
-            item['name'] = index_names.get(item['code'], item['code'])
-        for tier_name in ['L1', 'L2', 'L3']:
-            for item in pdata.get('tiers', {}).get(tier_name, []):
-                item['name'] = index_names.get(item['code'], item['code'])
-        for item in pdata.get('top10', []):
-            item['name'] = index_names.get(item['code'], item['code'])
+        result['pools'][pname] = {
+            'rankings': rankings,
+            'tiers': {'L1': l1, 'L2': l2, 'L3': l3},
+            'top10': top10,
+        }
 
     return jsonify(result)
 

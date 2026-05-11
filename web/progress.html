@@ -11,96 +11,107 @@
   <link rel="stylesheet" href="shared/css/components.css">
   <script src="shared/js/theme.js"></script>
   <style>
-    body { max-width:1100px; margin:0 auto; padding:20px; }
-    .stats-row { display:flex; gap:12px; margin:16px 0 24px; flex-wrap:wrap; }
-    .stat-card { flex:1 1 120px; background:var(--card-bg); border-radius:14px; padding:16px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
-    .stat-card .num { font-family:var(--font-display); font-size:1.6rem; font-weight:900; }
-    .stat-card .lbl { font-size:0.65rem; color:var(--text-tertiary); margin-top:4px; }
-    .module { margin-bottom:24px; }
-    .module h2 { font-family:var(--font-display); font-size:1rem; font-weight:800; margin:0 0 8px; display:flex; align-items:center; gap:8px; }
-    table { width:100%; border-collapse:collapse; font-size:0.75rem; }
-    th, td { padding:5px 8px; text-align:left; border-bottom:1px solid var(--divider); }
-    th { font-weight:700; color:var(--text-secondary); font-size:0.68rem; }
-    .status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; }
-    .s-done { background:#4CAF50; } .s-wip  { background:#FF9800; } .s-todo { background:#BDBDBD; }
-    .updated { text-align:center; font-size:0.65rem; color:var(--text-tertiary); margin-top:32px; }
+    body { max-width:1100px; margin:0 auto; }
+    .pg-stats { display:flex; gap:10px; margin:16px 0 20px; flex-wrap:wrap; }
+    .pg-stat { flex:1 1 100px; background:var(--card-bg); border-radius:16px; padding:18px 14px; text-align:center; box-shadow:0 1px 6px rgba(0,0,0,0.04); }
+    .pg-stat .n { font-family:var(--font-display); font-size:2rem; font-weight:900; }
+    .pg-stat .l { font-size:0.6rem; color:var(--text-tertiary); margin-top:4px; letter-spacing:0.04em; }
+    .section-title { font-family:var(--font-display); font-size:0.7rem; font-weight:800; color:var(--text-secondary); margin:20px 0 10px; letter-spacing:0.06em; }
+    .pg-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:12px; }
+    .pg-card { background:var(--card-bg); border-radius:18px; padding:18px; box-shadow:0 1px 6px rgba(0,0,0,0.04); }
+    .pg-card h3 { font-family:var(--font-display); font-size:0.82rem; font-weight:800; margin:0 0 10px; display:flex; align-items:center; gap:6px; }
+    .pg-card h3 .badge { font-size:0.5rem; padding:2px 8px; border-radius:8px; font-weight:600; }
+    .pg-table { width:100%; border-collapse:collapse; font-size:0.7rem; }
+    .pg-table td { padding:5px 6px; border-bottom:1px solid var(--divider); }
+    .pg-table td:last-child { text-align:right; color:var(--text-tertiary); font-size:0.62rem; }
+    .pg-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:4px; }
+    .dot-done { background:#4CAF50; } .dot-wip { background:#FF9800; } .dot-todo { background:#BDBDBD; }
+    .lesson-card { background:var(--card-bg); border-left:3px solid #FF9800; border-radius:0 14px 14px 0; padding:14px 18px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.03); }
+    .lesson-card .ln { font-family:var(--font-display); font-size:0.65rem; font-weight:800; color:#F57C00; margin-bottom:4px; }
+    .lesson-card .ld { font-size:0.65rem; color:var(--text-secondary); line-height:1.5; }
+    .updated { text-align:center; font-size:0.6rem; color:var(--text-tertiary); margin-top:32px; padding-bottom:24px; }
   </style>
 </head>
 <body>
-  <header class="panel-header">
-    <h1>📋 欧奈尔投资系统 · 项目进展</h1>
-    <p>最后更新：2026-05-12</p>
-  </header>
+  <div class="app-container">
+    <nav class="top-nav">
+      <div class="nav-brand"><span class="nav-fox">🦊</span><span>项目进展</span><span class="nav-greeting">Progress</span></div>
+      <div class="nav-links">
+        <a href="./" class="nav-item active">📋 进展</a>
+        <a href="market-scan/" class="nav-item">📊 大盘扫描</a>
+        <button class="theme-toggle" aria-label="切换主题">🌙</button>
+      </div>
+    </nav>
 
-  <div class="stats-row">
-    <div class="stat-card"><div class="num" style="color:#4CAF50">15</div><div class="lbl">✅ 已完成</div></div>
-    <div class="stat-card"><div class="num" style="color:#FF9800">2</div><div class="lbl">🔴 进行中</div></div>
-    <div class="stat-card"><div class="num">3</div><div class="lbl">⏳ 下一步</div></div>
-    <div class="stat-card"><div class="num">2</div><div class="lbl">🐛 已知问题</div></div>
+    <header class="panel-header">
+      <h1>📋 欧奈尔投资系统 · 项目进展</h1>
+      <p>2026-05-12</p>
+    </header>
+
+    <div class="pg-stats">
+      <div class="pg-stat"><div class="n" style="color:#4CAF50">18</div><div class="l">已完成</div></div>
+      <div class="pg-stat"><div class="n" style="color:#FF9800">1</div><div class="l">进行中</div></div>
+      <div class="pg-stat"><div class="n">1</div><div class="l">待开发</div></div>
+    </div>
+
+    <div class="section-title">功能模块</div>
+    <div class="pg-grid">
+
+      <div class="pg-card">
+        <h3>📊 指数分析 <span class="badge" style="background:#E8F5E9;color:#2E7D32">8项</span></h3>
+        <table class="pg-table">
+          <tr><td><span class="pg-dot dot-done"></span>指数RS强度+回测</td><td>/index-rs-backtest/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>指数拥挤度+回测</td><td>/index-crowdedness/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>机构吸筹/出货</td><td>/index-ad-backtest/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>指数背离检测</td><td>/divergence-backtest/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>指数扫描看板</td><td>/index-scan/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>指数估值分位</td><td>/index-valuation/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>指数RS引擎</td><td>src/scanners/index_rs.py</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>⭐ 最强指数</td><td>/strongest-index/</td></tr>
+        </table>
+      </div>
+
+      <div class="pg-card">
+        <h3>💎 个股分析 <span class="badge" style="background:#F3E5F5;color:#7B1FA2">3项</span></h3>
+        <table class="pg-table">
+          <tr><td><span class="pg-dot dot-done"></span>个股RS强度+回测</td><td>/stock-rs-backtest/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>个股全维度扫描</td><td>/stock-valuation/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>个股财务分析</td><td>/stock-analysis/</td></tr>
+        </table>
+      </div>
+
+      <div class="pg-card">
+        <h3>📉 大盘信号 <span class="badge" style="background:#FFF3E0;color:#E65100">4项</span></h3>
+        <table class="pg-table">
+          <tr><td><span class="pg-dot dot-done"></span>抛盘日+回测</td><td>/distribution-day/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>追盘日+回测</td><td>/follow-through-day/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>吸筹日+回测</td><td>/accumulation-day/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>大盘健康度看板</td><td>/market-scan/</td></tr>
+        </table>
+      </div>
+
+      <div class="pg-card">
+        <h3>🔧 基础设施 <span class="badge" style="background:#ECEFF1;color:#546E7A">5项</span></h3>
+        <table class="pg-table">
+          <tr><td><span class="pg-dot dot-done"></span>理杏仁数据拉取</td><td>scripts/fetch_*</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>每日更新脚本</td><td>daily_update.py</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>融资融券历史</td><td>fetch_stock_margin_history</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>看板样式系统</td><td>xhs-cards.css</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>回测配置持久化</td><td>YAML ↔ API</td></tr>
+        </table>
+      </div>
+
+    </div>
+
+    <div class="section-title" style="margin-top:28px">📋 本次开发经验教训</div>
+    <div class="lesson-card"><div class="ln">1. API 返回 JSON 时前端不要用 YAML 解析</div><div class="ld">load_config 返回 dict，前端却检查 data.ok && data.yaml 等不到，白费半天排查。</div></div>
+    <div class="lesson-card"><div class="ln">2. 预计算存表，多页面共享</div><div class="ld">index_rs_daily 每天算一次，最强指数和指数强度两页面都读它。避免重复计算和结果分歧。</div></div>
+    <div class="lesson-card"><div class="ln">3. 先对齐算法再写代码</div><div class="ld">RS 公式 (*99 vs *100)、AD 斜率 (百分比 vs 首尾对比) 反复改了 4 轮才对齐。动手前先读产品文档中的公式。</div></div>
+    <div class="lesson-card"><div class="ln">4. YAML 文件名与代码中 signal_type 严格一致</div><div class="ld">accumulation vs accumulation_day、theme vs thematic，名不对读不到。</div></div>
+    <div class="lesson-card"><div class="ln">5. 大池子 SQL 占位符不要嵌套子查询</div><div class="ld">229 个占位符导致主题池静默失败。拆成两步：先取最新日期，再按日期查。</div></div>
+    <div class="lesson-card"><div class="ln">6. 引擎 CLI 打印了结果 ≠ 写入了数据库</div><div class="ld">stock_rs.py 控制台打印双强股票但没 INSERT，快照读到全是 0。</div></div>
+
+    <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>
-
-  <div class="module">
-    <h2>📊 指数分析</h2>
-    <table>
-      <tr><th>功能</th><th>状态</th><th>页面</th></tr>
-      <tr><td>指数RS强度 + 回测看板</td><td><span class="status-dot s-done"></span>完成</td><td>/index-rs-backtest/</td></tr>
-      <tr><td>指数拥挤度 + 回测看板</td><td><span class="status-dot s-done"></span>完成</td><td>/index-crowdedness/</td></tr>
-      <tr><td>机构吸筹/出货评级</td><td><span class="status-dot s-done"></span>完成</td><td>/index-ad-backtest/</td></tr>
-      <tr><td>指数背离检测</td><td><span class="status-dot s-done"></span>完成</td><td>/divergence-backtest/</td></tr>
-      <tr><td>指数扫描看板</td><td><span class="status-dot s-done"></span>完成</td><td>/index-scan/</td></tr>
-      <tr><td>指数估值分位</td><td><span class="status-dot s-done"></span>完成</td><td>/index-valuation/</td></tr>
-    </table>
-  </div>
-
-  <div class="module">
-    <h2>💎 个股分析</h2>
-    <table>
-      <tr><th>功能</th><th>状态</th><th>页面</th></tr>
-      <tr><td>个股RS强度 + 回测看板</td><td><span class="status-dot s-done"></span>完成</td><td>/stock-rs-backtest/</td></tr>
-      <tr><td>个股全维度扫描</td><td><span class="status-dot s-done"></span>完成</td><td>/stock-valuation/</td></tr>
-      <tr><td>个股财务分析（DCF/Comps/Earnings/3-Statement）</td><td><span class="status-dot s-done"></span>完成</td><td>/stock-analysis/</td></tr>
-    </table>
-  </div>
-
-  <div class="module">
-    <h2>📉 大盘扫描</h2>
-    <table>
-      <tr><th>功能</th><th>状态</th><th>页面</th></tr>
-      <tr><td>抛盘日引擎 + 回测看板</td><td><span class="status-dot s-done"></span>完成</td><td>/distribution-day/</td></tr>
-      <tr><td>追盘日引擎 + 回测看板</td><td><span class="status-dot s-done"></span>完成</td><td>/follow-through-day/</td></tr>
-    </table>
-  </div>
-
-  <div class="module">
-    <h2>🔧 基础设施</h2>
-    <table>
-      <tr><th>功能</th><th>状态</th><th>说明</th></tr>
-      <tr><td>理杏仁数据拉取脚本</td><td><span class="status-dot s-done"></span>完成</td><td>个股/指数K线、财务、基本面、股本变动</td></tr>
-      <tr><td>看板样式系统</td><td><span class="status-dot s-done"></span>完成</td><td>小红书手账风格 + 导航栏统一</td></tr>
-      <tr><td>回测配置持久化</td><td><span class="status-dot s-done"></span>完成</td><td>所有回测看板 保存/加载 YAML</td></tr>
-      <tr><td>基本面数据补全</td><td><span class="status-dot s-wip"></span>进行中</td><td>fetch_fundamental_nonfinancial.py 增量拉取中</td></tr>
-    </table>
-  </div>
-
-  <div class="module">
-    <h2>🐛 已知问题</h2>
-    <table>
-      <tr><th>问题</th><th>优先级</th></tr>
-      <tr><td>个股扫描-市场强度Tab RPS_120/RPS_60 折线未显示（引擎已算）</td><td>低</td></tr>
-      <tr><td>fetch_fundamental_nonfinancial 增量模式未检测历史数据缺口（~2528只股票缺2016-2024数据）</td><td>中</td></tr>
-    </table>
-  </div>
-
-  <div class="module">
-    <h2>⏳ 下一步</h2>
-    <table>
-      <tr><th>功能</th><th>说明</th></tr>
-      <tr><td>大盘健康评分</td><td>M1.4，综合多指标评分</td></tr>
-      <tr><td>大盘扫描看板整合</td><td>M1.5，整合抛盘日/追盘日</td></tr>
-      <tr><td>买入形态与信号识别</td><td>M4，杯柄/VCP/口袋支点</td></tr>
-    </table>
-  </div>
-
-  <div class="updated">❤️ 投资手账本 · 项目进展</div>
 </body>
 </html>
