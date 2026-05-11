@@ -1,0 +1,9 @@
+# 基部识别参数
+base:
+  lookback: 120
+  min_advance: 30
+  min_consolidation: 20
+  max_drawdown_ratio: 50
+  amp_narrow_enabled: true
+  vol_ratio: 1.2
+  new_low_days: 20

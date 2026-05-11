@@ -16,7 +16,7 @@ PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(PROJECT_DIR, "src"))
 os.chdir(PROJECT_DIR)
 
-from scripts.common import api_post, get_db, get_all_stock_codes, log, DEFAULT_TIMEOUT
+from common import api_post, get_db, get_all_stock_codes, log, DEFAULT_TIMEOUT
 
 API_PATH = "/company/hot/mtasl"
 BATCH = 100
