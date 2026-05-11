@@ -38,7 +38,7 @@ def main():
         payload = {"stockCodes": batch}
         try:
             result = api_post(API_PATH, payload)
-            data = result.get("data", [])
+            data = result if isinstance(result, list) else result.get("data", [])
             if not data:
                 log.info(f"  [{i//BATCH+1}] 空返回")
                 failed_batches += 1

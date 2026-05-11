@@ -92,68 +92,24 @@ def detect(klines, params=None, rs_info=None):
             ma50_vols.append(0)
 
     signals = []
-    for i in range(LB, n):
+    for i in range(LB + 1, n):
         today = klines[i]
-        window = klines[i - LB:i + 1]
-        wl = len(window)
 
-        # ── B1: 120日内峰值→谷底，峰值在前，谷底在后 ──
-        highs = [(k['high'], j) for j, k in enumerate(window) if k['high'] is not None]
-        lows = [(k['low'], j) for j, k in enumerate(window) if k['low'] is not None]
-        if not highs or not lows:
+        # ── B6 + XG: 昨日满足基部条件 + 今日收盘突破昨日反弹高点 ──
+        yesterday_base = _check_base_conditions_with_rh(klines, i - 1, params)
+        if not yesterday_base:
             continue
-
-        hh_val, hh_idx = max(highs, key=lambda x: x[0])
-        ll_val, ll_idx = min(lows, key=lambda x: x[0])
-
-        if hh_idx >= ll_idx:
-            continue  # 峰值必须在前
-        if (hh_val - ll_val) / ll_val < MIN_R:
-            continue  # 涨幅不够
-
-        # ── B2: 回撤 12%~33% ──
-        dd = (hh_val - ll_val) / hh_val
-        if dd < DD_MIN or dd > DD_MAX:
-            continue
-
-        # ── B3: 谷底右侧反弹 ≥ 峰谷距离 × 60% ──
-        rh_list = [(k['high'], j) for j, k in enumerate(window[ll_idx:], start=ll_idx) if k['high'] is not None]
-        if not rh_list:
-            continue
-        rh_val, rh_idx = max(rh_list, key=lambda x: x[0])
-        if (rh_val - ll_val) / (hh_val - ll_val) < RB:
-            continue
-
-        # ── B4: 反弹高点距今 5~20天 ──
-        days_from_rh = wl - 1 - rh_idx
-        if days_from_rh < HOLD_MIN or days_from_rh > HOLD_MAX:
-            continue
-
-        # ── B5: RS 达标 (外部传入) ──
-        if rs_info:
-            rs_ok = (rs_info['rs_20'] >= RS_THR or rs_info['rs_60'] >= RS_THR or rs_info['rs_250'] >= RS_THR)
-        else:
-            rs_ok = True  # 回测模式跳过 RS 检查
-        if not rs_ok:
-            continue
-
-        # ── Peak age: 峰值距今 > 30天 ──
-        if wl - 1 - hh_idx < PEAK_AGE:
-            continue
-
-        # ── B6: 昨日满足 B1~B4? 检查 i-1 ──
-        base_ok_yesterday = _check_base_conditions(klines, i - 1, params)
-        if not base_ok_yesterday:
-            continue
-
-        # ── XG: 今日收盘突破反弹高点 ──
-        if today['close'] <= rh_val:
+        rh_val_yd = yesterday_base
+        if today['close'] <= rh_val_yd:
             continue
 
         # ── 成交量 ──
         if i >= 49 and ma50_vols[i] > 0:
-            if today['volume'] / ma50_vols[i] < VOL_R:
+            vol_ratio = today['volume'] / ma50_vols[i]
+            if vol_ratio < VOL_R:
                 continue
+        else:
+            vol_ratio = 0
 
         # ── 阳线 ──
         if GREEN and today['close'] <= today['open']:
@@ -165,19 +121,28 @@ def detect(klines, params=None, rs_info=None):
             if pos < CLOSE_POS:
                 continue
 
+        # ── 从昨日窗口提取基部元数据 ──
+        yd_window = klines[i - 1 - LB:i]
+        yd_highs = [(k['high'], j) for j, k in enumerate(yd_window) if k['high'] is not None]
+        yd_lows = [(k['low'], j) for j, k in enumerate(yd_window) if k['low'] is not None]
+        yd_hh_val, yd_hh_idx = max(yd_highs, key=lambda x: x[0])
+        yd_ll_val, yd_ll_idx = min(yd_lows, key=lambda x: x[0])
+        yd_rh_list = [(k['high'], j) for j, k in enumerate(yd_window[yd_ll_idx:], start=yd_ll_idx) if k['high'] is not None]
+        _, yd_rh_idx = max(yd_rh_list, key=lambda x: x[0])
+
         signals.append({
             'date': today['date'],
             'close': today['close'],
             'volume': today['volume'],
-            'peak_date': window[hh_idx]['date'],
-            'peak_price': hh_val,
-            'trough_date': window[ll_idx]['date'],
-            'trough_price': ll_val,
-            'rebound_date': window[rh_idx]['date'],
-            'rebound_price': rh_val,
-            'drawdown': round(dd * 100, 1),
-            'rebound_pct': round((rh_val - ll_val) / (hh_val - ll_val) * 100, 1),
-            'vol_ratio': round(today['volume'] / ma50_vols[i], 2) if ma50_vols[i] > 0 else 0,
+            'peak_date': yd_window[yd_hh_idx]['date'],
+            'peak_price': yd_hh_val,
+            'trough_date': yd_window[yd_ll_idx]['date'],
+            'trough_price': yd_ll_val,
+            'rebound_date': yd_window[yd_rh_idx]['date'],
+            'rebound_price': rh_val_yd,
+            'drawdown': round((yd_hh_val - yd_ll_val) / yd_hh_val * 100, 1),
+            'rebound_pct': round((rh_val_yd - yd_ll_val) / (yd_hh_val - yd_ll_val) * 100, 1),
+            'vol_ratio': round(vol_ratio, 2),
             'rs_20': rs_info['rs_20'] if rs_info else 0,
             'rs_60': rs_info['rs_60'] if rs_info else 0,
             'rs_250': rs_info['rs_250'] if rs_info else 0,
@@ -186,8 +151,8 @@ def detect(klines, params=None, rs_info=None):
     return signals
 
 
-def _check_base_conditions(klines, i, params):
-    """检查单日是否满足 B1~B4（不含突破条件）"""
+def _check_base_conditions_with_rh(klines, i, params):
+    """检查单日是否满足 B1~B4，返回反弹高点值或0"""
     LB = params['lookback']
     MIN_R = params['min_range_pct'] / 100.0
     DD_MIN = params['drawdown_min'] / 100.0
@@ -195,40 +160,45 @@ def _check_base_conditions(klines, i, params):
     RB = params['rebound_ratio'] / 100.0
     HOLD_MIN = params['hold_min']
     HOLD_MAX = params['hold_max']
+    PEAK_AGE = params['peak_age_min']
 
     if i < LB:
-        return False
+        return 0
     window = klines[i - LB:i + 1]
     wl = len(window)
 
     highs = [(k['high'], j) for j, k in enumerate(window) if k['high'] is not None]
     lows = [(k['low'], j) for j, k in enumerate(window) if k['low'] is not None]
     if not highs or not lows:
-        return False
+        return 0
 
     hh_val, hh_idx = max(highs, key=lambda x: x[0])
     ll_val, ll_idx = min(lows, key=lambda x: x[0])
     if hh_idx >= ll_idx:
-        return False
+        return 0
     if (hh_val - ll_val) / ll_val < MIN_R:
-        return False
+        return 0
 
     dd = (hh_val - ll_val) / hh_val
     if dd < DD_MIN or dd > DD_MAX:
-        return False
+        return 0
 
     rh_list = [(k['high'], j) for j, k in enumerate(window[ll_idx:], start=ll_idx) if k['high'] is not None]
     if not rh_list:
-        return False
+        return 0
     rh_val, rh_idx = max(rh_list, key=lambda x: x[0])
     if (rh_val - ll_val) / (hh_val - ll_val) < RB:
-        return False
+        return 0
 
     days_from_rh = wl - 1 - rh_idx
     if days_from_rh < HOLD_MIN or days_from_rh > HOLD_MAX:
-        return False
+        return 0
 
-    return True
+    # peak age
+    if wl - 1 - hh_idx < PEAK_AGE:
+        return 0
+
+    return rh_val
 
 
 def detect_for_stock(stock_code, target_date, params=None, mode='stock'):

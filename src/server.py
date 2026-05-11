@@ -515,6 +515,44 @@ def api_strongest_index():
     return jsonify({'date': target_date, 'pools': result_pools, 'all_indices': all_indices})
 
 # ═══════════════════════════════════════════════
+# API: POST /api/breakout
+# ═══════════════════════════════════════════════
+
+@app.route('/api/breakout', methods=['POST', 'OPTIONS'])
+def api_breakout():
+    if request.method == 'OPTIONS': return '', 204
+    data = request.get_json()
+    stock_code = data.get('stock_code', '600519')
+    start = data.get('start', '2023-01-01')
+    end = data.get('end', datetime.now().strftime('%Y-%m-%d'))
+    mode = data.get('mode', 'stock')
+    params = data.get('params', {})
+
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    kf = "AND kline_type='normal'" if mode == 'index' else ''
+
+    rows = db.execute(f"SELECT date, open, high, low, close, volume FROM {table} WHERE stock_code=? {kf} AND date>=date(?,'-200 days') AND date<=? ORDER BY date", (stock_code, start, end)).fetchall()
+    if not rows: return jsonify({'klines': [], 'signals': []})
+
+    klines_full = [dict(r) for r in rows]
+
+    merged = {}
+    cfg_path = os.path.join(PROJECT_DIR, 'config', 'market', 'breakout.yaml')
+    if os.path.exists(cfg_path):
+        import yaml
+        with open(cfg_path, encoding='utf-8') as f:
+            cfg = yaml.safe_load(f) or {}
+        merged.update(cfg.get('breakout', {}))
+    merged.update(params.get('breakout', params))
+
+    from scanners.breakout_scanner import detect
+    signals = detect(klines_full, merged)
+    klines_out = [k for k in klines_full if start <= k['date'] <= end]
+    signals_out = [s for s in signals if start <= s['date'] <= end]
+    return jsonify({'klines': klines_out, 'signals': signals_out})
+
+# ═══════════════════════════════════════════════
 # API: GET /api/market-panorama
 # ═══════════════════════════════════════════════
 
@@ -570,44 +608,7 @@ def api_market_panorama():
                            'desc': snap['ad_detail'] or ''},
                     'divergence': {'count': snap['diverge_count'] or 0, 'desc': snap['diverge_detail'] or ''}})
 
-
-@app.route('/api/base-detection', methods=['POST', 'OPTIONS'])
-def api_base_detection():
-    if request.method == 'OPTIONS': return '', 204
-    data = request.get_json()
-    stock_code = data.get('stock_code', '600519')
-    start = data.get('start', '2023-01-01')
-    end = data.get('end', datetime.now().strftime('%Y-%m-%d'))
-    mode = data.get('mode', 'stock')
-    params = data.get('params', {})
-
-    db = get_db()
-    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
-    kline_filter = "AND kline_type='normal'" if mode == 'index' else ''
-
-    rows = db.execute(f"""
-        SELECT date, open, high, low, close, volume
-        FROM {table} WHERE stock_code = ? {kline_filter}
-        AND date >= date(?, '-200 days') AND date <= ?
-        ORDER BY date
-    """, (stock_code, start, end)).fetchall()
-
-    if not rows:
-        return jsonify({'klines': [], 'signals': []})
-
-    klines_full = [dict(r) for r in rows]
-
-    merged = {}
-    cfg_path = os.path.join(PROJECT_DIR, 'config', 'market', 'base_detector.yaml')
-    if os.path.exists(cfg_path):
-        import yaml
-        with open(cfg_path, encoding='utf-8') as f:
-            cfg = yaml.safe_load(f) or {}
-        merged.update(cfg.get('base', {}))
-    merged.update(params.get('base', params))
-
-    from scanners.base_detector import detect
-    signals = detect(klines_full, merged)
+# ═══════════════════════════════════════════════
     klines_out = [k for k in klines_full if start <= k['date'] <= end]
     signals_out = [s for s in signals if start <= s['date'] <= end]
     return jsonify({'klines': klines_out, 'signals': signals_out})

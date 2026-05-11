@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>基部识别 · 投资手账本</title>
+  <title>标准突破 · 投资手账本</title>
   <link rel="stylesheet" href="../shared/css/theme.css">
   <link rel="stylesheet" href="../shared/css/base.css">
   <link rel="stylesheet" href="../shared/css/xhs-cards.css">
@@ -18,34 +18,28 @@
     .fld { margin-bottom:8px; }
     .fld label { display:block; font-size:0.62rem; font-weight:600; color:var(--text-tertiary); margin-bottom:3px; }
     .fld input,.fld select { width:100%; padding:7px 10px; border:1px solid var(--divider); border-radius:10px; font-size:0.75rem; background:var(--card-bg); color:var(--text-primary); box-sizing:border-box; }
-    .code-row { display:flex; gap:6px; }
-    .code-row input { flex:1; }
-    .code-row button { padding:7px 12px; border:1px solid var(--divider); border-radius:10px; background:var(--bg); cursor:pointer; font-size:0.7rem; }
     .btn-run { display:block; width:100%; padding:11px; background:#FE2C55; color:#FFF; border:none; border-radius:14px; font-size:0.95rem; font-weight:800; cursor:pointer; }
-    .btn-run:hover { opacity:0.88; }
-    .btn-run:disabled { background:#CCC; cursor:not-allowed; }
+    .btn-run:hover { opacity:0.88; } .btn-run:disabled { background:#CCC; cursor:not-allowed; }
     .btn-save { width:100%; padding:9px; margin-top:6px; background:var(--card-bg); border:1.5px solid var(--divider); border-radius:14px; font-size:0.85rem; font-weight:700; cursor:pointer; }
     .btn-save.saved { background:#E8F5E9; border-color:#4CAF50; color:#2E7D32; }
     .param-card { background:var(--card-bg); border:1px solid var(--divider); border-radius:16px; overflow:hidden; }
     .param-card-hd { display:flex; align-items:center; padding:10px 14px; cursor:pointer; font-size:0.75rem; font-weight:800; }
     .param-card-hd .dot { width:8px; height:8px; border-radius:50%; margin-right:8px; }
-    .param-card-bd { padding:0 14px 12px; }
-    .param-card-bd.collapsed { display:none; }
+    .param-card-bd { padding:0 14px 12px; } .param-card-bd.collapsed { display:none; }
     .sr { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-    .sr .sl { width:60px; font-size:0.6rem; font-weight:600; color:var(--text-tertiary); flex-shrink:0; }
+    .sr .sl { width:65px; font-size:0.6rem; font-weight:600; color:var(--text-tertiary); flex-shrink:0; }
     .sr input[type=range] { flex:1; height:4px; }
-    .sr .sv { width:36px; text-align:right; font-size:0.65rem; font-weight:700; }
+    .sr .sv { width:40px; text-align:right; font-size:0.65rem; font-weight:700; }
     .tog-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-    .tog-row .sl { width:60px; font-size:0.6rem; font-weight:600; color:var(--text-tertiary); }
+    .tog-row .sl { width:65px; font-size:0.6rem; font-weight:600; color:var(--text-tertiary); }
     .tsw { position:relative; width:34px; height:18px; border-radius:9px; border:none; cursor:pointer; }
-    .tsw.on { background:#FE2C55; }
-    .tsw.off { background:#CCC; }
+    .tsw.on { background:#FE2C55; } .tsw.off { background:#CCC; }
     .tsw::after { content:''; position:absolute; top:2px; width:14px; height:14px; border-radius:50%; background:#FFF; transition:left 0.2s; }
-    .tsw.on::after { left:18px; }
-    .tsw.off::after { left:2px; }
+    .tsw.on::after { left:18px; } .tsw.off::after { left:2px; }
     table { width:100%; border-collapse:collapse; font-size:0.7rem; }
     th,td { padding:4px 6px; text-align:left; border-bottom:1px solid var(--divider); }
     th { font-weight:700; color:var(--text-secondary); font-size:0.62rem; cursor:pointer; }
+    .t-up { color:#E53935; font-weight:700; } .t-dn { color:#26C6DA; font-weight:700; }
     .nav-dropdown { position:relative; display:inline-flex; }
     .nav-dropdown-menu { display:none; position:absolute; top:100%; left:0; background:var(--card-bg); border:1px solid var(--divider); border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); min-width:150px; padding:6px 0; z-index:200; white-space:nowrap; }
     .nav-dropdown:hover .nav-dropdown-menu { display:block; }
@@ -58,14 +52,14 @@
 <body>
   <div class="app-container">
     <nav class="top-nav">
-      <div class="nav-brand"><span class="nav-fox">🦊</span><span>基部识别</span><span class="nav-greeting">Base Detection</span></div>
+      <div class="nav-brand"><span class="nav-fox">🦊</span><span>标准突破买点</span><span class="nav-greeting">Breakout Scanner</span></div>
       <div class="nav-links">
         <a href="../" class="nav-item">🏠 看板</a>
         <div class="nav-dropdown"><a href="#" class="nav-item active">回测 ▾</a><div class="nav-dropdown-menu">
           <a href="../distribution-day/">📉 抛盘日</a><a href="../follow-through-day/">📈 追盘日</a><a href="../accumulation-day/">📦 吸筹日</a>
           <a href="../index-rs-backtest/">🏆 指数RS强度</a><a href="../index-crowdedness/">📊 指数拥挤度</a><a href="../stock-rs-backtest/">💪 个股RS强度</a>
           <a href="../index-ad-backtest/">🔍 机构吸筹/出货</a><a href="../divergence-backtest/">⚠️ 指数背离</a>
-          <a href="../strongest-index/">⭐ 最强指数</a><a href="../base-detection/" class="active">📐 基部识别</a>
+          <a href="../strongest-index/">⭐ 最强指数</a><a href="../base-detection/" class="active">📐 标准突破</a>
         </div></div>
         <a href="../index-scan/" class="nav-item">🔬 指数扫描</a><a href="../index-valuation/" class="nav-item">📈 指数估值</a>
         <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a><a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
@@ -76,156 +70,145 @@
       <div class="left">
         <div class="xhs-card">
           <div class="xhs-card-header"><span class="xhs-card-label">📅 扫描设置</span></div>
-          <div class="fld" style="margin-top:8px"><label>类型</label><select id="mode"><option value="stock">个股</option><option value="index">指数</option></select></div>
-          <div class="code-row"><div class="fld" style="flex:1"><input type="text" id="stock-code" value="600519" placeholder="代码"></div><button onclick="loadNames()">🔍</button></div>
+          <div class="fld" style="margin-top:8px"><select id="mode"><option value="stock">个股</option><option value="index">指数</option></select></div>
+          <div class="fld"><input type="text" id="stock-code" value="600519" placeholder="代码"></div>
           <div class="fld"><label>开始</label><input type="date" id="date-start"></div>
           <div class="fld"><label>结束</label><input type="date" id="date-end"></div>
         </div>
-        <div class="param-card" id="card1"><div class="param-card-hd" onclick="toggleCard('card1')"><span class="dot" style="background:#FE2C55"></span>🔴 前置上涨</div><div class="param-card-bd" id="card1-bd">
-          <div class="sr"><span class="sl">搜索窗口</span><input type="range" id="p-lookback" min="60" max="250" value="120" oninput="sv('p-lookback')"><span class="sv" id="p-lookback-v">120</span></div>
-          <div class="sr"><span class="sl">最小涨幅</span><input type="range" id="p-min-adv" min="15" max="60" value="30" oninput="sv('p-min-adv')"><span class="sv" id="p-min-adv-v">30%</span></div>
-          <div class="sr"><span class="sl">最少整理</span><input type="range" id="p-min-cons" min="10" max="60" value="20" oninput="sv('p-min-cons')"><span class="sv" id="p-min-cons-v">20天</span></div>
+        <div class="param-card" id="c1"><div class="param-card-hd" onclick="tc('c1')"><span class="dot" style="background:#FE2C55"></span>🔴 基部结构</div><div class="param-card-bd" id="c1-bd">
+          <div class="sr"><span class="sl">搜索窗口</span><input type="range" id="p-lb" min="60" max="250" value="120" oninput="sv('p-lb')"><span class="sv" id="p-lb-v">120</span></div>
+          <div class="sr"><span class="sl">最小涨幅</span><input type="range" id="p-mr" min="20" max="80" value="30" oninput="sv('p-mr')"><span class="sv" id="p-mr-v">30%</span></div>
+          <div class="sr"><span class="sl">回撤下限</span><input type="range" id="p-ddl" min="5" max="30" value="12" oninput="sv('p-ddl')"><span class="sv" id="p-ddl-v">12%</span></div>
+          <div class="sr"><span class="sl">回撤上限</span><input type="range" id="p-ddh" min="20" max="60" value="33" oninput="sv('p-ddh')"><span class="sv" id="p-ddh-v">33%</span></div>
+          <div class="sr"><span class="sl">反弹比例</span><input type="range" id="p-rb" min="40" max="90" value="60" oninput="sv('p-rb')"><span class="sv" id="p-rb-v">60%</span></div>
         </div></div>
-        <div class="param-card" id="card2"><div class="param-card-hd" onclick="toggleCard('card2')"><span class="dot" style="background:#FF9800"></span>🟠 价格紧凑</div><div class="param-card-bd" id="card2-bd">
-          <div class="sr"><span class="sl">最大回撤</span><input type="range" id="p-drawdown" min="30" max="80" value="60" oninput="svp('p-drawdown')"><span class="sv" id="p-drawdown-v">60%</span></div>
-          <div class="tog-row"><span class="sl">振幅收窄</span><button class="tsw on" id="p-amp-on" onclick="event.stopPropagation();tog('p-amp-on')"></button></div>
+        <div class="param-card" id="c2"><div class="param-card-hd" onclick="tc('c2')"><span class="dot" style="background:#FF9800"></span>🟠 横盘确认</div><div class="param-card-bd" id="c2-bd">
+          <div class="sr"><span class="sl">最少横盘</span><input type="range" id="p-hl" min="3" max="15" value="5" oninput="sv('p-hl')"><span class="sv" id="p-hl-v">5天</span></div>
+          <div class="sr"><span class="sl">最多横盘</span><input type="range" id="p-hh" min="10" max="40" value="20" oninput="sv('p-hh')"><span class="sv" id="p-hh-v">20天</span></div>
+          <div class="sr"><span class="sl">峰值距今</span><input type="range" id="p-pa" min="20" max="90" value="30" oninput="sv('p-pa')"><span class="sv" id="p-pa-v">30天</span></div>
         </div></div>
-        <div class="param-card" id="card3"><div class="param-card-hd" onclick="toggleCard('card3')"><span class="dot" style="background:#4CAF50"></span>🟢 右侧蓄力</div><div class="param-card-bd" id="card3-bd">
-          <div class="sr"><span class="sl">量比阈值</span><input type="range" id="p-vol" min="0.8" max="2.0" step="0.05" value="1.2" oninput="svn('p-vol')"><span class="sv" id="p-vol-v">1.20</span></div>
-          <div class="sr"><span class="sl">不创新低</span><input type="range" id="p-nl" min="10" max="60" value="20" oninput="sv('p-nl')"><span class="sv" id="p-nl-v">20天</span></div>
+        <div class="param-card" id="c3"><div class="param-card-hd" onclick="tc('c3')"><span class="dot" style="background:#4CAF50"></span>🟢 突破确认</div><div class="param-card-bd" id="c3-bd">
+          <div class="sr"><span class="sl">RS门槛</span><input type="range" id="p-rs" min="70" max="99" value="87" oninput="sv('p-rs')"><span class="sv" id="p-rs-v">87</span></div>
+          <div class="sr"><span class="sl">量比阈值</span><input type="range" id="p-vr" min="0.8" max="3.0" step="0.05" value="1.4" oninput="svn('p-vr')"><span class="sv" id="p-vr-v">1.40</span></div>
+          <div class="tog-row"><span class="sl">要求阳线</span><button class="tsw on" id="p-gr-on" onclick="event.stopPropagation();tog('p-gr-on')"></button></div>
+          <div class="sr"><span class="sl">收盘位置</span><input type="range" id="p-cp" min="30" max="80" value="60" oninput="sv('p-cp')"><span class="sv" id="p-cp-v">60%</span></div>
         </div></div>
         <button class="btn-run" id="btn-run">🔍 运行识别</button>
         <button class="btn-save" id="btn-save">💾 保存配置</button>
       </div>
       <div class="right">
-        <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📈 K线图 · 基部标注</span></div><div class="chart-wrap" id="chart"></div></div>
-        <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 基部明细</span><span style="font-size:0.6rem;color:var(--text-tertiary)">点击表头排序</span></div><div class="table-wrapper" id="table"></div></div>
+        <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📈 K线图 · 突破信号</span></div><div class="chart-wrap" id="chart"></div></div>
+        <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 突破信号明细</span></div><div class="table-wrapper" id="table"></div></div>
       </div>
     </div>
-    <footer class="page-footer">❤️ 投资手账本 · 基部识别</footer>
+    <footer class="page-footer">❤️ 投资手账本 · 标准突破买点</footer>
   </div>
   <script src="../shared/js/theme.js"></script>
   <script src="../shared/js/api-client.js"></script>
   <script>
-    const SIGNAL_TYPE='base_detector';
-    function toggleCard(id){document.getElementById(id+'-bd').classList.toggle('collapsed');}
+    const ST='breakout';
+    function tc(id){document.getElementById(id+'-bd').classList.toggle('collapsed');}
     function tog(id){const b=document.getElementById(id);b.classList.toggle('on');b.classList.toggle('off');}
     function sv(id){const e=document.getElementById(id),v=document.getElementById(id+'-v');if(e&&v)v.textContent=e.value;}
-    function svp(id){const e=document.getElementById(id),v=document.getElementById(id+'-v');if(e&&v)v.textContent=e.value+'%';}
     function svn(id){const e=document.getElementById(id),v=document.getElementById(id+'-v');if(e&&v)v.textContent=parseFloat(e.value).toFixed(2);}
-
-    let chart=null,currentKlines=[],currentSignals=[];
+    let chart=null,ck=[],cs=[];
 
     document.addEventListener('DOMContentLoaded',async()=>{
       const now=new Date();
       document.getElementById('date-end').value=now.toISOString().split('T')[0];
-      const ago=new Date(now);ago.setFullYear(ago.getFullYear()-2);
+      const ago=new Date(now);ago.setFullYear(ago.getFullYear()-3);
       document.getElementById('date-start').value=ago.toISOString().split('T')[0];
       chart=echarts.init(document.getElementById('chart'));
       document.getElementById('btn-run').addEventListener('click',run);
-      document.getElementById('btn-save').addEventListener('click',saveConfig);
-      await loadConfig();
-      setTimeout(run,500);
+      document.getElementById('btn-save').addEventListener('click',saveCfg);
+      await loadCfg();setTimeout(run,500);
     });
+
+    function gp(){
+      return {breakout:{
+        lookback:+document.getElementById('p-lb').value,min_range_pct:+document.getElementById('p-mr').value,
+        drawdown_min:+document.getElementById('p-ddl').value,drawdown_max:+document.getElementById('p-ddh').value,
+        rebound_ratio:+document.getElementById('p-rb').value,hold_min:+document.getElementById('p-hl').value,
+        hold_max:+document.getElementById('p-hh').value,peak_age_min:+document.getElementById('p-pa').value,
+        rs_threshold:+document.getElementById('p-rs').value,vol_ratio:+parseFloat(document.getElementById('p-vr').value),
+        require_green:document.getElementById('p-gr-on').classList.contains('on'),
+        close_position_min:+document.getElementById('p-cp').value,
+      }};
+    }
 
     async function run(){
       const btn=document.getElementById('btn-run');btn.disabled=true;btn.textContent='⏳ 识别中...';
-      const code=document.getElementById('stock-code').value;
-      const start=document.getElementById('date-start').value;
-      const end=document.getElementById('date-end').value;
-      const mode=document.getElementById('mode').value;
-      const params={base:{
-        lookback:parseInt(document.getElementById('p-lookback').value),
-        min_advance:parseInt(document.getElementById('p-min-adv').value),
-        min_consolidation:parseInt(document.getElementById('p-min-cons').value),
-        max_drawdown_ratio:parseInt(document.getElementById('p-drawdown').value),
-        amp_narrow_enabled:document.getElementById('p-amp-on').classList.contains('on'),
-        vol_ratio:parseFloat(document.getElementById('p-vol').value),
-        new_low_days:parseInt(document.getElementById('p-nl').value),
-      }};
       try{
-        const r=await fetch(API_BASE+'/api/base-detection',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stock_code:code,start,end,mode,params})});
-        const d=await r.json();
-        currentKlines=d.klines||[];currentSignals=d.signals||[];
-        renderChart();renderTable();
+        const r=await fetch(API_BASE+'/api/breakout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+          stock_code:document.getElementById('stock-code').value,start:document.getElementById('date-start').value,
+          end:document.getElementById('date-end').value,mode:document.getElementById('mode').value,params:gp()
+        })});
+        const d=await r.json();ck=d.klines||[];cs=d.signals||[];renderChart();renderTable();
         btn.textContent='🔄 重新识别';
       }catch(e){console.error(e);btn.textContent='❌ 失败';}
       btn.disabled=false;
     }
 
     function renderChart(){
-      if(!chart||!currentKlines.length)return;
-      const dates=currentKlines.map(k=>k.date);
-      const ohlc=currentKlines.map(k=>[k.open,k.close,k.low,k.high]);
-      const vols=currentKlines.map(k=>k.volume);
-      const upColor=(currentKlines[0]&&currentKlines[0].close>=currentKlines[0].open)?'#E53935':'#26C6DA';
-
-      // 基部区域 — 多色循环
+      if(!chart||!ck.length)return;
+      const dates=ck.map(k=>k.date);
       const colors=['rgba(255,152,0,0.15)','rgba(33,150,243,0.15)','rgba(76,175,80,0.15)','rgba(156,39,176,0.15)','rgba(0,188,212,0.15)','rgba(233,30,99,0.15)'];
       const borders=['#FF9800','#2196F3','#4CAF50','#9C27B0','#00BCD4','#E91E63'];
-      const baseAreas=[];
-      currentSignals.forEach((s,i)=>{
-        const si=dates.indexOf(s.date);
-        const hi=dates.indexOf(s.prior_high_date);
-        if(hi>=0&&si>=0){
-          baseAreas.push([{xAxis:hi,itemStyle:{color:colors[i%6],borderColor:borders[i%6],borderWidth:1,borderType:'dashed'}},{x:si}]);
-        }
+      const marks=[];
+      cs.forEach((s,i)=>{
+        const si=dates.indexOf(s.date);if(si<0)return;
+        const cm=Math.max(0,si-10);
+        marks.push({name:'突破',coord:[si,s.close],value:s.date,symbol:'pin',symbolSize:28,itemStyle:{color:borders[i%6],borderColor:'#FFF',borderWidth:1}});
+        //橙色框：peak → signal
+        const pi=dates.indexOf(s.peak_date);if(pi>=0)marks.push([{xAxis:pi,itemStyle:{color:colors[i%6],borderColor:borders[i%6],borderWidth:1,borderType:'dashed'}},{x:si}]);
       });
-
       chart.setOption({
-        backgroundColor:'transparent',
-        tooltip:{trigger:'axis'},
+        backgroundColor:'transparent',tooltip:{trigger:'axis'},
         grid:[{left:'8%',right:'1%',top:8,height:'60%'},{left:'8%',right:'1%',top:'75%',height:'15%'}],
         xAxis:[{type:'category',data:dates,axisLabel:{fontSize:9},axisLine:{lineStyle:{color:'#ddd'}}},{type:'category',data:dates,axisLabel:{show:false},axisLine:{lineStyle:{color:'#ddd'}},gridIndex:1}],
         yAxis:[{type:'value',scale:true,axisLabel:{fontSize:9},splitLine:{lineStyle:{color:'#f0f0f0'}}},{type:'value',scale:true,axisLabel:{fontSize:8},gridIndex:1,splitLine:{show:false}}],
         dataZoom:[{type:'inside',xAxisIndex:[0,1],start:0,end:100},{type:'slider',xAxisIndex:[0,1],start:0,end:100,height:16,bottom:4}],
         series:[
-          {name:'K线',type:'candlestick',data:ohlc,itemStyle:{color:'#E53935',color0:'#26C6DA',borderColor:'#E53935',borderColor0:'#26C6DA'},markArea:{silent:true,data:baseAreas}},
-          {name:'成交量',type:'bar',data:vols.map((v,i)=>({value:v,itemStyle:{color:currentKlines[i].close>=currentKlines[i].open?'rgba(229,57,53,0.4)':'rgba(38,198,218,0.4)'}})),xAxisIndex:1,yAxisIndex:1},
-        ]
+          {name:'K线',type:'candlestick',data:ck.map(k=>[k.open,k.close,k.low,k.high]),itemStyle:{color:'#E53935',color0:'#26C6DA',borderColor:'#E53935',borderColor0:'#26C6DA'}},
+          {name:'成交量',type:'bar',data:ck.map((k,i)=>({value:k.volume,itemStyle:{color:ck[i].close>=ck[i].open?'rgba(229,57,53,0.4)':'rgba(38,198,218,0.4)'}})),xAxisIndex:1,yAxisIndex:1},
+        ].concat(marks.filter(m=>Array.isArray(m)?true:false).length?[{name:'基部',type:'line',data:[],markArea:{silent:true,data:marks.filter(m=>Array.isArray(m))}}]:[]).concat(marks.filter(m=>!Array.isArray(m)&&m.symbol).length?[{name:'突破',type:'scatter',data:marks.filter(m=>!Array.isArray(m))}]:[])
       });
     }
 
     function renderTable(){
       const div=document.getElementById('table');
-      if(!currentSignals.length){div.innerHTML='<div style=padding:24px;text-align:center;color:var(--text-tertiary)>当前参数未检出基部信号</div>';return;}
-      let h='<table><thead><tr><th>#</th><th>信号日</th><th>收盘</th><th>前低日</th><th>前高日</th><th>前涨幅</th><th>回撤</th><th>整理天数</th><th>振幅比</th><th>量比</th></tr></thead><tbody>';
-      [...currentSignals].reverse().forEach((s,i)=>{
-        h+='<tr><td>'+(currentSignals.length-i)+'</td><td style=font-weight:700>'+s.date+'</td><td>'+s.close.toFixed(2)+'</td><td>'+s.prior_low_date+'</td><td>'+s.prior_high_date+'</td><td style=color:#E53935;font-weight:700>'+s.prior_gain+'%</td><td>'+s.drawdown+'%</td><td>'+s.consolidation_days+'</td><td>'+(s.amp_trend<1?'<span style=color:#4CAF50>收窄</span>':'持平')+' ('+s.amp_trend.toFixed(2)+')</td><td>'+s.vol_ratio.toFixed(2)+'</td></tr>';
+      if(!cs.length){div.innerHTML='<div style=padding:24px;text-align:center;color:var(--text-tertiary)>当前参数未检出标准突破信号</div>';return;}
+      let h='<table><thead><tr><th>#</th><th>突破日</th><th>收盘</th><th>峰值日</th><th>谷底日</th><th>回撤</th><th>反弹比</th><th>量比</th><th>RS_20</th><th>RS_60</th></tr></thead><tbody>';
+      [...cs].reverse().forEach((s,i)=>{
+        h+='<tr><td>'+(cs.length-i)+'</td><td style=font-weight:700>'+s.date+'</td><td class=t-up>'+s.close.toFixed(2)+'</td><td>'+s.peak_date+'</td><td>'+s.trough_date+'</td><td>'+s.drawdown+'%</td><td>'+s.rebound_pct+'%</td><td style=font-weight:700>'+s.vol_ratio.toFixed(2)+'</td><td>'+(s.rs_20||'-')+'</td><td>'+(s.rs_60||'-')+'</td></tr>';
       });
       div.innerHTML=h+'</tbody></table>';
     }
 
-    async function loadConfig(){
-      try{
-        const r=await fetch(API_BASE+'/api/config?signal_type='+SIGNAL_TYPE,{cache:'no-store'});
-        const cfg=await r.json();
-        if(!cfg||!cfg.base)return;
-        const b=cfg.base;
-        setVal('p-lookback',b.lookback||120);setVal('p-min-adv',b.min_advance||30);
-        setVal('p-min-cons',b.min_consolidation||20);setVal('p-drawdown',b.max_drawdown_ratio||60);
-        setVal('p-vol',b.vol_ratio||1.2);setVal('p-nl',b.new_low_days||20);
-        setTog('p-amp-on',b.amp_narrow_enabled!==false);
+    async function loadCfg(){
+      try{const r=await fetch(API_BASE+'/api/config?signal_type='+ST,{cache:'no-store'});const c=await r.json();if(!c||!c.breakout)return;const b=c.breakout;
+        svs('p-lb',b.lookback||120);svs('p-mr',b.min_range_pct||30);svs('p-ddl',b.drawdown_min||12);svs('p-ddh',b.drawdown_max||33);
+        svs('p-rb',b.rebound_ratio||60);svs('p-hl',b.hold_min||5);svs('p-hh',b.hold_max||20);svs('p-pa',b.peak_age_min||30);
+        svs('p-rs',b.rs_threshold||87);svs('p-vr',b.vol_ratio||1.4);svs('p-cp',b.close_position_min||60);
+        stog('p-gr-on',b.require_green!==false);
       }catch(e){}
     }
-    function setVal(id,v){const e=document.getElementById(id);if(!e)return;e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));}
-    function setTog(id,on){const b=document.getElementById(id);if(!b)return;b.className='tsw '+(on?'on':'off');}
+    function svs(id,v){const e=document.getElementById(id);if(!e)return;e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));}
+    function stog(id,on){const b=document.getElementById(id);if(!b)return;b.className='tsw '+(on?'on':'off');}
 
-    async function saveConfig(){
+    async function saveCfg(){
       const btn=document.getElementById('btn-save');btn.textContent='⏳';btn.disabled=true;
-      const y=[
-        '# 基部识别参数','base:',
-        '  lookback: '+document.getElementById('p-lookback').value,
-        '  min_advance: '+document.getElementById('p-min-adv').value,
-        '  min_consolidation: '+document.getElementById('p-min-cons').value,
-        '  max_drawdown_ratio: '+document.getElementById('p-drawdown').value,
-        '  amp_narrow_enabled: '+(document.getElementById('p-amp-on').classList.contains('on')?'true':'false'),
-        '  vol_ratio: '+document.getElementById('p-vol').value,
-        '  new_low_days: '+document.getElementById('p-nl').value,'',
+      const p=gp().breakout;
+      const y=['# 标准突破买点参数','breakout:',
+        '  lookback: '+p.lookback,'  min_range_pct: '+p.min_range_pct,
+        '  drawdown_min: '+p.drawdown_min,'  drawdown_max: '+p.drawdown_max,
+        '  rebound_ratio: '+p.rebound_ratio,'  hold_min: '+p.hold_min,
+        '  hold_max: '+p.hold_max,'  peak_age_min: '+p.peak_age_min,
+        '  rs_threshold: '+p.rs_threshold,'  vol_ratio: '+p.vol_ratio,
+        '  require_green: '+(p.require_green?'true':'false'),
+        '  close_position_min: '+p.close_position_min,'',
       ].join('\n');
-      try{
-        const r=await fetch(API_BASE+'/api/config?signal_type='+SIGNAL_TYPE,{method:'POST',headers:{'Content-Type':'text/plain'},body:y});
-        const d=await r.json();
+      try{const r=await fetch(API_BASE+'/api/config?signal_type='+ST,{method:'POST',headers:{'Content-Type':'text/plain'},body:y});const d=await r.json();
         if(d.ok){btn.textContent='✅';btn.classList.add('saved');setTimeout(()=>{btn.textContent='💾 保存配置';btn.classList.remove('saved');btn.disabled=false;},2000);}
       }catch(e){btn.textContent='❌';btn.disabled=false;}
     }
