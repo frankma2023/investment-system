@@ -130,9 +130,11 @@ def detect(klines, params=None, rs_info=None):
 
         # ── 步骤 4: 延伸区 ──
         if EXT_LB > 0:
-            low_65 = min(klines[j]['close'] for j in range(max(0,i-EXT_LB), i) if klines[j].get('close') is not None)
-            if low_65 > 0 and close > low_65 * (1 + EXT_MAX):
-                continue
+            vals_65 = [klines[j]['close'] for j in range(max(0,i-EXT_LB), i) if klines[j].get('close') is not None]
+            if vals_65:
+                low_65 = min(vals_65)
+                if low_65 > 0 and close > low_65 * (1 + EXT_MAX):
+                    continue
 
         # ── 步骤 4.5: 不高于65日最高收盘（防突破后误标） ──
         if BELOW_65H and EXT_LB > 0:

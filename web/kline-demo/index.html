@@ -68,16 +68,27 @@
 
 <!-- Libraries -->
 <script src="../shared/js/echarts.min.js"></script>
-<!-- Chart.js + Financial: all from esm.sh -->
+<!-- Import Map: 统一 chart.js / luxon / adapter 路径 -->
+<script type="importmap">
+{
+  "imports": {
+    "chart.js": "https://esm.sh/chart.js@4.4.7",
+    "chartjs-chart-financial": "https://esm.sh/chartjs-chart-financial@0.2.1",
+    "chartjs-adapter-luxon": "https://esm.sh/chartjs-adapter-luxon@1.3.1",
+    "luxon": "https://esm.sh/luxon@3.5.0"
+  }
+}
+</script>
 <script type="module">
-import { Chart, registerables } from 'https://esm.sh/chart.js@4.4.7';
-import { CandlestickController, CandlestickElement, OhlcController, OhlcElement } from 'https://esm.sh/chartjs-chart-financial@0.2.1';
-import 'https://esm.sh/chartjs-adapter-luxon@1.3.1';
-import { DateTime } from 'https://esm.sh/luxon@3.5.0';
+import { Chart, registerables } from 'chart.js';
+import { CandlestickController, CandlestickElement, OhlcController, OhlcElement } from 'chartjs-chart-financial';
+import 'chartjs-adapter-luxon';  // side-effect: registers adapter on the SAME Chart
+import { DateTime } from 'luxon';
 Chart.register(...registerables, CandlestickController, CandlestickElement, OhlcController, OhlcElement);
 window._Chart=Chart;
 window._DateTime=DateTime;
 window._CJSReady=true;
+console.log('[Chart.js] loaded, adapter registered, ready');
 </script>
 <script src="https://cdn.jsdelivr.net/npm/hqchart@1.1.13159/dist/hqchart.umd.js"></script>
 
@@ -221,6 +232,8 @@ function makeChartJS(period){
   canvasParent.style.width='100%'; canvasParent.style.height='100%';
   ctx.style.width='100%'; ctx.style.height='100%';
   if(cjs){cjs.destroy();cjs=null}
+  // Also destroy any stray chart on this canvas
+  let stray=Chart.getChart(ctx); if(stray)stray.destroy();
 
   cjs=new Chart(ctx,{
     data:{
