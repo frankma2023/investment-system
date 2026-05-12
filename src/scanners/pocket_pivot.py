@@ -50,6 +50,7 @@ def detect(klines, params=None, rs_info=None):
     SMA10_EN = params.get('sma10_check', True)
     SMA50_EN = params.get('sma50_check', True)
     SMA50_SLOPE = params.get('sma50_slope_10d', 0.002)
+    SMA50_SLOPE_EN = params.get('sma50_slope_enabled', True)
     CLOSE_POS = params.get('close_position_min', 0.50)
     GREEN = params.get('require_green', True)
     VOL_LB = params.get('vol_down_lookback', 10)
@@ -85,7 +86,7 @@ def detect(klines, params=None, rs_info=None):
         # ── 步骤 1: 趋势 ──
         if SMA50_EN and (sma50[i] <= 0 or close <= sma50[i]):
             continue
-        if SMA50_EN and sma50[i] > 0 and i >= 10:
+        if SMA50_EN and sma50[i] > 0 and i >= 10 and SMA50_SLOPE_EN:
             if sma50[i-10] > 0 and (sma50[i] - sma50[i-10]) / sma50[i-10] < SMA50_SLOPE:
                 continue
         if SMA10_EN and sma10[i] > 0 and close <= sma10[i]:

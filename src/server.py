@@ -543,16 +543,23 @@ def api_pocket_pivot():
     end = data.get('end', datetime.now().strftime('%Y-%m-%d'))
     params = data.get('params', {})
     mode = data.get('mode', 'stock')
+    period = data.get('period', 'day')  # day/week/month
 
     db = get_db()
     table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
     kf = "AND kline_type='normal'" if mode == 'index' else ''
+    # 月线需要更长历史
+    extra = '-600 days' if period == 'month' else '-300 days'
     rows = db.execute(f"""SELECT date, open, high, low, close, volume, amount FROM {table}
-        WHERE stock_code=? {kf} AND date>=date(?,'-120 days') AND date<=? ORDER BY date""",
-        (stock_code, start, end)).fetchall()
+        WHERE stock_code=? {kf} AND date>=date(?,?) AND date<=? ORDER BY date""",
+        (stock_code, start, extra, end)).fetchall()
     if not rows: return jsonify({'klines':[],'signals':[]})
 
     klines_full = [dict(r) for r in rows]
+
+    # ── 日→周/月聚合 ──
+    if period != 'day':
+        klines_full = _aggregate_klines(klines_full, period)
 
     merged = {}
     cfg_path = os.path.join(PROJECT_DIR, 'config', 'market', 'pocket_pivot.yaml')
@@ -564,12 +571,44 @@ def api_pocket_pivot():
 
     from scanners.pocket_pivot import detect, get_rs
     rs_info = get_rs(db, stock_code, end, mode)
-    print(f"[PP debug] {stock_code} rs={rs_info} merged keys={list(merged.keys())[:5]}...", flush=True)
     signals = detect(klines_full, merged, rs_info)
-    print(f"[PP debug] signals={len(signals)}", flush=True)
+    # 为每个信号日补上当日真实的 RS 值
+    for s in signals:
+        sd_rs = get_rs(db, stock_code, s['date'], mode)
+        if sd_rs:
+            s['rs_20'] = sd_rs['rs_20']
+            s['rs_250'] = sd_rs['rs_250']
     klines_out = [k for k in klines_full if start <= k['date'] <= end]
     signals_out = [s for s in signals if start <= s['date'] <= end]
     return jsonify({'klines': klines_out, 'signals': signals_out})
+
+
+def _aggregate_klines(klines, period):
+    """日K线聚合为周K或月K"""
+    if not klines: return []
+    result = []
+    group_key = None; current = None
+    for k in klines:
+        d = k['date']
+        if period == 'week':
+            from datetime import datetime
+            dt = datetime.strptime(d, '%Y-%m-%d')
+            iso = dt.isocalendar()
+            gk = f"{iso[0]}-W{iso[1]:02d}"
+        else:
+            gk = d[:7]
+        if gk != group_key:
+            if current: result.append(current)
+            current = {'date': d, 'open': k['open'], 'high': k['high'], 'low': k['low'], 'close': k['close'], 'volume': k['volume'] or 0, 'amount': k.get('amount') or 0}
+            group_key = gk
+        else:
+            current['high'] = max(current['high'], k['high'])
+            current['low'] = min(current['low'], k['low'])
+            current['close'] = k['close']
+            current['volume'] = (current['volume'] or 0) + (k['volume'] or 0)
+            current['amount'] = (current['amount'] or 0) + (k.get('amount') or 0)
+    if current: result.append(current)
+    return result
 
 
 @app.route('/api/pocket-pivot-rs')
