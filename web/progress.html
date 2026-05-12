@@ -49,7 +49,7 @@
     </header>
 
     <div class="pg-stats">
-      <div class="pg-stat"><div class="n" style="color:#4CAF50">18</div><div class="l">已完成</div></div>
+      <div class="pg-stat"><div class="n" style="color:#4CAF50">20</div><div class="l">已完成</div></div>
       <div class="pg-stat"><div class="n" style="color:#FF9800">1</div><div class="l">进行中</div></div>
       <div class="pg-stat"><div class="n">1</div><div class="l">待开发</div></div>
     </div>
@@ -58,7 +58,7 @@
     <div class="pg-grid">
 
       <div class="pg-card">
-        <h3>📊 指数分析 <span class="badge" style="background:#E8F5E9;color:#2E7D32">8项</span></h3>
+        <h3>📊 指数分析 <span class="badge" style="background:#E8F5E9;color:#2E7D32">9项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-done"></span>指数RS强度+回测</td><td>/index-rs-backtest/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>指数拥挤度+回测</td><td>/index-crowdedness/</td></tr>
@@ -68,25 +68,29 @@
           <tr><td><span class="pg-dot dot-done"></span>指数估值分位</td><td>/index-valuation/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>指数RS引擎</td><td>src/scanners/index_rs.py</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>⭐ 最强指数</td><td>/strongest-index/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🅱 双重底(指数)</td><td>/double-bottom/</td></tr>
         </table>
       </div>
 
       <div class="pg-card">
-        <h3>💎 个股分析 <span class="badge" style="background:#F3E5F5;color:#7B1FA2">3项</span></h3>
+        <h3>💎 个股分析 <span class="badge" style="background:#F3E5F5;color:#7B1FA2">5项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-done"></span>个股RS强度+回测</td><td>/stock-rs-backtest/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>个股全维度扫描</td><td>/stock-valuation/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>个股财务分析</td><td>/stock-analysis/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🎯 口袋支点</td><td>/pocket-pivot/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🅱 双重底(个股)</td><td>/double-bottom/</td></tr>
         </table>
       </div>
 
       <div class="pg-card">
-        <h3>📉 大盘信号 <span class="badge" style="background:#FFF3E0;color:#E65100">4项</span></h3>
+        <h3>📉 大盘信号 <span class="badge" style="background:#FFF3E0;color:#E65100">5项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-done"></span>抛盘日+回测</td><td>/distribution-day/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>追盘日+回测</td><td>/follow-through-day/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>吸筹日+回测</td><td>/accumulation-day/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>大盘健康度看板</td><td>/market-scan/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>📐 标准突破</td><td>/base-detection/</td></tr>
         </table>
       </div>
 
@@ -110,6 +114,10 @@
     <div class="lesson-card"><div class="ln">4. YAML 文件名与代码中 signal_type 严格一致</div><div class="ld">accumulation vs accumulation_day、theme vs thematic，名不对读不到。</div></div>
     <div class="lesson-card"><div class="ln">5. 大池子 SQL 占位符不要嵌套子查询</div><div class="ld">229 个占位符导致主题池静默失败。拆成两步：先取最新日期，再按日期查。</div></div>
     <div class="lesson-card"><div class="ln">6. 引擎 CLI 打印了结果 ≠ 写入了数据库</div><div class="ld">stock_rs.py 控制台打印双强股票但没 INSERT，快照读到全是 0。</div></div>
+    <div class="lesson-card"><div class="ln">7. RS 值不能一查到底贴到所有信号上</div><div class="ld">get_rs 只取最新快照，所有历史信号共用同一个 RS 值。需逐日查库。</div></div>
+    <div class="lesson-card"><div class="ln">8. 前低搜索窗口不设限会追溯到上市首日</div><div class="ld">双重底前低搜索了全历史数据，紫金矿业回溯到 2014 年。加 200 天窗口限制。</div></div>
+    <div class="lesson-card"><div class="ln">9. YAML 和引擎默认参数必须完整同步</div><div class="ld">YAML 缺键→前端 gp() 传不全→API merge 后缺参数→引擎 KeyError。</div></div>
+    <div class="lesson-card"><div class="ln">10. 回测页面需要统一的开发标准</div><div class="ld">口袋支点 v2 成为事实标准后写了 docs/dev/回测看板开发标准.md，后续页面直接套模板。</div></div>
 
     <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>
