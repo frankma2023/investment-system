@@ -89,7 +89,7 @@
         <div class="param-card" id="c3"><div class="param-card-hd" onclick="tc('c3')"><span class="dot" style="background:#4CAF50"></span>🟢 延伸+RS</div><div class="param-card-bd" id="c3-bd">
           <div class="sr"><span class="sl">延伸回看</span><input type="range" id="p-el" min="0" max="120" value="65" oninput="sv('p-el')"><span class="sv" id="p-el-v">65</span></div>
           <div class="sr"><span class="sl">最大涨幅</span><input type="range" id="p-em" min="20" max="200" value="50" oninput="sv('p-em')"><span class="sv" id="p-em-v">50%</span></div>
-          <div class="sr"><span class="sl">RS门槛</span><input type="range" id="p-rs" min="60" max="99" value="80" oninput="sv('p-rs')"><span class="sv" id="p-rs-v">80</span></div>
+          <div class="sr"><span class="sl">RS门槛</span><input type="range" id="p-rs" min="0" max="99" value="80" oninput="sv('p-rs')"><span class="sv" id="p-rs-v">80</span></div>
           <div class="tog-row"><span class="sl">双RS</span><button class="tsw off" id="p-rd-on" onclick="event.stopPropagation();tog('p-rd-on')"></button></div>
         </div></div>
         <div class="param-card" id="c4"><div class="param-card-hd" onclick="tc('c4')"><span class="dot" style="background:#9C27B0"></span>🟣 10日线反弹+防突破</div><div class="param-card-bd" id="c4-bd">
@@ -247,6 +247,75 @@
       var idx=ck.findIndex(function(r){return r.date===date;});
       if(idx<0){div.innerHTML='<div style=font-size:0.7rem;color:#FF6B6B>该日期不在K线范围内</div>';div.style.display='block';return;}
       var k=ck[idx],p=gp().pocket_pivot;
+
+      // SMA
+      var sma10=0,sma50=0;
+      if(idx>=10){var cs=[];for(var j=idx-10;j<idx;j++)if(ck[j].close!=null)cs.push(ck[j].close);if(cs.length)sma10=cs.reduce(function(a,b){return a+b})/cs.length;}
+      if(idx>=50){var cs=[];for(var j=idx-50;j<idx;j++)if(ck[j].close!=null)cs.push(ck[j].close);if(cs.length)sma50=cs.reduce(function(a,b){return a+b})/cs.length;}
+      var sma50_s=0;
+      if(idx>=60){var cs2=[];for(var j=idx-60;j<idx-10;j++)if(ck[j].close!=null)cs2.push(ck[j].close);var sma50_old=cs2.length?cs2.reduce(function(a,b){return a+b})/cs2.length:0;if(sma50_old>0)sma50_s=(sma50-sma50_old)/sma50_old*100;}
+
+      var c1a=p.sma10_check!==false?sma10>0&&k.close>sma10:true;
+      var c1b=p.sma50_check!==false?sma50>0&&k.close>sma50:true;
+      var c1c=sma50_s>=p.sma50_slope_10d*100;
+
+      var pos=k.high!=k.low?(k.close-k.low)/(k.high-k.low)*100:100;
+      var c2a=pos>=p.close_position_min*100;
+      var c2b=p.require_green!==false?k.close>k.open:true;
+
+      var mdv=0,hd=false;
+      for(var j=Math.max(0,idx-p.vol_down_lookback);j<idx;j++){if(ck[j].close<ck[j].open){hd=true;if(ck[j].volume>mdv)mdv=ck[j].volume;}}
+      var c3=hd?k.volume>mdv:p.vol_fallback_enabled!==false;
+
+      var low65=999999,high65=0;
+      for(var j=Math.max(0,idx-p.extension_lookback);j<idx;j++){if(ck[j].close!=null){if(ck[j].close<low65)low65=ck[j].close;if(ck[j].close>high65)high65=ck[j].close;}}
+      var c4=low65>0?k.close<=low65*(1+p.extension_max_pct):true;
+      var c4b=p.below_65d_high!==false?k.close<=high65:true;
+
+      function cc(v,d){return v?'<td style=color:#4CAF50>✅ '+d+'</td>':'<td style=color:#FF6B6B>❌ '+d+'</td>';}
+      function showRS(rs,thr){var t=[];
+        t.push('<tr><td>⑤ RS_20</td><td>'+(rs.rs_20!=null?rs.rs_20:'—')+'</td><td>≥'+thr+'</td>'+cc(rs.rs_20>=thr,'')+'</tr>');
+        t.push('<tr><td>⑤ RS_250</td><td>'+(rs.rs_250!=null?rs.rs_250:'—')+'</td><td>≥'+thr+'</td>'+cc(p.rs_dual_require?(rs.rs_20>=thr&&rs.rs_250>=thr):(rs.rs_20>=thr||rs.rs_250>=thr),p.rs_dual_require?'双RS':'任一满足')+'</tr>');
+        return t.join('');
+      }
+
+      var t='<table style=margin:0;font-size:0.68rem><thead><tr><th>条件</th><th>实际值</th><th>阈值</th><th>判定</th></tr></thead><tbody>';
+      t+='<tr><td>① SMA10</td><td>'+sma10.toFixed(2)+'</td><td>C='+k.close.toFixed(2)+'</td>'+cc(c1a,'close>SMA10')+'</tr>';
+      t+='<tr><td>① SMA50</td><td>'+sma50.toFixed(2)+'</td><td>C='+k.close.toFixed(2)+'</td>'+cc(c1b,'close>SMA50')+'</tr>';
+      t+='<tr><td>① SMA50斜率</td><td>'+sma50_s.toFixed(3)+'%</td><td>≥'+(p.sma50_slope_10d*100).toFixed(1)+'%</td>'+cc(c1c,'')+'</tr>';
+      t+='<tr><td>② 收盘位置</td><td>'+pos.toFixed(0)+'%</td><td>≥'+(p.close_position_min*100).toFixed(0)+'%</td>'+cc(c2a,'')+'</tr>';
+      t+='<tr><td>② 阳线</td><td>'+(k.close>k.open?'是':'否')+'</td><td>是</td>'+cc(c2b,'')+'</tr>';
+      t+='<tr><td>③ 量>10日阴线</td><td>量='+fmt2(k.volume)+(hd?' 最大阴量='+fmt2(mdv):' 无阴线')+'</td><td>逐日对比</td>'+cc(c3,'')+'</tr>';
+      t+='<tr><td>④ 65日低涨幅</td><td>'+((k.close-low65)/low65*100).toFixed(1)+'%</td><td>≤'+(p.extension_max_pct*100).toFixed(0)+'%</td>'+cc(c4,'')+'</tr>';
+      t+='<tr><td>④ 不超65日高</td><td>C='+k.close.toFixed(2)+' vs H65='+high65.toFixed(2)+'</td><td>C≤H65</td>'+cc(c4b,'')+'</tr>';
+      // RS placeholder - filled after fetch
+      t+='<tr id=diag-rs-row><td>⑤ RS (加载中...)</td><td colspan=3 style=color:var(--text-tertiary)>正在从服务器获取RS数据...</td></tr>';
+      t+='<tr style=border-top:2px solid var(--divider)><td style=font-weight:900>综合</td><td colspan=2></td><td style=font-weight:900;font-size:0.85rem;color:#999>RS加载中...</td></tr></tbody></table>';
+      div.innerHTML='<div style=font-size:0.6rem;color:var(--text-tertiary);margin-bottom:6px>'+date+' O='+k.open.toFixed(2)+' H='+k.high.toFixed(2)+' L='+k.low.toFixed(2)+' C='+k.close.toFixed(2)+'</div>'+t;
+      div.style.display='block';
+
+      // Async fetch RS
+      var code=document.getElementById('stock-code').value;
+      var mode=document.getElementById('mode').value;
+      fetch(API_BASE+'/api/pocket-pivot-rs?code='+code+'&date='+date+'&mode='+mode).then(function(r){return r.json();}).then(function(rs){
+        var all=c1a&&c1b&&c1c&&c2a&&c2b&&c3&&c4&&c4b;
+        if(rs&&rs.rs_20!=null){
+          all=all&&(p.rs_dual_require?(rs.rs_20>=p.rs_threshold&&rs.rs_250>=p.rs_threshold):(rs.rs_20>=p.rs_threshold||rs.rs_250>=p.rs_threshold));
+          document.getElementById('diag-rs-row').outerHTML=showRS(rs,p.rs_threshold);
+        }else{
+          document.getElementById('diag-rs-row').innerHTML='<td>⑤ RS</td><td colspan=2>无数据（已跳过）</td><td style=color:#4CAF50>✅ 跳过</td>';
+        }
+        var trs=document.querySelectorAll('#diag-result tr');
+        var last=trs[trs.length-1];
+        last.cells[3].innerHTML='<span style=font-weight:900;font-size:0.85rem;color:'+(all?'#4CAF50':'#FF6B6B')+'">'+(all?'🎯 应为口袋支点':'❌ 不满足')+'</span>';
+      }).catch(function(){document.getElementById('diag-rs-row').innerHTML='<td>⑤ RS</td><td colspan=3 style=color:#FF6B6B>获取失败</td>';});
+    }
+      const date=document.getElementById('diag-date').value;
+      const div=document.getElementById('diag-result');
+      if(!date||!ck.length){div.style.display='none';return;}
+      var idx=ck.findIndex(function(r){return r.date===date;});
+      if(idx<0){div.innerHTML='<div style=font-size:0.7rem;color:#FF6B6B>该日期不在K线范围内</div>';div.style.display='block';return;}
+      var k=ck[idx],p=gp().pocket_pivot;
       var sma10=0,sma50=0;
       if(idx>=10){var cs=[];for(var j=idx-10;j<idx;j++)if(ck[j].close!=null)cs.push(ck[j].close);if(cs.length)sma10=cs.reduce(function(a,b){return a+b})/cs.length;}
       if(idx>=50){var cs=[];for(var j=idx-50;j<idx;j++)if(ck[j].close!=null)cs.push(ck[j].close);if(cs.length)sma50=cs.reduce(function(a,b){return a+b})/cs.length;}
@@ -277,7 +346,6 @@
       t+='<tr style=border-top:2px solid var(--divider)><td style=font-weight:900>综合</td><td colspan=2></td><td style=font-weight:900;font-size:0.85rem;color:'+(all?'#4CAF50':'#FF6B6B')+'">'+(all?'🎯 应为口袋支点':'❌ 不满足')+'</td></tr></tbody></table>';
       div.innerHTML='<div style=font-size:0.6rem;color:var(--text-tertiary);margin-bottom:6px>'+date+' O='+k.open.toFixed(2)+' H='+k.high.toFixed(2)+' L='+k.low.toFixed(2)+' C='+k.close.toFixed(2)+'</div>'+t;
       div.style.display='block';
-    }
     function fmt2(v){if(v==null)return'—';if(v>=1e8)return(v/1e8).toFixed(2)+'亿';if(v>=1e4)return(v/1e4).toFixed(0)+'万';return v.toFixed(0);}
 
     async function saveCfg(){

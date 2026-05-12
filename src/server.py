@@ -564,10 +564,24 @@ def api_pocket_pivot():
 
     from scanners.pocket_pivot import detect, get_rs
     rs_info = get_rs(db, stock_code, end, mode)
+    print(f"[PP debug] {stock_code} rs={rs_info} merged keys={list(merged.keys())[:5]}...", flush=True)
     signals = detect(klines_full, merged, rs_info)
+    print(f"[PP debug] signals={len(signals)}", flush=True)
     klines_out = [k for k in klines_full if start <= k['date'] <= end]
     signals_out = [s for s in signals if start <= s['date'] <= end]
     return jsonify({'klines': klines_out, 'signals': signals_out})
+
+
+@app.route('/api/pocket-pivot-rs')
+def api_pocket_pivot_rs():
+    code = request.args.get('code', '')
+    date = request.args.get('date', '')
+    mode = request.args.get('mode', 'stock')
+    if not code or not date: return jsonify({})
+    db = get_db()
+    from scanners.pocket_pivot import get_rs
+    rs = get_rs(db, code, date, mode)
+    return jsonify(rs or {'rs_20': None, 'rs_250': None})
 
 # ═══════════════════════════════════════════════
 # API: POST /api/breakout
