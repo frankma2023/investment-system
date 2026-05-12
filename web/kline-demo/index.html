@@ -68,10 +68,17 @@
 
 <!-- Libraries -->
 <script src="../shared/js/echarts.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/luxon@3.5.0/build/global/luxon.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.1/dist/chartjs-chart-financial.umd.min.js"></script>
+<!-- Chart.js + Financial: all from esm.sh -->
+<script type="module">
+import { Chart, registerables } from 'https://esm.sh/chart.js@4.4.7';
+import { CandlestickController, CandlestickElement, OhlcController, OhlcElement } from 'https://esm.sh/chartjs-chart-financial@0.2.1';
+import 'https://esm.sh/chartjs-adapter-luxon@1.3.1';
+import { DateTime } from 'https://esm.sh/luxon@3.5.0';
+Chart.register(...registerables, CandlestickController, CandlestickElement, OhlcController, OhlcElement);
+window._Chart=Chart;
+window._DateTime=DateTime;
+window._CJSReady=true;
+</script>
 <script src="https://cdn.jsdelivr.net/npm/hqchart@1.1.13159/dist/hqchart.umd.js"></script>
 
 <script>
@@ -197,14 +204,16 @@ function makeECharts(period){
 /* ======================== Chart.js + Financial ======================== */
 let cjs=null;
 function makeChartJS(period){
-  let {data:dd, dates:dt}=getData(period);
+  if(!window._CJSReady){setTimeout(()=>makeChartJS(period),200);return}
+  let Chart=window._Chart, D=window._DateTime;
+  let {data:dd, dates:dtStr}=getData(period);
   // Financial plugin format: {t, o, h, l, c}
-  let ohlc=dd.map((d,i)=>({t:luxon.DateTime.fromISO(dt[i]).valueOf(),o:d.o,h:d.h,l:d.l,c:d.c}));
+  let ohlc=dd.map((d,i)=>({t:D.fromISO(dtStr[i]).valueOf(),o:d.o,h:d.h,l:d.l,c:d.c}));
   let upColor='rgba(239,68,68,0.6)', downColor='rgba(34,197,94,0.6)';
 
   let makeLine=(p)=>{
     let v=calcMA(dd,'c',p);
-    return v.map((x,i)=>x!=null?{t:luxon.DateTime.fromISO(dt[i]).valueOf(),v:x}:null).filter(x=>x);
+    return v.map((x,i)=>x!=null?{t:D.fromISO(dtStr[i]).valueOf(),v:x}:null).filter(x=>x);
   };
 
   let ctx=document.getElementById('canvas-chartjs');
@@ -220,7 +229,7 @@ function makeChartJS(period){
         {label:'MA5',type:'line',data:makeLine(5),yAxisID:'yPrice',borderColor:'#FFD700',borderWidth:1,pointRadius:0,parsing:{xAxisKey:'t',yAxisKey:'v'}},
         {label:'MA10',type:'line',data:makeLine(10),yAxisID:'yPrice',borderColor:'#FF6B8A',borderWidth:1,pointRadius:0,parsing:{xAxisKey:'t',yAxisKey:'v'}},
         {label:'MA20',type:'line',data:makeLine(20),yAxisID:'yPrice',borderColor:'#00D4AA',borderWidth:1,pointRadius:0,parsing:{xAxisKey:'t',yAxisKey:'v'}},
-        {label:'成交量',type:'bar',data:dd.map((d,i)=>({t:luxon.DateTime.fromISO(dt[i]).valueOf(),v:d.v,c:d.c>=d.o?'up':'down'})),yAxisID:'yVol',parsing:{xAxisKey:'t',yAxisKey:'v'},backgroundColor:ctx=>ctx.raw&&ctx.raw.c==='up'?upColor:downColor,borderColor:ctx=>ctx.raw&&ctx.raw.c==='up'?'#ef4444':'#22c55e',borderWidth:0.5}
+        {label:'成交量',type:'bar',data:dd.map((d,i)=>({t:D.fromISO(dtStr[i]).valueOf(),v:d.v,c:d.c>=d.o?'up':'down'})),yAxisID:'yVol',parsing:{xAxisKey:'t',yAxisKey:'v'},backgroundColor:ctx=>ctx.raw&&ctx.raw.c==='up'?upColor:downColor,borderColor:ctx=>ctx.raw&&ctx.raw.c==='up'?'#ef4444':'#22c55e',borderWidth:0.5}
       ]
     },
     options:{

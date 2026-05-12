@@ -2,7 +2,7 @@
 pocket_pivot:
   sma10_check: true
   sma50_check: false
-  sma50_slope_10d: 0
+  sma50_slope_10d: -0.01
   close_position_min: 0.5
   require_green: true
   vol_down_lookback: 10
