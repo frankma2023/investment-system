@@ -515,6 +515,61 @@ def api_strongest_index():
     return jsonify({'date': target_date, 'pools': result_pools, 'all_indices': all_indices})
 
 # ═══════════════════════════════════════════════
+# API: GET /api/stock-name
+# ═══════════════════════════════════════════════
+
+@app.route('/api/stock-name')
+def api_stock_name():
+    code = request.args.get('code', '')
+    if not code: return jsonify({})
+    db = get_db()
+    r = db.execute("SELECT name FROM stock_basic WHERE stock_code=?", (code,)).fetchone()
+    if r: return jsonify({'code': code, 'name': r['name']})
+    # fallback: index names from index_style.yaml
+    idx_names = load_index_names()
+    nm = idx_names.get(code, '')
+    return jsonify({'code': code, 'name': nm})
+
+# ═══════════════════════════════════════════════
+# API: POST /api/pocket-pivot
+# ═══════════════════════════════════════════════
+
+@app.route('/api/pocket-pivot', methods=['POST', 'OPTIONS'])
+def api_pocket_pivot():
+    if request.method == 'OPTIONS': return '', 204
+    data = request.get_json()
+    stock_code = data.get('stock_code', '600519')
+    start = data.get('start', '2023-01-01')
+    end = data.get('end', datetime.now().strftime('%Y-%m-%d'))
+    params = data.get('params', {})
+    mode = data.get('mode', 'stock')
+
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    kf = "AND kline_type='normal'" if mode == 'index' else ''
+    rows = db.execute(f"""SELECT date, open, high, low, close, volume, amount FROM {table}
+        WHERE stock_code=? {kf} AND date>=date(?,'-120 days') AND date<=? ORDER BY date""",
+        (stock_code, start, end)).fetchall()
+    if not rows: return jsonify({'klines':[],'signals':[]})
+
+    klines_full = [dict(r) for r in rows]
+
+    merged = {}
+    cfg_path = os.path.join(PROJECT_DIR, 'config', 'market', 'pocket_pivot.yaml')
+    if os.path.exists(cfg_path):
+        with open(cfg_path, encoding='utf-8') as f:
+            cfg = yaml.safe_load(f) or {}
+        merged.update(cfg.get('pocket_pivot', {}))
+    merged.update(params.get('pocket_pivot', params))
+
+    from scanners.pocket_pivot import detect, get_rs
+    rs_info = get_rs(db, stock_code, end, mode)
+    signals = detect(klines_full, merged, rs_info)
+    klines_out = [k for k in klines_full if start <= k['date'] <= end]
+    signals_out = [s for s in signals if start <= s['date'] <= end]
+    return jsonify({'klines': klines_out, 'signals': signals_out})
+
+# ═══════════════════════════════════════════════
 # API: POST /api/breakout
 # ═══════════════════════════════════════════════
 

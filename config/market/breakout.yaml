@@ -1,14 +1,14 @@
-# 标准突破买点参数配置
+# 标准突破买点参数
 breakout:
-  lookback: 120              # HHV/LLV 搜索窗口
-  min_range_pct: 30          # 峰值-谷底最小幅度(%)
-  drawdown_min: 12           # 峰值到谷底最小回撤(%)
-  drawdown_max: 33           # 峰值到谷底最大回撤(%)
-  rebound_ratio: 60          # 谷底右侧反弹占比峰谷距离(%)  
-  hold_min: 5                # 反弹高点距今最少天数
-  hold_max: 20               # 反弹高点距今最多天数
-  peak_age_min: 30           # 峰值距今最少天数
-  rs_threshold: 87           # RS强度最低门槛
-  vol_ratio: 1.4             # 突破日量比(相对50日均量)
-  require_green: true        # 要求阳线
-  close_position_min: 60     # 收盘位置最低分位(%)
+  lookback: 120
+  min_range_pct: 20
+  drawdown_min: 12
+  drawdown_max: 40
+  rebound_ratio: 50
+  hold_min: 5
+  hold_max: 40
+  peak_age_min: 20
+  rs_threshold: 81
+  vol_ratio: 0.9
+  require_green: true
+  close_position_min: 50

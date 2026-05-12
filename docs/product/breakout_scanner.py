@@ -20,13 +20,14 @@
 import sys, os, argparse, sqlite3
 from datetime import datetime, date as dt_date
 
-# ── 项目路径（src/scanners/ → 三层 dirname = 项目根） ──
-_candidate = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-REAL_PROJECT = r"D:\hanako\investment-system"
+# ── 实际项目路径（拷到 src/ 下时会自动计算，在 docs/ 下调试时用硬编码） ──
+_REAL_PROJECT = r"D:\hanako\investment-system"
+_candidate = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# 如果从 src/ 运行，两层 dirname 即为项目根；否则退回到硬编码路径
 if os.path.exists(os.path.join(_candidate, "data", "lixinger.db")):
     PROJECT_DIR = _candidate
 else:
-    PROJECT_DIR = REAL_PROJECT
+    PROJECT_DIR = _REAL_PROJECT
 
 sys.path.insert(0, PROJECT_DIR)
 os.chdir(PROJECT_DIR)
@@ -121,8 +122,6 @@ def detect(klines, params=None, rs_info=None, debug=False):
     for i in range(LB + 1, n):
         stats['scanned'] += 1
         today = klines[i]
-        if today.get('close') is None:
-            continue
 
         # ── B6 + XG: 昨日满足基部条件 + 今日收盘突破昨日反弹高点 ──
         base_result = _check_base_conditions_with_rh(klines, i - 1, params, debug_stats=(stats if debug else None))

@@ -62,10 +62,9 @@ def load_data(conn, target_date=None, start_date=None):
 
     # ── 加载个股K线 ──
     kline_rows = conn.execute("""
-        SELECT stock_code, date, adj_close, amount
+        SELECT stock_code, date, COALESCE(adj_close, close) as adj_close, amount
         FROM daily_kline
         WHERE date >= ? AND date <= ?
-          AND adj_close IS NOT NULL
         ORDER BY stock_code, date
     """, (start_str, end_str)).fetchall()
 
@@ -284,10 +283,10 @@ if __name__ == "__main__":
     for row in latest.iter_rows(named=True):
         rows.append((
             row['stock_code'], str(latest_date),
-            row.get('close'), row.get('adj_close'),
-            row.get('ret_20'), row.get('ret_250'),
-            row.get('rps_20'), row.get('rps_250'),
-            row.get('rs_line'), row.get('amount'),
+            row['adj_close'], row['adj_close'],
+            row['ret_20'], row['ret_250'],
+            row['rps_20'], row['rps_250'],
+            row['rs_line_norm'], row['amount'],
         ))
     conn.executemany(
         "INSERT INTO stock_rs_daily (stock_code, date, close, adj_close, ret_20, ret_250, rps_20, rps_250, rs_line, amount) VALUES (?,?,?,?,?,?,?,?,?,?)",

@@ -83,7 +83,7 @@
           <div class="sr"><span class="sl">反弹比例</span><input type="range" id="p-rb" min="40" max="90" value="60" oninput="sv('p-rb')"><span class="sv" id="p-rb-v">60%</span></div>
         </div></div>
         <div class="param-card" id="c2"><div class="param-card-hd" onclick="tc('c2')"><span class="dot" style="background:#FF9800"></span>🟠 横盘确认</div><div class="param-card-bd" id="c2-bd">
-          <div class="sr"><span class="sl">最少横盘</span><input type="range" id="p-hl" min="3" max="15" value="5" oninput="sv('p-hl')"><span class="sv" id="p-hl-v">5天</span></div>
+          <div class="sr"><span class="sl">最少横盘</span><input type="range" id="p-hl" min="0" max="15" value="5" oninput="sv('p-hl')"><span class="sv" id="p-hl-v">5天</span></div>
           <div class="sr"><span class="sl">最多横盘</span><input type="range" id="p-hh" min="10" max="40" value="20" oninput="sv('p-hh')"><span class="sv" id="p-hh-v">20天</span></div>
           <div class="sr"><span class="sl">峰值距今</span><input type="range" id="p-pa" min="20" max="90" value="30" oninput="sv('p-pa')"><span class="sv" id="p-pa-v">30天</span></div>
         </div></div>
@@ -114,6 +114,7 @@
     let chart=null,ck=[],cs=[];
 
     document.addEventListener('DOMContentLoaded',async()=>{
+      console.log('DOM ready, API_BASE=',typeof API_BASE!=='undefined'?API_BASE:'UNDEFINED');
       const now=new Date();
       document.getElementById('date-end').value=now.toISOString().split('T')[0];
       const ago=new Date(now);ago.setFullYear(ago.getFullYear()-3);
@@ -121,7 +122,8 @@
       chart=echarts.init(document.getElementById('chart'));
       document.getElementById('btn-run').addEventListener('click',run);
       document.getElementById('btn-save').addEventListener('click',saveCfg);
-      await loadCfg();setTimeout(run,500);
+      try{await loadCfg();}catch(e){console.log('loadCfg error:',e);}
+      setTimeout(function(){console.log('auto-running...');run();},500);
     });
 
     function gp(){
@@ -154,13 +156,15 @@
       const dates=ck.map(k=>k.date);
       const colors=['rgba(255,152,0,0.15)','rgba(33,150,243,0.15)','rgba(76,175,80,0.15)','rgba(156,39,176,0.15)','rgba(0,188,212,0.15)','rgba(233,30,99,0.15)'];
       const borders=['#FF9800','#2196F3','#4CAF50','#9C27B0','#00BCD4','#E91E63'];
-      const marks=[];
+      const areas=[],points=[];
       cs.forEach((s,i)=>{
         const si=dates.indexOf(s.date);if(si<0)return;
-        const cm=Math.max(0,si-10);
-        marks.push({name:'突破',coord:[si,s.close],value:s.date,symbol:'pin',symbolSize:28,itemStyle:{color:borders[i%6],borderColor:'#FFF',borderWidth:1}});
-        //橙色框：peak → signal
-        const pi=dates.indexOf(s.peak_date);if(pi>=0)marks.push([{xAxis:pi,itemStyle:{color:colors[i%6],borderColor:borders[i%6],borderWidth:1,borderType:'dashed'}},{x:si}]);
+        const pi=dates.indexOf(s.peak_date);
+        // 橙色框：peak → signal
+        const area=[{xAxis:pi>=0?pi:0,itemStyle:{color:colors[i%6],borderColor:borders[i%6],borderWidth:1,borderType:'dashed'}},{xAxis:si}];
+        areas.push(area);
+        // 突破标记
+        points.push({name:'',coord:[si,s.close],value:s.date,symbol:'pin',symbolSize:28,itemStyle:{color:borders[i%6],borderColor:'#FFF',borderWidth:1}});
       });
       chart.setOption({
         backgroundColor:'transparent',tooltip:{trigger:'axis'},
@@ -171,8 +175,9 @@
         series:[
           {name:'K线',type:'candlestick',data:ck.map(k=>[k.open,k.close,k.low,k.high]),itemStyle:{color:'#E53935',color0:'#26C6DA',borderColor:'#E53935',borderColor0:'#26C6DA'}},
           {name:'成交量',type:'bar',data:ck.map((k,i)=>({value:k.volume,itemStyle:{color:ck[i].close>=ck[i].open?'rgba(229,57,53,0.4)':'rgba(38,198,218,0.4)'}})),xAxisIndex:1,yAxisIndex:1},
-        ].concat(marks.filter(m=>Array.isArray(m)?true:false).length?[{name:'基部',type:'line',data:[],markArea:{silent:true,data:marks.filter(m=>Array.isArray(m))}}]:[]).concat(marks.filter(m=>!Array.isArray(m)&&m.symbol).length?[{name:'突破',type:'scatter',data:marks.filter(m=>!Array.isArray(m))}]:[])
-      });
+          {name:'突破',type:'scatter',data:points,symbolSize:28,z:5},
+          {name:'基部',type:'line',data:[],markArea:{silent:true,data:areas},z:1}
+        ]});
     }
 
     function renderTable(){
