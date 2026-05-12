@@ -54,7 +54,7 @@
 </nav>
 
   <div class="top-bar">
-    <div><label>搜索/选择指数</label><input type="text" id="idx-search" placeholder="输入代码或名称筛选..." oninput="filterIndices()" style="width:220px;margin-right:8px"><select id="idx-select" onchange="loadData()" style="max-width:300px"></select></div>
+    <div><label>搜索/选择指数</label><input type="text" id="idx-search" placeholder="输入代码或名称筛选..." oninput="filterIndices()" onkeydown="if(event.key==='Enter'){var l=filterIndices(true);if(l.length===1){document.getElementById('idx-select').value=l[0].code;loadData();}}" style="width:220px;margin-right:8px"><select id="idx-select" onchange="loadData()" style="max-width:300px"></select></div>
     <div><label>起始年份</label><select id="year-start" onchange="loadData()"><option value="2016">2016</option><option value="2018">2018</option><option value="2020">2020</option><option value="2022">2022</option><option value="2024">2024</option></select></div>
     <div><label>截止年份</label><select id="year-end" onchange="loadData()"><option value="2026" selected>至今</option><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option></select></div>
   </div>
@@ -92,10 +92,11 @@ async function init(){
   loadData();
 }
 
-function filterIndices(){
+function filterIndices(ret){
   var q=(document.getElementById('idx-search').value||'').toUpperCase();
   var list=allIndices.filter(function(x){return !q||x.code.indexOf(q)>=0||(x.name||'').toUpperCase().indexOf(q)>=0});
   renderSelect(list);
+  if(ret)return list;
 }
 
 function renderSelect(list){
@@ -103,6 +104,8 @@ function renderSelect(list){
   sel.innerHTML='';
   list.forEach(function(x){var o=document.createElement('option');o.value=x.code;o.textContent=x.code+' '+x.name;sel.appendChild(o)});
   if(list.some(function(x){return x.code===cur}))sel.value=cur;
+  else if(list.length===1){sel.value=list[0].code;setTimeout(loadData,100);}
+  else if(list.length>0)sel.value=list[0].code;
 }
 
 async function loadData(){
