@@ -64,9 +64,10 @@
   <div id="chart-ucharts" class="chart-container"><canvas id="canvas-ucharts"></canvas></div>
 </div>
 
-<p class="note">仿真数据 180 个交易日 (2025-08 ~ 2026-05) · 基础价格 35 元 · 含趋势周期和波动率变化</p>
+<p class="note">601012 隆基绿能 · 真实日K数据 730 个交易日 (2023-05 ~ 2026-05) · 当前价约 16.61 元</p>
 
-<!-- Libraries -->
+<!-- 601012 隆基绿能真实K线数据 (2023-05 ~ 2026-05, 730交易日) -->
+<script src="data-601012.js"></script>
 <script src="../shared/js/echarts.min.js"></script>
 <!-- Chart.js UMD + Financial (v0.1.0 支持全局 Chart.register) + Luxon adapter UMD -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -131,6 +132,23 @@ function genDates(startY,startM,count){
   return dates;
 }
 
+/* ======================== 真实数据: 601012 隆基绿能 ======================== */
+function loadRealData(){
+  if(typeof STOCK_DATA_601012==='undefined') return null;
+  let dates=[], ohlc=[];
+  STOCK_DATA_601012.forEach(d=>{
+    dates.push(d.d);
+    ohlc.push({o:d.o,c:d.c,h:d.h,l:d.l,v:d.v,amt:d.amt,to:d.to});
+  });
+  return {dates, ohlc};
+}
+let _realData=null;
+function getRealData(){
+  if(!_realData) _realData=loadRealData();
+  return _realData;
+}
+
+// Fallback: 仿真数据
 const DAYS=genDates(2025,8,180);
 const OHLC=generateOHLC(180,35,42);
 
@@ -160,8 +178,11 @@ function aggregate(data, dates, n){
 
 let currentPeriod='day';
 function getData(period){
-  if(period==='day') return {data:OHLC, dates:DAYS};
-  return aggregate(OHLC, DAYS, period==='week'?5:21);
+  let real=getRealData();
+  let srcOHLC=real?real.ohlc:OHLC;
+  let srcDates=real?real.dates:DAYS;
+  if(period==='day') return {data:srcOHLC, dates:srcDates};
+  return aggregate(srcOHLC, srcDates, period==='week'?5:21);
 }
 
 /* ======================== ECharts ======================== */
