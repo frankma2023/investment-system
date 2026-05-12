@@ -136,11 +136,13 @@ def detect(klines, params=None, rs_info=None):
                 if low_65 > 0 and close > low_65 * (1 + EXT_MAX):
                     continue
 
-        # ── 步骤 4.5: 不高于65日最高收盘（防突破后误标） ──
+        # ── 步骤 4.5: 不高于65日最高收盘 ──
         if BELOW_65H and EXT_LB > 0:
-            high_65 = max(klines[j]['close'] for j in range(max(0,i-EXT_LB), i) if klines[j].get('close') is not None)
-            if high_65 > 0 and close > high_65:
-                continue
+            vals_h65 = [klines[j]['close'] for j in range(max(0,i-EXT_LB), i) if klines[j].get('close') is not None]
+            if vals_h65:
+                high_65 = max(vals_h65)
+                if close > high_65:
+                    continue
 
         # ── 步骤 5: RS ──
         if rs_info:
