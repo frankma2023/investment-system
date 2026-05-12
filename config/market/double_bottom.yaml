@@ -1,0 +1,26 @@
+# 双重底参数
+double_bottom:
+  min_prior_advance: 0.30
+  prior_high_min_age: 40
+  left_bottom_decline_min: 0.15
+  left_bottom_decline_max: 0.50
+  left_bottom_min_days_from_high: 10
+  middle_peak_min_rebound: 0.10
+  middle_peak_min_days: 5
+  middle_peak_tolerance: 0.0
+  right_bottom_max_undercut: 0.03
+  right_bottom_min_price_ratio: 0.85
+  right_bottom_min_days: 5
+  right_bottom_max_age: 5
+  left_vol_ratio_min: 0.8
+  middle_peak_vol_ratio_min: 1.0
+  right_vol_contraction: 0.7
+  right_rebound_confirm: 0.05
+  breakout_vol_ratio: 1.4
+  require_green: true
+  close_position_min: 0.50
+  max_pattern_span: 200
+  min_pattern_span: 40
+  bottom_distance_min: 10
+  handle_enabled: false
+  min_listing_days: 180
