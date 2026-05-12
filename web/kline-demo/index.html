@@ -174,7 +174,7 @@ function makeECharts(period){
   let maNames=[5,10,20,50,120,250];
   let maSeries=maNames.filter(p=>dd.length>=p).map((p,k)=>{
     let v=calcMA(dd,'c',p);
-    return {name:'MA'+p,type:'line',symbol:'none',data:v.map((x,i)=>x!=null?[dt[i],x]:null).filter(x=>x),lineStyle:{width:1,color:maColors[k]},xAxisIndex:0,yAxisIndex:1};
+    return {name:'MA'+p,type:'line',symbol:'none',data:v.map((x,i)=>x!=null?[dt[i],x]:null).filter(x=>x),lineStyle:{width:1,color:maColors[k]},xAxisIndex:0,yAxisIndex:0};
   });
 
   let opt={
