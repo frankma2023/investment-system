@@ -99,11 +99,11 @@
 
   <!-- Tab1: 估值仪表 -->
   <div class="tab-content active" id="tab-val">
-    <div class="chart-card"><div class="chart-title">PE-TTM 走势</div><div id="chart-pe" style="height:320px"></div><div id="text-pe" class="analysis-text"></div></div>
+    <div class="chart-card"><div class="chart-title">PE-TTM 走势与十年分位</div><div id="chart-pe" style="height:320px"></div><div id="text-pe" class="analysis-text"></div></div>
     <div class="chart-grid">
-      <div class="chart-card"><div class="chart-title">PB 走势</div><div id="chart-pb" style="height:260px"></div><div id="text-pb" class="analysis-text"></div></div>
-      <div class="chart-card"><div class="chart-title">PS-TTM 走势</div><div id="chart-ps" style="height:260px"></div><div id="text-ps" class="analysis-text"></div></div>
-      <div class="chart-card"><div class="chart-title">股息率 (%)</div><div id="chart-dyr" style="height:260px"></div><div id="text-dyr" class="analysis-text"></div></div>
+      <div class="chart-card"><div class="chart-title">PB 走势与十年分位</div><div id="chart-pb" style="height:260px"></div><div id="text-pb" class="analysis-text"></div></div>
+      <div class="chart-card"><div class="chart-title">PS-TTM 走势与十年分位</div><div id="chart-ps" style="height:260px"></div><div id="text-ps" class="analysis-text"></div></div>
+      <div class="chart-card"><div class="chart-title">股息率 (%) 走势与十年分位</div><div id="chart-dyr" style="height:260px"></div><div id="text-dyr" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">总市值（亿）</div><div id="chart-mc" style="height:260px"></div></div>
     </div>
   </div>
@@ -196,30 +196,37 @@ async function loadValuation(code,start,end){
   if(!d.dates||!d.dates.length)return;
   var isDark=document.documentElement.dataset.theme==='dark';
   var peC=isDark?'#FF6B6B':'#E8553D',pbC=isDark?'#539BF5':'#3568B8',psC='#E8A838',dnC=isDark?'#4ECDC4':'#2D9D5A',mcC='#8B5CF6';
-  buildLine('chart-pe','PE-TTM',d.dates,d.pe,peC,'倍');
-  genVText('text-pe','PE-TTM',d.pe,'倍');
-  buildLine('chart-pb','PB',d.dates,d.pb,pbC,'倍');
-  genVText('text-pb','PB',d.pb,'倍');
-  buildLine('chart-ps','PS-TTM',d.dates,d.ps,psC,'倍');
-  genVText('text-ps','PS-TTM',d.ps,'倍');
-  buildLine('chart-dyr','股息率%',d.dates,d.dyr.map(function(v){return v!=null?(v*100).toFixed(2):null}),dnC,'%');
+  buildLine('chart-pe','PE-TTM',d.dates,d.pe,peC,'倍',d.pe_pct);
+  genVText('text-pe','PE-TTM',d.pe,'倍',d.pe_pct);
+  buildLine('chart-pb','PB',d.dates,d.pb,pbC,'倍',d.pb_pct);
+  genVText('text-pb','PB',d.pb,'倍',d.pb_pct);
+  buildLine('chart-ps','PS-TTM',d.dates,d.ps,psC,'倍',d.ps_pct);
+  genVText('text-ps','PS-TTM',d.ps,'倍',d.ps_pct);
+  buildLine('chart-dyr','股息率%',d.dates,d.dyr.map(function(v){return v!=null?(v*100).toFixed(2):null}),dnC,'%',d.dyr_pct);
   genVText('text-dyr','股息率',d.dyr.map(function(v){return v!=null?(v*100):null}),'%');
   buildBigLine('chart-mc','总市值',d.dates,d.mc,'亿');
 }
 
-function buildLine(id,name,dates,vals,color,unit){
+function buildLine(id,name,dates,vals,color,unit,pctVals){
   var dom=document.getElementById(id);if(dom._echart)dom._echart.dispose();
   var ch=echarts.init(dom),isDark=document.documentElement.dataset.theme==='dark';
   var tx=isDark?'#999':'#6E6E6E',sp=isDark?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.04)';
   var vv=vals.filter(function(v){return v!=null}),avg=vv.reduce(function(a,b){return a+b},0)/vv.length;
+  var series=[{name:name,type:'line',data:vals,smooth:true,symbol:'none',lineStyle:{color:color,width:1.5},
+      markLine:{silent:true,symbol:'none',label:{color:tx,fontSize:9,formatter:'均值 {c}'},data:[{yAxis:avg,name:'均值',lineStyle:{color:'#E8A838',type:'dashed',width:1}}]}}];
+  var yAxis=[{type:'value',name:unit,axisLabel:{color:tx,fontSize:9},splitLine:{lineStyle:{color:sp}}}];
+  if(pctVals&&pctVals.length){
+    yAxis.push({type:'value',name:'分位',min:0,max:1,axisLabel:{color:tx,fontSize:8,formatter:function(v){return (v*100).toFixed(0)+'%'}},splitLine:{show:false}});
+    series.push({name:'十年分位',type:'line',data:pctVals,smooth:true,symbol:'none',yAxisIndex:1,lineStyle:{color:'rgba(156,39,176,0.5)',width:1.5,type:'dashed'},
+      markLine:{silent:true,symbol:'none',label:{color:tx,fontSize:8,formatter:'{c}'},data:[{yAxis:0.2,name:'20%',lineStyle:{color:'#4CAF50',type:'dotted',width:1}},{yAxis:0.8,name:'80%',lineStyle:{color:'#FF9800',type:'dotted',width:1}}]}});
+  }
   ch.setOption({
     backgroundColor:'transparent',tooltip:{trigger:'axis'},
-    grid:{left:'8%',right:'4%',top:8,bottom:36},
+    grid:{left:'8%',right: pctVals&&pctVals.length?'10%':'4%',top:8,bottom:36},
     xAxis:{type:'category',data:dates,axisLabel:{color:tx,fontSize:9,formatter:function(v){return v.slice(0,7)}},axisLine:{lineStyle:{color:sp}}},
-    yAxis:{type:'value',name:unit,axisLabel:{color:tx,fontSize:9},splitLine:{lineStyle:{color:sp}}},
+    yAxis:yAxis,
     dataZoom:[{type:'inside',start:50,end:100},{type:'slider',start:50,end:100,height:16,bottom:4}],
-    series:[{name:name,type:'line',data:vals,smooth:true,symbol:'none',lineStyle:{color:color,width:1.5},
-      markLine:{silent:true,symbol:'none',label:{color:tx,fontSize:9,formatter:'均值 {c}'},data:[{yAxis:avg,name:'均值',lineStyle:{color:'#E8A838',type:'dashed',width:1}}]}}]
+    series:series
   });dom._echart=ch;
 }
 function buildBigLine(id,name,dates,vals,unit){
@@ -238,13 +245,15 @@ function buildBigLine(id,name,dates,vals,unit){
       markLine:{silent:true,symbol:'none',label:{color:tx,fontSize:9,formatter:'均值 {c}'},data:[{yAxis:(avg/1e8).toFixed(1),name:'均值',lineStyle:{color:'#E8A838',type:'dashed',width:1}}]}}]
   });dom._echart=ch;
 }
-function genVText(id,name,vals,unit){
+function genVText(id,name,vals,unit,pctVals){
   var vv=vals.filter(function(v){return v!=null});if(!vv.length){document.getElementById(id).innerHTML='';return}
   var cur=vv[vv.length-1],avg=vv.reduce(function(a,b){return a+b},0)/vv.length;
   var mx=Math.max.apply(null,vv),mn=Math.min.apply(null,vv);
   var cd=unit==='亿'?(cur/1e8).toFixed(1):cur.toFixed(2);
   var ad=unit==='亿'?(avg/1e8).toFixed(1):avg.toFixed(2);
-  document.getElementById(id).innerHTML='<b>当前'+name+'：</b>'+cd+unit+'，历史均值 '+ad+unit+'，最高 '+mx.toFixed(2)+unit+'，最低 '+mn.toFixed(2)+unit+'。'+(cur>avg?'当前高于':'当前低于')+'历史均值。';
+  var txt='<b>当前'+name+'：</b>'+cd+unit+'，历史均值 '+ad+unit+'，最高 '+mx.toFixed(2)+unit+'，最低 '+mn.toFixed(2)+unit+'。'+(cur>avg?'当前高于':'当前低于')+'历史均值。';
+  if(pctVals&&pctVals.length){var pv=pctVals.filter(function(v){return v!=null});if(pv.length){var cp=pv[pv.length-1];txt+=' <b>十年分位：'+(cp*100).toFixed(0)+'%</b>';}}
+  document.getElementById(id).innerHTML=txt;
 }
 
 // ══════ 财报 ══════

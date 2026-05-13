@@ -1,0 +1,9 @@
+# 扁平基部参数
+flat_base:
+  amp_max: 0.15
+  min_duration: 20
+  slope_enabled: false
+  vol_contraction_ratio: 0.7
+  bb_enabled: false
+  breakout_vol_ratio: 1.4
+  require_green: true

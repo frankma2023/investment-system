@@ -611,6 +611,37 @@ def _aggregate_klines(klines, period):
     return result
 
 
+@app.route('/api/flat-base', methods=['POST', 'OPTIONS'])
+def api_flat_base():
+    if request.method == 'OPTIONS': return '', 204
+    data = request.get_json()
+    stock_code = data.get('stock_code', '600519')
+    start = data.get('start', '2023-01-01')
+    end = data.get('end', datetime.now().strftime('%Y-%m-%d'))
+    period = data.get('period', 'day')
+    params = data.get('params', {})
+    db = get_db()
+    extra = '-900 days' if period == 'month' else '-400 days'
+    rows = db.execute(f"""SELECT date, open, high, low, close, volume, amount FROM daily_kline
+        WHERE stock_code=? AND date>=date(?,?) AND date<=? ORDER BY date""",
+        (stock_code, start, extra, end)).fetchall()
+    if not rows: return jsonify({'klines':[],'signals':[]})
+    klines_full = [dict(r) for r in rows]
+    if period != 'day': klines_full = _aggregate_klines(klines_full, period)
+    from scanners.flat_base import detect, load_params
+    merged = load_params()
+    cfg_path = os.path.join(PROJECT_DIR, 'config', 'market', 'flat_base.yaml')
+    if os.path.exists(cfg_path):
+        with open(cfg_path, encoding='utf-8') as f:
+            cfg = yaml.safe_load(f) or {}
+        merged.update(cfg.get('flat_base', {}))
+    merged.update(params.get('flat_base', params))
+    signals = detect(klines_full, merged)
+    klines_out = [k for k in klines_full if start <= k['date'] <= end]
+    signals_out = [s for s in signals if start <= s['date'] <= end]
+    return jsonify({'klines': klines_out, 'signals': signals_out})
+
+
 @app.route('/api/double-bottom', methods=['POST', 'OPTIONS'])
 def api_double_bottom():
     if request.method == 'OPTIONS': return '', 204
@@ -1270,6 +1301,24 @@ def api_stock_valuation():
     # 股票名称
     name_row = db.execute('SELECT name FROM stock_basic WHERE stock_code=?', (code,)).fetchone()
     result['name'] = name_row['name'] if name_row else code
+
+    # ── 计算十年分位 ──
+    def calc_pct(arr, ascending=True):
+        """计算每个值在历史中的百分位(0~1)"""
+        valid = [(i, v) for i, v in enumerate(arr) if v is not None]
+        if len(valid) < 2: return [None]*len(arr)
+        sorted_vals = sorted(valid, key=lambda x: x[1], reverse=not ascending)
+        n = len(sorted_vals)
+        pcts = [None]*len(arr)
+        for rank, (idx, _) in enumerate(sorted_vals):
+            pcts[idx] = round(rank/(n-1), 4)
+        return pcts
+
+    result['pe_pct'] = calc_pct(result['pe'], ascending=True)    # PE越低越便宜
+    result['pb_pct'] = calc_pct(result['pb'], ascending=True)
+    result['ps_pct'] = calc_pct(result['ps'], ascending=True)
+    result['dyr_pct'] = calc_pct(result['dyr'], ascending=False)  # 股息率越高越好
+
     return jsonify(result)
 
 

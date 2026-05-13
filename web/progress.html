@@ -49,7 +49,7 @@
     </header>
 
     <div class="pg-stats">
-      <div class="pg-stat"><div class="n" style="color:#4CAF50">20</div><div class="l">已完成</div></div>
+      <div class="pg-stat"><div class="n" style="color:#4CAF50">21</div><div class="l">已完成</div></div>
       <div class="pg-stat"><div class="n" style="color:#FF9800">1</div><div class="l">进行中</div></div>
       <div class="pg-stat"><div class="n">1</div><div class="l">待开发</div></div>
     </div>
@@ -80,6 +80,7 @@
           <tr><td><span class="pg-dot dot-done"></span>个股财务分析</td><td>/stock-analysis/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>🎯 口袋支点</td><td>/pocket-pivot/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>🅱 双重底(个股)</td><td>/double-bottom/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>📏 扁平基部</td><td>/flat-base/</td></tr>
         </table>
       </div>
 
@@ -95,13 +96,14 @@
       </div>
 
       <div class="pg-card">
-        <h3>🔧 基础设施 <span class="badge" style="background:#ECEFF1;color:#546E7A">5项</span></h3>
+        <h3>🔧 基础设施 <span class="badge" style="background:#ECEFF1;color:#546E7A">6项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-done"></span>理杏仁数据拉取</td><td>scripts/fetch_*</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>每日更新脚本</td><td>daily_update.py</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>融资融券历史</td><td>fetch_stock_margin_history</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>看板样式系统</td><td>xhs-cards.css</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>回测配置持久化</td><td>YAML ↔ API</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>开发标准文档</td><td>docs/dev/</td></tr>
         </table>
       </div>
 
@@ -118,6 +120,9 @@
     <div class="lesson-card"><div class="ln">8. 前低搜索窗口不设限会追溯到上市首日</div><div class="ld">双重底前低搜索了全历史数据，紫金矿业回溯到 2014 年。加 200 天窗口限制。</div></div>
     <div class="lesson-card"><div class="ln">9. YAML 和引擎默认参数必须完整同步</div><div class="ld">YAML 缺键→前端 gp() 传不全→API merge 后缺参数→引擎 KeyError。</div></div>
     <div class="lesson-card"><div class="ln">10. 回测页面需要统一的开发标准</div><div class="ld">口袋支点 v2 成为事实标准后写了 docs/dev/回测看板开发标准.md，后续页面直接套模板。</div></div>
+    <div class="lesson-card"><div class="ln">11. 排查工具必须覆盖引擎所有条件</div><div class="ld">扁平基部排查漏了斜率、前涨幅、突破条件，导致"全通过但不检出"的困惑。排查项=引擎条件全集。</div></div>
+    <div class="lesson-card"><div class="ln">12. 前低搜索窗口要足够大</div><div class="ld">默认 200 天不够——前高恰好在窗口边界时前低被截断。扩到 400 天。诊断工具和引擎要同步。</div></div>
+    <div class="lesson-card"><div class="ln">13. 连续突破信号需去重</div><div class="ld">同一基部突破后连日收盘都在高点之上，每天都被标为突破。加"昨日收盘<基部高点"约束只保留首日。</div></div>
 
     <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>

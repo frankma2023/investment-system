@@ -74,13 +74,14 @@
     <div class="top-bar">
       <div class="fld" style="flex:0.5;min-width:90px"><label>周期</label><select id="period" style="width:100%" onchange="run()"><option value="day">日线</option><option value="week">周线</option><option value="month">月线</option></select></div>
       <div class="fld" style="flex:0.5;min-width:80px"><label>类型</label><select id="mode" onchange="run()"><option value="stock">个股</option><option value="index">指数</option></select></div>
-      <div class="code-wrap"><div class="fld"><label>代码</label><input type="text" id="stock-code" value="600519" style="width:100px"><span id="stock-name" style="font-size:0.65rem;color:var(--text-tertiary);padding:7px 6px;flex-shrink:0"></span></div></div>
+      <div class="code-wrap"><div class="fld"><label>代码</label><input type="text" id="stock-code" value="600519" style="width:100px" onkeydown="if(event.key==='Enter')run()" onchange="run()"><span id="stock-name" style="font-size:0.65rem;color:var(--text-tertiary);padding:7px 6px;flex-shrink:0"></span></div></div>
       <div class="fld"><label>开始</label><input type="date" id="date-start"></div>
       <div class="fld"><label>结束</label><input type="date" id="date-end"></div>
     </div>
 
     <!-- K线图 -->
     <div class="chart-wrap" id="chart"></div>
+    <div style="font-size:0.6rem;color:var(--text-tertiary);margin-top:4px;margin-bottom:8px">▲ <span style="color:#FF9800;font-weight:700">橙色</span>=延续口袋支点 · ▲ <span style="color:#4CAF50;font-weight:700">绿色</span>=10日线反弹口袋支点</div>
 
     <div class="bottom-layout">
       <div class="bottom-left">
