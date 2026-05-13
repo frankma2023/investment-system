@@ -12,6 +12,14 @@ sys.path.insert(0, PROJECT_DIR)
 os.chdir(PROJECT_DIR)
 DB_PATH = os.path.join(PROJECT_DIR, "data", "lixinger.db")
 
+ENGINE_META = {
+    "name": "double_bottom",
+    "display_name": "双重底",
+    "category": "pattern",
+    "version": "1.0",
+    "description": "识别W形双重底形态及其颈线突破，五节点时序：前低→前高→左底→中间峰→右底→突破"
+}
+
 
 def load_params():
     p = {

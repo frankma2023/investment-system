@@ -33,6 +33,14 @@ os.chdir(PROJECT_DIR)
 
 DB_PATH = os.path.join(PROJECT_DIR, "data", "lixinger.db")
 
+ENGINE_META = {
+    "name": "breakout",
+    "display_name": "标准突破",
+    "category": "pattern",
+    "version": "2.0",
+    "description": "识别标准突破买点，基于基部+突破逻辑：峰谷结构、回撤12%~33%、反弹比例、RS确认、放量突破"
+}
+
 
 def load_params():
     import yaml

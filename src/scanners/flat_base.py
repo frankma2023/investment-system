@@ -12,6 +12,14 @@ sys.path.insert(0, PROJECT_DIR)
 os.chdir(PROJECT_DIR)
 DB_PATH = os.path.join(PROJECT_DIR, "data", "lixinger.db")
 
+ENGINE_META = {
+    "name": "flat_base",
+    "display_name": "扁平基部",
+    "category": "pattern",
+    "version": "1.0",
+    "description": "识别扁平基部形态：极窄振幅横盘、成交量持续萎缩、布林带带宽收缩、放量突破"
+}
+
 
 def load_params():
     p = {

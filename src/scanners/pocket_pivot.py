@@ -20,6 +20,14 @@ os.chdir(PROJECT_DIR)
 
 DB_PATH = os.path.join(PROJECT_DIR, "data", "lixinger.db")
 
+ENGINE_META = {
+    "name": "pocket_pivot",
+    "display_name": "口袋支点",
+    "category": "pattern",
+    "version": "1.0",
+    "description": "识别欧奈尔口袋支点买入点，五步规则：趋势基础、日内行为、成交量、延伸区、RS确认"
+}
+
 
 def load_params():
     cfg_path = os.path.join(PROJECT_DIR, "config", "market", "pocket_pivot.yaml")

@@ -26,6 +26,10 @@ from detectors.divergence import (
     detect_macd_divergence, detect_breadth_divergence,
     confirm_divergence, compute_resonance
 )
+from engine_registry import discover_engines, get_engine_list, run_all_engines
+from scanners.recommend import generate as generate_recommendation
+import numpy as np
+import talib
 
 # ── Config ───────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -521,10 +525,12 @@ def api_strongest_index():
 @app.route('/api/stock-name')
 def api_stock_name():
     code = request.args.get('code', '')
+    mode = request.args.get('mode', '')  # 'stock'|'index'|''=auto
     if not code: return jsonify({})
     db = get_db()
-    r = db.execute("SELECT name FROM stock_basic WHERE stock_code=?", (code,)).fetchone()
-    if r: return jsonify({'code': code, 'name': r['name']})
+    if mode != 'index':
+        r = db.execute("SELECT name FROM stock_basic WHERE stock_code=?", (code,)).fetchone()
+        if r: return jsonify({'code': code, 'name': r['name']})
     # fallback: index names from index_style.yaml
     idx_names = load_index_names()
     nm = idx_names.get(code, '')
@@ -1877,6 +1883,197 @@ def compute_advance_ratios(db, index_codes, as_of_date):
         advance_map[code] = date_to_ratio  # {date: ratio}
 
     return advance_map
+
+# ═══════════════════════════════════════════════
+# 统一形态扫描 API — /api/pattern-scan
+# ═══════════════════════════════════════════════
+
+@app.route('/api/pattern-scan', methods=['GET', 'OPTIONS'])
+def api_pattern_scan():
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    # ── 参数解析 ──
+    code = request.args.get('code', '600519')
+    start = request.args.get('start', None)
+    end = request.args.get('end', datetime.now().strftime('%Y-%m-%d'))
+    period = request.args.get('period', 'daily')
+    mode = request.args.get('mode', '')  # 'stock' | 'index' | ''=auto
+
+    db = get_db()
+
+    # ── 确定是股票还是指数 ──
+    if mode == 'index':
+        is_index = True
+    elif mode == 'stock':
+        is_index = False
+    else:
+        is_index = bool(re.match(r'^(sh|sz|cs|cy|)\d{6}$', code) and (
+            code.startswith('sh') or code.startswith('sz') or
+            code.startswith('cs') or code.startswith('cy')
+        ))
+    table = 'index_daily_kline' if is_index else 'daily_kline'
+    kf = "AND kline_type='normal'" if is_index else ''
+
+    # 获取足够的历史K线（至少2年）
+    if start:
+        rows = db.execute(f"""SELECT date, open, high, low, close, volume
+            FROM {table} WHERE stock_code=? {kf}
+            AND date>=date(?, '-750 days') AND date<=?
+            ORDER BY date""", (code, start, end)).fetchall()
+    else:
+        rows = db.execute(f"""SELECT date, open, high, low, close, volume
+            FROM {table} WHERE stock_code=? {kf}
+            AND date<=?
+            ORDER BY date""", (code, end)).fetchall()
+
+    if not rows:
+        return jsonify({'code': code, 'error': 'no_data'})
+
+    klines_full = [dict(r) for r in rows]
+
+    # 获取股票名称
+    name = code
+    if not is_index:
+        name_row = db.execute("SELECT name FROM stock_basic WHERE stock_code=?", (code,)).fetchone()
+        if name_row:
+            name = name_row['name']
+    if name == code:
+        idx_names = load_index_names()
+        nm = idx_names.get(code, '')
+        if nm:
+            name = nm
+
+    # ── 日→周/月聚合（如需要） ──
+    if period == 'monthly':
+        klines_full = _aggregate_klines(klines_full, 'month')
+    elif period == 'weekly':
+        klines_full = _aggregate_klines(klines_full, 'week')
+
+    # ── 计算 TA-Lib 指标（供前端和引擎使用） ──
+    indicators = _compute_indicators(klines_full)
+
+    # ── 运行全部引擎 ──
+    signals = run_all_engines(klines=klines_full, indicators=indicators)
+
+    # ── 过滤到请求的日期范围 ──
+    if start:
+        klines_out = [k for k in klines_full if k['date'] >= start]
+        signals_out = [s for s in signals if s['date'] >= start]
+    else:
+        klines_out = klines_full
+        signals_out = signals
+
+    # ── 信号统计 ──
+    by_source = {}
+    bullish = 0
+    bearish = 0
+    for s in signals_out:
+        # 归一化：补齐缺失字段
+        if 'type' not in s:
+            s['type'] = 'bullish'  # 自研形态引擎默认买入信号
+        if 'confidence' not in s:
+            s['confidence'] = 'medium'
+        if 'pivot' not in s:
+            s['pivot'] = None
+        if 'details' not in s:
+            s['details'] = {}
+
+        src = s['source']
+        if src not in by_source:
+            by_source[src] = 0
+        by_source[src] += 1
+        if s['type'] == 'bullish':
+            bullish += 1
+        else:
+            bearish += 1
+
+    # ── 引擎列表 ──
+    engine_list = get_engine_list()
+
+    return jsonify({
+        'code': code,
+        'name': name,
+        'period': period,
+        'date_range': {
+            'start': klines_out[0]['date'] if klines_out else start,
+            'end': klines_out[-1]['date'] if klines_out else end,
+        },
+        'klines': klines_out,
+        'indicators': _sanitize_indicators(indicators, len(klines_out)),
+        'engines': engine_list,
+        'signals': signals_out,
+        'signal_stats': {
+            'by_source': by_source,
+            'total': len(signals_out),
+            'bullish': bullish,
+            'bearish': bearish,
+        },
+        'recommendation': generate_recommendation(
+            signals_out, indicators, klines_out, name
+        ),
+    })
+
+
+def _compute_indicators(klines):
+    """计算 TA-Lib 技术指标，返回 dict of lists"""
+    n = len(klines)
+    if n < 5:
+        return {}
+
+    close = np.array([k.get('close') or np.nan for k in klines], dtype=np.float64)
+    high = np.array([k.get('high') or np.nan for k in klines], dtype=np.float64)
+    low = np.array([k.get('low') or np.nan for k in klines], dtype=np.float64)
+    open_ = np.array([k.get('open') or np.nan for k in klines], dtype=np.float64)
+    vol = np.array([k.get('volume') or 0 for k in klines], dtype=np.float64)
+
+    result = {}
+
+    # SMA
+    for p in [5, 10, 20, 50, 120, 250]:
+        sma = talib.SMA(close, p)
+        result[f'sma{p}'] = [float(x) if not np.isnan(x) else None for x in sma]
+
+    # BBANDS
+    bb_u, bb_m, bb_l = talib.BBANDS(close, 20, 2, 2, 0)
+    result['bb_upper'] = [float(x) if not np.isnan(x) else None for x in bb_u]
+    result['bb_middle'] = [float(x) if not np.isnan(x) else None for x in bb_m]
+    result['bb_lower'] = [float(x) if not np.isnan(x) else None for x in bb_l]
+
+    # ATR
+    atr = talib.ATR(high, low, close, 14)
+    result['atr14'] = [float(x) if not np.isnan(x) else None for x in atr]
+
+    # RSI
+    rsi = talib.RSI(close, 14)
+    result['rsi14'] = [float(x) if not np.isnan(x) else None for x in rsi]
+
+    # MACD
+    macd, macd_sig, macd_hist = talib.MACD(close, 12, 26, 9)
+    result['macd'] = [float(x) if not np.isnan(x) else None for x in macd]
+    result['macd_signal'] = [float(x) if not np.isnan(x) else None for x in macd_sig]
+    result['macd_hist'] = [float(x) if not np.isnan(x) else None for x in macd_hist]
+
+    # VOL_MA50
+    vol_ma = talib.SMA(vol, 50)
+    result['vol_ma50'] = [float(x) if not np.isnan(x) else None for x in vol_ma]
+
+    return result
+
+
+def _sanitize_indicators(indicators, target_len):
+    """确保 indicators 长度和 klines_out 对齐。
+    klines_out 是 klines_full 按 start 日期过滤后的尾部，
+    因此 indicators 也取尾部 target_len 个元素。"""
+    result = {}
+    for key, arr in indicators.items():
+        arr = list(arr)
+        if len(arr) < target_len:
+            arr = [None] * (target_len - len(arr)) + arr
+        else:
+            arr = arr[-target_len:]  # 取尾部，与 klines_out 对齐
+        result[key] = arr
+    return result
 
 # ═══════════════════════════════════════════════
 # CORS
