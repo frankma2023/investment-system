@@ -1,0 +1,2617 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日双强股形态扫描 · 投资手账本</title>
+<link rel="stylesheet" href="../shared/css/theme.css">
+<link rel="stylesheet" href="../shared/css/base.css">
+<link rel="stylesheet" href="../shared/css/xhs-cards.css">
+<link rel="stylesheet" href="../shared/css/components.css">
+<style>
+body { font-family: var(--font-display); }
+.app-container { max-width: 1400px; margin:0 auto; padding:12px 16px; }
+.top-bar { display:flex; justify-content:space-between; align-items:center; padding:14px 20px; background:var(--card-bg); border-radius:18px; margin-bottom:12px; box-shadow:0 1px 6px rgba(0,0,0,0.04); }
+.top-bar h1 { font-size:1.1rem; margin:0; }
+.top-bar .meta { font-size:0.65rem; color:var(--text-tertiary); }
+.table-wrap { background:var(--card-bg); border-radius:18px; padding:10px; box-shadow:0 1px 6px rgba(0,0,0,0.04); overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:0.7rem; }
+th { padding:8px 6px; text-align:left; font-weight:700; color:var(--text-secondary); font-size:0.6rem; border-bottom:2px solid var(--divider); white-space:nowrap; position:sticky; top:0; background:var(--card-bg); cursor:pointer; }
+th:hover { color:var(--color-accent); }
+td { padding:6px; border-bottom:1px solid var(--divider); white-space:nowrap; }
+tr:hover { background:var(--color-accent-subtle); }
+.num { text-align:right; }
+.code-link { color:var(--color-accent); font-weight:700; text-decoration:none; }
+.code-link:hover { text-decoration:underline; }
+.up { color:#E53935; font-weight:700; }
+.down { color:#4CAF50; font-weight:700; }
+.rs-hot { color:#E53935; font-weight:700; }
+.rs-warm { color:#FF9800; font-weight:600; }
+.badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.58rem; font-weight:700; }
+.ds-double { background:#E8F5E9; color:#2E7D32; border:1px solid #4CAF50; }
+.ds-robust { background:#E3F2FD; color:#1565C0; border:1px solid #2196F3; }
+.ds-burst { background:#FFF3E0; color:#E65100; border:1px solid #FF9800; }
+.sig-text { font-size:0.62rem; color:var(--text-secondary); }
+.sig-none { font-size:0.62rem; color:var(--text-tertiary); }
+.nav-dropdown { position:relative; display:inline-flex; }
+.nav-dropdown-menu { display:none; position:absolute; top:100%; left:0; background:var(--card-bg); border:1px solid var(--divider); border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); min-width:150px; padding:6px 0; z-index:200; white-space:nowrap; }
+.nav-dropdown:hover .nav-dropdown-menu { display:block; }
+.nav-dropdown-menu a { display:block; padding:7px 16px; font-size:0.72rem; color:var(--text-secondary); text-decoration:none; }
+.nav-dropdown-menu a:hover { background:var(--color-accent-subtle); color:var(--color-accent); }
+.nav-dropdown-menu a.active { color:var(--color-accent); font-weight:700; }
+.footer { text-align:center; padding:16px; font-size:0.6rem; color:var(--text-tertiary); }
+</style>
+</head>
+<body>
+<div class="app-container">
+<nav class="top-nav">
+  <div class="nav-brand"><span class="nav-fox">📋</span><span>每日双强形态扫描</span></div>
+  <div class="nav-links">
+    <a href="../" class="nav-item">🏠 看板</a>
+    <div class="nav-dropdown"><a href="#" class="nav-item">回测 ▾</a><div class="nav-dropdown-menu">
+      <a href="../distribution-day/">📉 抛盘日</a><a href="../follow-through-day/">📈 追盘日</a><a href="../accumulation-day/">📦 吸筹日</a>
+      <a href="../index-rs-backtest/">🏆 指数RS强度</a><a href="../index-crowdedness/">📊 指数拥挤度</a><a href="../stock-rs-backtest/">💪 个股RS强度</a>
+      <a href="../index-ad-backtest/">🔍 机构吸筹/出货</a><a href="../divergence-backtest/">⚠️ 指数背离</a>
+      <a href="../strongest-index/">⭐ 最强指数</a><a href="../base-detection/">📐 标准突破</a><a href="../pocket-pivot/">🎯 口袋支点</a>
+      <a href="../pattern-scan/">🔎 形态识别</a>
+    </div></div>
+    <a href="../index-scan/" class="nav-item">🔬 指数扫描</a><a href="../index-valuation/" class="nav-item">📈 指数估值</a>
+    <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a><a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
+    <a href="../pattern-scan/" class="nav-item">🔎 形态识别</a>
+    <button class="theme-toggle">🌙</button>
+  </div>
+</nav>
+
+<div class="top-bar">
+  <div>
+    <h1>📋 双强股形态扫描 <span style="font-size:0.65rem;font-weight:400;color:var(--text-tertiary)">—— 稳健龙头 + 加速爆发</span></h1>
+  </div>
+  <div class="meta">
+    扫描日期: 2026-05-13 | 股票数: 276 | 耗时: 33.0s | 生成: 2026-05-13 19:30:57
+  </div>
+</div>
+
+<div class="table-wrap">
+<table id="stock-table">
+<thead>
+<tr>
+  <th onclick="sortTable(0)">代码</th>
+  <th onclick="sortTable(1)">名称</th>
+  <th onclick="sortTable(2)">价格</th>
+  <th onclick="sortTable(3)">涨幅</th>
+  <th onclick="sortTable(4)">RS_250</th>
+  <th onclick="sortTable(5)">RS_120</th>
+  <th onclick="sortTable(6)">RS_60</th>
+  <th onclick="sortTable(7)">RS_20</th>
+  <th onclick="sortTable(8)">类型</th>
+  <th>信号摘要</th>
+</tr>
+</thead>
+<tbody>
+
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300903" target="_blank">300903</a></td>
+                <td>科翔股份</td>
+                <td class="num">72.00</td>
+                <td class="num"><span class="up">+4.02%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">98</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301217" target="_blank">301217</a></td>
+                <td>铜冠铜箔</td>
+                <td class="num">99.01</td>
+                <td class="num"><span class="up">+4.76%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301511" target="_blank">301511</a></td>
+                <td>德福科技</td>
+                <td class="num">102.16</td>
+                <td class="num"><span class="up">+8.82%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603629" target="_blank">603629</a></td>
+                <td>利通电子</td>
+                <td class="num">172.71</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301308" target="_blank">301308</a></td>
+                <td>江波龙</td>
+                <td class="num">611.90</td>
+                <td class="num"><span class="up">+8.95%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">94</td><td class="rs-hot">97</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603256" target="_blank">603256</a></td>
+                <td>宏和科技</td>
+                <td class="num">146.22</td>
+                <td class="num"><span class="down">-1.41%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">98</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688048" target="_blank">688048</a></td>
+                <td>长光华芯</td>
+                <td class="num">436.90</td>
+                <td class="num"><span class="up">+1.25%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688313" target="_blank">688313</a></td>
+                <td>仕佳光子</td>
+                <td class="num">179.66</td>
+                <td class="num"><span class="down">-0.72%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">95</td><td class="rs-hot">97</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002384" target="_blank">002384</a></td>
+                <td>东山精密</td>
+                <td class="num">220.75</td>
+                <td class="num"><span class="up">+0.59%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300308" target="_blank">300308</a></td>
+                <td>中际旭创</td>
+                <td class="num">1049.20</td>
+                <td class="num"><span class="up">+3.07%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">94</td><td class="rs-hot">96</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301232" target="_blank">301232</a></td>
+                <td>飞沃科技</td>
+                <td class="num">243.17</td>
+                <td class="num"><span class="up">+7.03%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">99</td><td>75</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688498" target="_blank">688498</a></td>
+                <td>源杰科技</td>
+                <td class="num">1708.00</td>
+                <td class="num"><span class="down">-1.33%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600105" target="_blank">600105</a></td>
+                <td>永鼎股份</td>
+                <td class="num">51.83</td>
+                <td class="num"><span class="down">-0.94%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">98</td><td class="rs-hot">96</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688025" target="_blank">688025</a></td>
+                <td>杰普特</td>
+                <td class="num">369.00</td>
+                <td class="num"><span class="down">-0.27%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688167" target="_blank">688167</a></td>
+                <td>炬光科技</td>
+                <td class="num">516.70</td>
+                <td class="num"><span class="up">+8.78%</span></td>
+                <td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">94</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002008" target="_blank">002008</a></td>
+                <td>大族激光</td>
+                <td class="num">148.13</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600396" target="_blank">600396</a></td>
+                <td>华电辽能</td>
+                <td class="num">16.56</td>
+                <td class="num"><span class="up">+10.03%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002428" target="_blank">002428</a></td>
+                <td>云南锗业</td>
+                <td class="num">101.51</td>
+                <td class="num"><span class="up">+0.09%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002491" target="_blank">002491</a></td>
+                <td>通鼎互联</td>
+                <td class="num">26.95</td>
+                <td class="num"><span class="up">+7.80%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300136" target="_blank">300136</a></td>
+                <td>信维通信</td>
+                <td class="num">113.70</td>
+                <td class="num"><span class="up">+4.03%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-warm">89</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300806" target="_blank">300806</a></td>
+                <td>斯迪克</td>
+                <td class="num">87.19</td>
+                <td class="num"><span class="up">+1.47%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">95</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600330" target="_blank">600330</a></td>
+                <td>天通股份</td>
+                <td class="num">35.07</td>
+                <td class="num"><span class="up">+7.38%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">97</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688020" target="_blank">688020</a></td>
+                <td>方邦股份</td>
+                <td class="num">163.48</td>
+                <td class="num"><span class="up">+3.94%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">97</td><td class="rs-hot">96</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300604" target="_blank">300604</a></td>
+                <td>长川科技</td>
+                <td class="num">228.00</td>
+                <td class="num"><span class="up">+7.00%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">97</td><td class="rs-hot">95</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301526" target="_blank">301526</a></td>
+                <td>国际复材</td>
+                <td class="num">20.32</td>
+                <td class="num"><span class="up">+14.48%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">97</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603083" target="_blank">603083</a></td>
+                <td>剑桥科技</td>
+                <td class="num">191.64</td>
+                <td class="num"><span class="up">+1.17%</span></td>
+                <td class="rs-hot">98</td><td class="rs-warm">89</td><td class="rs-hot">96</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603618" target="_blank">603618</a></td>
+                <td>杭电股份</td>
+                <td class="num">39.43</td>
+                <td class="num"><span class="down">-2.52%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=001309" target="_blank">001309</a></td>
+                <td>德明利</td>
+                <td class="num">679.80</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">96</td><td class="rs-hot">98</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688668" target="_blank">688668</a></td>
+                <td>鼎通科技</td>
+                <td class="num">252.47</td>
+                <td class="num"><span class="up">+0.19%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">97</td><td class="rs-hot">91</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=601208" target="_blank">601208</a></td>
+                <td>东材科技</td>
+                <td class="num">49.60</td>
+                <td class="num"><span class="up">+4.97%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">96</td><td class="rs-hot">96</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688519" target="_blank">688519</a></td>
+                <td>南亚新材</td>
+                <td class="num">201.50</td>
+                <td class="num"><span class="up">+1.90%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=001267" target="_blank">001267</a></td>
+                <td>汇绿生态</td>
+                <td class="num">63.44</td>
+                <td class="num"><span class="down">-1.32%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300390" target="_blank">300390</a></td>
+                <td>天华新能</td>
+                <td class="num">99.81</td>
+                <td class="num"><span class="down">-1.90%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301183" target="_blank">301183</a></td>
+                <td>东田微</td>
+                <td class="num">266.00</td>
+                <td class="num"><span class="up">+4.73%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">96</td><td class="rs-hot">92</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=605289" target="_blank">605289</a></td>
+                <td>罗曼股份</td>
+                <td class="num">161.87</td>
+                <td class="num"><span class="up">+2.06%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">96</td><td class="rs-hot">98</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688028" target="_blank">688028</a></td>
+                <td>沃尔德</td>
+                <td class="num">139.05</td>
+                <td class="num"><span class="up">+5.60%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">92</td><td class="rs-hot">92</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688110" target="_blank">688110</a></td>
+                <td>东芯股份</td>
+                <td class="num">163.70</td>
+                <td class="num"><span class="up">+5.57%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">90</td><td class="rs-warm">84</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603601" target="_blank">603601</a></td>
+                <td>再升科技</td>
+                <td class="num">18.07</td>
+                <td class="num"><span class="up">+7.11%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">90</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688525" target="_blank">688525</a></td>
+                <td>佰维存储</td>
+                <td class="num">328.49</td>
+                <td class="num"><span class="up">+6.32%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300476" target="_blank">300476</a></td>
+                <td>胜宏科技</td>
+                <td class="num">387.40</td>
+                <td class="num"><span class="up">+3.19%</span></td>
+                <td class="rs-hot">98</td><td>75</td><td class="rs-hot">92</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002636" target="_blank">002636</a></td>
+                <td>金安国纪</td>
+                <td class="num">46.61</td>
+                <td class="num"><span class="up">+0.17%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-warm">88</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300475" target="_blank">300475</a></td>
+                <td>香农芯创</td>
+                <td class="num">194.64</td>
+                <td class="num"><span class="up">+5.43%</span></td>
+                <td class="rs-hot">98</td><td>44</td><td class="rs-warm">86</td><td class="rs-warm">87</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301200" target="_blank">301200</a></td>
+                <td>大族数控</td>
+                <td class="num">233.97</td>
+                <td class="num"><span class="up">+11.31%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">92</td><td class="rs-hot">91</td><td class="rs-warm">87</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301338" target="_blank">301338</a></td>
+                <td>凯格精机</td>
+                <td class="num">205.18</td>
+                <td class="num"><span class="up">+2.47%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">92</td><td class="rs-warm">87</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=000657" target="_blank">000657</a></td>
+                <td>中钨高新</td>
+                <td class="num">62.46</td>
+                <td class="num"><span class="up">+4.66%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">97</td><td class="rs-warm">86</td><td class="rs-warm">86</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301005" target="_blank">301005</a></td>
+                <td>超捷股份</td>
+                <td class="num">190.40</td>
+                <td class="num"><span class="up">+0.36%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">98</td><td>71</td><td class="rs-warm">86</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688205" target="_blank">688205</a></td>
+                <td>德科立</td>
+                <td class="num">296.33</td>
+                <td class="num"><span class="up">+1.28%</span></td>
+                <td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">92</td><td class="rs-warm">85</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300209" target="_blank">300209</a></td>
+                <td>行云科技</td>
+                <td class="num">25.57</td>
+                <td class="num"><span class="down">-1.35%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300736" target="_blank">300736</a></td>
+                <td>百邦科技</td>
+                <td class="num">45.99</td>
+                <td class="num"><span class="up">+1.59%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301248" target="_blank">301248</a></td>
+                <td>杰创智能</td>
+                <td class="num">95.26</td>
+                <td class="num"><span class="up">+9.17%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">98</td><td class="rs-hot">97</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600683" target="_blank">600683</a></td>
+                <td>京投发展</td>
+                <td class="num">19.26</td>
+                <td class="num"><span class="down">-7.63%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603045" target="_blank">603045</a></td>
+                <td>福达合金</td>
+                <td class="num">77.11</td>
+                <td class="num"><span class="up">+4.75%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688655" target="_blank">688655</a></td>
+                <td>迅捷兴</td>
+                <td class="num">60.52</td>
+                <td class="num"><span class="down">-2.34%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">99</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002281" target="_blank">002281</a></td>
+                <td>光迅科技</td>
+                <td class="num">197.97</td>
+                <td class="num"><span class="down">-1.75%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301396" target="_blank">301396</a></td>
+                <td>宏景科技</td>
+                <td class="num">338.78</td>
+                <td class="num"><span class="up">+9.65%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">99</td><td class="rs-hot">99</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=601126" target="_blank">601126</a></td>
+                <td>四方股份</td>
+                <td class="num">81.51</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688766" target="_blank">688766</a></td>
+                <td>普冉股份</td>
+                <td class="num">441.00</td>
+                <td class="num"><span class="up">+10.57%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">93</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=920438" target="_blank">920438</a></td>
+                <td>戈碧迦</td>
+                <td class="num">74.09</td>
+                <td class="num"><span class="up">+2.93%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">92</td><td class="rs-warm">85</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301002" target="_blank">301002</a></td>
+                <td>崧盛股份</td>
+                <td class="num">60.99</td>
+                <td class="num"><span class="up">+12.18%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">92</td><td class="rs-hot">92</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301086" target="_blank">301086</a></td>
+                <td>鸿富瀚</td>
+                <td class="num">230.34</td>
+                <td class="num"><span class="up">+6.64%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">96</td><td class="rs-hot">95</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301369" target="_blank">301369</a></td>
+                <td>联动科技</td>
+                <td class="num">249.20</td>
+                <td class="num"><span class="up">+6.44%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300137" target="_blank">300137</a></td>
+                <td>先河环保</td>
+                <td class="num">20.05</td>
+                <td class="num"><span class="up">+8.97%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301389" target="_blank">301389</a></td>
+                <td>隆扬电子</td>
+                <td class="num">80.68</td>
+                <td class="num"><span class="up">+6.19%</span></td>
+                <td class="rs-hot">97</td><td class="rs-warm">83</td><td class="rs-hot">95</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600869" target="_blank">600869</a></td>
+                <td>远东股份</td>
+                <td class="num">23.07</td>
+                <td class="num"><span class="up">+0.74%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">98</td><td class="rs-hot">95</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002080" target="_blank">002080</a></td>
+                <td>中材科技</td>
+                <td class="num">66.91</td>
+                <td class="num"><span class="up">+1.39%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">93</td><td class="rs-hot">94</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301529" target="_blank">301529</a></td>
+                <td>福赛科技</td>
+                <td class="num">158.98</td>
+                <td class="num"><span class="down">-1.92%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">96</td><td class="rs-warm">81</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600118" target="_blank">600118</a></td>
+                <td>中国卫星</td>
+                <td class="num">112.00</td>
+                <td class="num"><span class="up">+0.30%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">96</td><td>74</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688702" target="_blank">688702</a></td>
+                <td>盛科通信</td>
+                <td class="num">302.72</td>
+                <td class="num"><span class="up">+1.52%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002240" target="_blank">002240</a></td>
+                <td>盛新锂能</td>
+                <td class="num">55.00</td>
+                <td class="num"><span class="down">-3.32%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">92</td><td class="rs-hot">92</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600487" target="_blank">600487</a></td>
+                <td>亨通光电</td>
+                <td class="num">75.43</td>
+                <td class="num"><span class="up">+0.44%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">98</td><td class="rs-hot">97</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002342" target="_blank">002342</a></td>
+                <td>巨力索具</td>
+                <td class="num">20.46</td>
+                <td class="num"><span class="up">+0.29%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">97</td><td>75</td><td class="rs-warm">89</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300814" target="_blank">300814</a></td>
+                <td>中富电路</td>
+                <td class="num">126.70</td>
+                <td class="num"><span class="up">+4.28%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">91</td><td class="rs-hot">95</td><td class="rs-warm">88</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688627" target="_blank">688627</a></td>
+                <td>精智达</td>
+                <td class="num">360.00</td>
+                <td class="num"><span class="up">+1.37%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">90</td><td class="rs-warm">81</td><td class="rs-warm">88</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300257" target="_blank">300257</a></td>
+                <td>开山股份</td>
+                <td class="num">38.21</td>
+                <td class="num"><span class="up">+5.23%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">95</td><td class="rs-hot">97</td><td class="rs-warm">87</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002353" target="_blank">002353</a></td>
+                <td>杰瑞股份</td>
+                <td class="num">148.95</td>
+                <td class="num"><span class="up">+3.58%</span></td>
+                <td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">93</td><td class="rs-warm">86</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603738" target="_blank">603738</a></td>
+                <td>泰晶科技</td>
+                <td class="num">54.00</td>
+                <td class="num"><span class="down">-0.52%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603773" target="_blank">603773</a></td>
+                <td>沃格光电</td>
+                <td class="num">88.10</td>
+                <td class="num"><span class="up">+7.75%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688146" target="_blank">688146</a></td>
+                <td>中船特气</td>
+                <td class="num">117.60</td>
+                <td class="num"><span class="up">+20.00%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">96</td><td class="rs-hot">98</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002149" target="_blank">002149</a></td>
+                <td>西部材料</td>
+                <td class="num">74.96</td>
+                <td class="num"><span class="up">+0.83%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">99</td><td class="rs-warm">88</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688328" target="_blank">688328</a></td>
+                <td>深科达</td>
+                <td class="num">68.11</td>
+                <td class="num"><span class="up">+1.46%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=001389" target="_blank">001389</a></td>
+                <td>广合科技</td>
+                <td class="num">194.78</td>
+                <td class="num"><span class="up">+2.15%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-hot">96</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600183" target="_blank">600183</a></td>
+                <td>生益科技</td>
+                <td class="num">94.18</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">96</td><td class="rs-warm">86</td><td class="rs-hot">90</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688387" target="_blank">688387</a></td>
+                <td>信科移动</td>
+                <td class="num">22.16</td>
+                <td class="num"><span class="up">+1.09%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">98</td><td class="rs-warm">86</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002290" target="_blank">002290</a></td>
+                <td>禾盛新材</td>
+                <td class="num">99.01</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">96</td><td class="rs-hot">95</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603186" target="_blank">603186</a></td>
+                <td>华正新材</td>
+                <td class="num">104.66</td>
+                <td class="num"><span class="up">+6.89%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">96</td><td class="rs-hot">93</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688307" target="_blank">688307</a></td>
+                <td>中润光学</td>
+                <td class="num">121.70</td>
+                <td class="num"><span class="up">+5.10%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688523" target="_blank">688523</a></td>
+                <td>航天环宇</td>
+                <td class="num">84.65</td>
+                <td class="num"><span class="down">-1.63%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">98</td><td class="rs-warm">86</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300870" target="_blank">300870</a></td>
+                <td>欧陆通</td>
+                <td class="num">440.00</td>
+                <td class="num"><span class="up">+11.56%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">95</td><td class="rs-hot">96</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301486" target="_blank">301486</a></td>
+                <td>致尚科技</td>
+                <td class="num">234.30</td>
+                <td class="num"><span class="up">+0.65%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">97</td><td>64</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603268" target="_blank">603268</a></td>
+                <td>松发股份</td>
+                <td class="num">165.08</td>
+                <td class="num"><span class="up">+3.18%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-hot">96</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688127" target="_blank">688127</a></td>
+                <td>蓝特光学</td>
+                <td class="num">93.98</td>
+                <td class="num"><span class="up">+3.86%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-hot">96</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=000593" target="_blank">000593</a></td>
+                <td>德龙汇能</td>
+                <td class="num">23.66</td>
+                <td class="num"><span class="up">+4.69%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">96</td><td class="rs-hot">94</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688102" target="_blank">688102</a></td>
+                <td>斯瑞新材</td>
+                <td class="num">46.10</td>
+                <td class="num"><span class="up">+0.63%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">95</td><td>76</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=001896" target="_blank">001896</a></td>
+                <td>豫能控股</td>
+                <td class="num">17.76</td>
+                <td class="num"><span class="up">+4.59%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-hot">98</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002645" target="_blank">002645</a></td>
+                <td>华宏科技</td>
+                <td class="num">29.09</td>
+                <td class="num"><span class="up">+1.18%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">91</td><td class="rs-hot">96</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301285" target="_blank">301285</a></td>
+                <td>鸿日达</td>
+                <td class="num">117.44</td>
+                <td class="num"><span class="up">+9.75%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">95</td><td class="rs-hot">94</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+2-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002463" target="_blank">002463</a></td>
+                <td>沪电股份</td>
+                <td class="num">112.58</td>
+                <td class="num"><span class="up">+3.59%</span></td>
+                <td class="rs-hot">96</td><td class="rs-warm">88</td><td class="rs-hot">95</td><td class="rs-warm">86</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002046" target="_blank">002046</a></td>
+                <td>国机精工</td>
+                <td class="num">59.49</td>
+                <td class="num"><span class="up">+3.59%</span></td>
+                <td class="rs-hot">96</td><td class="rs-hot">94</td><td class="rs-warm">82</td><td class="rs-warm">85</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002975" target="_blank">002975</a></td>
+                <td>博杰股份</td>
+                <td class="num">111.56</td>
+                <td class="num"><span class="up">+0.06%</span></td>
+                <td class="rs-hot">96</td><td class="rs-warm">83</td><td class="rs-warm">88</td><td class="rs-warm">85</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600673" target="_blank">600673</a></td>
+                <td>东阳光</td>
+                <td class="num">39.28</td>
+                <td class="num"><span class="up">+4.89%</span></td>
+                <td class="rs-hot">96</td><td class="rs-warm">89</td><td class="rs-warm">87</td><td class="rs-warm">85</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=601138" target="_blank">601138</a></td>
+                <td>工业富联</td>
+                <td class="num">70.84</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">96</td><td>43</td><td class="rs-warm">85</td><td class="rs-warm">85</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">BK+1 CDL+1 TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002297" target="_blank">002297</a></td>
+                <td>博云新材</td>
+                <td class="num">26.15</td>
+                <td class="num"><span class="up">+8.51%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+2 TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300819" target="_blank">300819</a></td>
+                <td>聚杰微纤</td>
+                <td class="num">86.80</td>
+                <td class="num"><span class="up">+4.69%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300959" target="_blank">300959</a></td>
+                <td>线上线下</td>
+                <td class="num">133.79</td>
+                <td class="num"><span class="up">+20.00%</span></td>
+                <td class="rs-hot">95</td><td>60</td><td class="rs-hot">90</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL-1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688008" target="_blank">688008</a></td>
+                <td>澜起科技</td>
+                <td class="num">258.80</td>
+                <td class="num"><span class="up">+7.52%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">93</td><td class="rs-hot">92</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688693" target="_blank">688693</a></td>
+                <td>锴威特</td>
+                <td class="num">139.40</td>
+                <td class="num"><span class="up">+1.38%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=003036" target="_blank">003036</a></td>
+                <td>泰坦股份</td>
+                <td class="num">44.00</td>
+                <td class="num"><span class="up">+1.10%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">96</td><td class="rs-hot">98</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301189" target="_blank">301189</a></td>
+                <td>奥尼电子</td>
+                <td class="num">93.15</td>
+                <td class="num"><span class="up">+10.22%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=605389" target="_blank">605389</a></td>
+                <td>长龄液压</td>
+                <td class="num">115.67</td>
+                <td class="num"><span class="up">+6.41%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">91</td><td class="rs-warm">89</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=001359" target="_blank">001359</a></td>
+                <td>平安电工</td>
+                <td class="num">114.40</td>
+                <td class="num"><span class="up">+5.42%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">96</td><td class="rs-hot">92</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300438" target="_blank">300438</a></td>
+                <td>鹏辉能源</td>
+                <td class="num">83.81</td>
+                <td class="num"><span class="down">-6.21%</span></td>
+                <td class="rs-hot">95</td><td class="rs-warm">88</td><td class="rs-hot">96</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300672" target="_blank">300672</a></td>
+                <td>国科微</td>
+                <td class="num">242.63</td>
+                <td class="num"><span class="up">+3.95%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">97</td><td class="rs-hot">95</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002348" target="_blank">002348</a></td>
+                <td>高乐股份</td>
+                <td class="num">12.69</td>
+                <td class="num"><span class="down">-0.24%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300843" target="_blank">300843</a></td>
+                <td>胜蓝股份</td>
+                <td class="num">95.43</td>
+                <td class="num"><span class="up">+5.73%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">93</td><td class="rs-hot">95</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301150" target="_blank">301150</a></td>
+                <td>中一科技</td>
+                <td class="num">81.68</td>
+                <td class="num"><span class="up">+5.60%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">93</td><td class="rs-hot">97</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300720" target="_blank">300720</a></td>
+                <td>海川智能</td>
+                <td class="num">72.75</td>
+                <td class="num"><span class="down">-7.12%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">96</td><td class="rs-hot">98</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300835" target="_blank">300835</a></td>
+                <td>龙磁科技</td>
+                <td class="num">122.58</td>
+                <td class="num"><span class="down">-0.33%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">94</td><td class="rs-hot">93</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002192" target="_blank">002192</a></td>
+                <td>融捷股份</td>
+                <td class="num">97.50</td>
+                <td class="num"><span class="down">-3.10%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">93</td><td class="rs-hot">96</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=605303" target="_blank">605303</a></td>
+                <td>园林股份</td>
+                <td class="num">25.83</td>
+                <td class="num"><span class="up">+3.44%</span></td>
+                <td class="rs-hot">95</td><td>78</td><td class="rs-hot">90</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603353" target="_blank">603353</a></td>
+                <td>和顺石油</td>
+                <td class="num">52.68</td>
+                <td class="num"><span class="down">-1.37%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">95</td><td class="rs-warm">89</td><td class="rs-warm">88</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688233" target="_blank">688233</a></td>
+                <td>神工股份</td>
+                <td class="num">95.50</td>
+                <td class="num"><span class="up">+3.40%</span></td>
+                <td class="rs-hot">95</td><td class="rs-warm">86</td><td>59</td><td class="rs-warm">88</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301018" target="_blank">301018</a></td>
+                <td>申菱环境</td>
+                <td class="num">139.95</td>
+                <td class="num"><span class="up">+2.71%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-warm">87</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002361" target="_blank">002361</a></td>
+                <td>神剑股份</td>
+                <td class="num">20.67</td>
+                <td class="num"><span class="up">+2.07%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">98</td><td class="rs-hot">94</td><td class="rs-warm">85</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301075" target="_blank">301075</a></td>
+                <td>多瑞医药</td>
+                <td class="num">82.29</td>
+                <td class="num"><span class="up">+2.36%</span></td>
+                <td class="rs-hot">95</td><td class="rs-warm">83</td><td class="rs-warm">85</td><td class="rs-warm">85</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301326" target="_blank">301326</a></td>
+                <td>捷邦科技</td>
+                <td class="num">191.66</td>
+                <td class="num"><span class="up">+2.62%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">90</td><td class="rs-hot">91</td><td class="rs-warm">85</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600343" target="_blank">600343</a></td>
+                <td>航天动力</td>
+                <td class="num">40.12</td>
+                <td class="num"><span class="up">+4.21%</span></td>
+                <td class="rs-hot">95</td><td class="rs-hot">96</td><td>72</td><td class="rs-warm">85</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002787" target="_blank">002787</a></td>
+                <td>华源控股</td>
+                <td class="num">27.37</td>
+                <td class="num"><span class="up">+7.12%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002885" target="_blank">002885</a></td>
+                <td>京泉华</td>
+                <td class="num">42.54</td>
+                <td class="num"><span class="up">+10.01%</span></td>
+                <td class="rs-hot">94</td><td>74</td><td class="rs-hot">93</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002943" target="_blank">002943</a></td>
+                <td>宇晶股份</td>
+                <td class="num">82.54</td>
+                <td class="num"><span class="up">+0.82%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">95</td><td>47</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688227" target="_blank">688227</a></td>
+                <td>品高股份</td>
+                <td class="num">109.06</td>
+                <td class="num"><span class="down">-3.98%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">98</td><td class="rs-hot">94</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688260" target="_blank">688260</a></td>
+                <td>昀冢科技</td>
+                <td class="num">51.14</td>
+                <td class="num"><span class="up">+0.51%</span></td>
+                <td class="rs-hot">94</td><td class="rs-warm">87</td><td class="rs-hot">95</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688268" target="_blank">688268</a></td>
+                <td>华特气体</td>
+                <td class="num">172.49</td>
+                <td class="num"><span class="up">+5.06%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">97</td><td class="rs-hot">98</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688545" target="_blank">688545</a></td>
+                <td>兴福电子</td>
+                <td class="num">90.22</td>
+                <td class="num"><span class="up">+12.77%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">96</td><td class="rs-hot">96</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=003031" target="_blank">003031</a></td>
+                <td>中瓷电子</td>
+                <td class="num">150.99</td>
+                <td class="num"><span class="down">-0.42%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">97</td><td class="rs-hot">96</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300478" target="_blank">300478</a></td>
+                <td>杭州高新</td>
+                <td class="num">38.85</td>
+                <td class="num"><span class="up">+3.21%</span></td>
+                <td class="rs-hot">94</td><td class="rs-warm">84</td><td class="rs-hot">93</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603950" target="_blank">603950</a></td>
+                <td>长源东谷</td>
+                <td class="num">76.83</td>
+                <td class="num"><span class="up">+1.09%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">95</td><td class="rs-hot">98</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688663" target="_blank">688663</a></td>
+                <td>新风光</td>
+                <td class="num">84.50</td>
+                <td class="num"><span class="up">+11.04%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">91</td><td class="rs-hot">92</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002181" target="_blank">002181</a></td>
+                <td>粤传媒</td>
+                <td class="num">17.90</td>
+                <td class="num"><span class="down">-4.02%</span></td>
+                <td class="rs-hot">94</td><td class="rs-warm">89</td><td class="rs-hot">91</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002498" target="_blank">002498</a></td>
+                <td>汉缆股份</td>
+                <td class="num">11.01</td>
+                <td class="num"><span class="up">+9.99%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">97</td><td class="rs-hot">96</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301148" target="_blank">301148</a></td>
+                <td>嘉戎技术</td>
+                <td class="num">73.60</td>
+                <td class="num"><span class="down">-0.90%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">94</td><td class="rs-warm">89</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600172" target="_blank">600172</a></td>
+                <td>黄河旋风</td>
+                <td class="num">11.84</td>
+                <td class="num"><span class="up">+10.04%</span></td>
+                <td class="rs-hot">94</td><td class="rs-warm">89</td><td class="rs-hot">90</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600601" target="_blank">600601</a></td>
+                <td>方正科技</td>
+                <td class="num">14.20</td>
+                <td class="num"><span class="down">-0.77%</span></td>
+                <td class="rs-hot">94</td><td>68</td><td class="rs-warm">84</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002364" target="_blank">002364</a></td>
+                <td>中恒电气</td>
+                <td class="num">48.40</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">92</td><td class="rs-hot">90</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002015" target="_blank">002015</a></td>
+                <td>协鑫能科</td>
+                <td class="num">23.39</td>
+                <td class="num"><span class="up">+10.02%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">94</td><td class="rs-hot">98</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002222" target="_blank">002222</a></td>
+                <td>福晶科技</td>
+                <td class="num">116.32</td>
+                <td class="num"><span class="up">+2.61%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">97</td><td class="rs-hot">94</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301235" target="_blank">301235</a></td>
+                <td>华康洁净</td>
+                <td class="num">67.49</td>
+                <td class="num"><span class="up">+5.59%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">95</td><td class="rs-warm">83</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688147" target="_blank">688147</a></td>
+                <td>微导纳米</td>
+                <td class="num">91.55</td>
+                <td class="num"><span class="up">+11.16%</span></td>
+                <td class="rs-hot">94</td><td class="rs-warm">89</td><td>77</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300265" target="_blank">300265</a></td>
+                <td>通光线缆</td>
+                <td class="num">25.57</td>
+                <td class="num"><span class="up">+10.12%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">96</td><td class="rs-hot">93</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600176" target="_blank">600176</a></td>
+                <td>中国巨石</td>
+                <td class="num">38.10</td>
+                <td class="num"><span class="up">+0.74%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">96</td><td class="rs-hot">95</td><td class="rs-warm">89</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688392" target="_blank">688392</a></td>
+                <td>骄成超声</td>
+                <td class="num">166.55</td>
+                <td class="num"><span class="up">+3.31%</span></td>
+                <td class="rs-hot">94</td><td class="rs-warm">81</td><td class="rs-warm">83</td><td class="rs-warm">88</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002213" target="_blank">002213</a></td>
+                <td>大为股份</td>
+                <td class="num">43.57</td>
+                <td class="num"><span class="up">+0.14%</span></td>
+                <td class="rs-hot">94</td><td class="rs-warm">84</td><td class="rs-hot">94</td><td class="rs-warm">87</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300816" target="_blank">300816</a></td>
+                <td>艾可蓝</td>
+                <td class="num">90.26</td>
+                <td class="num"><span class="up">+4.83%</span></td>
+                <td class="rs-hot">94</td><td class="rs-hot">95</td><td class="rs-warm">88</td><td class="rs-warm">85</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300302" target="_blank">300302</a></td>
+                <td>同有科技</td>
+                <td class="num">43.35</td>
+                <td class="num"><span class="up">+1.26%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">90</td><td class="rs-hot">98</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300905" target="_blank">300905</a></td>
+                <td>宝丽迪</td>
+                <td class="num">76.10</td>
+                <td class="num"><span class="down">-2.44%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">95</td><td class="rs-hot">97</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600726" target="_blank">600726</a></td>
+                <td>华电能源</td>
+                <td class="num">8.47</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002655" target="_blank">002655</a></td>
+                <td>共达电声</td>
+                <td class="num">36.68</td>
+                <td class="num"><span class="up">+5.19%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">98</td><td class="rs-hot">98</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002980" target="_blank">002980</a></td>
+                <td>华盛昌</td>
+                <td class="num">86.06</td>
+                <td class="num"><span class="up">+4.32%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603936" target="_blank">603936</a></td>
+                <td>博敏电子</td>
+                <td class="num">22.24</td>
+                <td class="num"><span class="up">+9.99%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">91</td><td class="rs-hot">96</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688141" target="_blank">688141</a></td>
+                <td>杰华特</td>
+                <td class="num">109.10</td>
+                <td class="num"><span class="down">-0.93%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600545" target="_blank">600545</a></td>
+                <td>卓郎智能</td>
+                <td class="num">6.28</td>
+                <td class="num"><span class="up">+2.95%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">94</td><td class="rs-hot">98</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603938" target="_blank">603938</a></td>
+                <td>三孚股份</td>
+                <td class="num">42.24</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">92</td><td class="rs-hot">95</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300395" target="_blank">300395</a></td>
+                <td>菲利华</td>
+                <td class="num">148.90</td>
+                <td class="num"><span class="up">+0.50%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">92</td><td class="rs-hot">93</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600522" target="_blank">600522</a></td>
+                <td>中天科技</td>
+                <td class="num">43.60</td>
+                <td class="num"><span class="down">-1.09%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688661" target="_blank">688661</a></td>
+                <td>和林微纳</td>
+                <td class="num">121.88</td>
+                <td class="num"><span class="down">-2.41%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">95</td><td class="rs-warm">88</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603986" target="_blank">603986</a></td>
+                <td>兆易创新</td>
+                <td class="num">365.00</td>
+                <td class="num"><span class="up">+3.24%</span></td>
+                <td class="rs-hot">93</td><td class="rs-warm">88</td><td class="rs-warm">84</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002536" target="_blank">002536</a></td>
+                <td>飞龙股份</td>
+                <td class="num">46.70</td>
+                <td class="num"><span class="up">+0.45%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">94</td><td class="rs-hot">93</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002916" target="_blank">002916</a></td>
+                <td>深南电路</td>
+                <td class="num">348.50</td>
+                <td class="num"><span class="up">+5.67%</span></td>
+                <td class="rs-hot">93</td><td class="rs-warm">87</td><td class="rs-hot">92</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300943" target="_blank">300943</a></td>
+                <td>春晖智控</td>
+                <td class="num">38.92</td>
+                <td class="num"><span class="up">+7.13%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">91</td><td>74</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603906" target="_blank">603906</a></td>
+                <td>龙蟠科技</td>
+                <td class="num">29.35</td>
+                <td class="num"><span class="down">-0.41%</span></td>
+                <td class="rs-hot">93</td><td class="rs-warm">84</td><td class="rs-hot">94</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002429" target="_blank">002429</a></td>
+                <td>兆驰股份</td>
+                <td class="num">13.49</td>
+                <td class="num"><span class="up">+0.07%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">94</td><td class="rs-warm">88</td><td class="rs-warm">89</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300503" target="_blank">300503</a></td>
+                <td>昊志机电</td>
+                <td class="num">69.08</td>
+                <td class="num"><span class="down">-0.36%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">95</td><td class="rs-warm">80</td><td class="rs-warm">89</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688347" target="_blank">688347</a></td>
+                <td>华虹公司</td>
+                <td class="num">160.62</td>
+                <td class="num"><span class="down">-0.02%</span></td>
+                <td class="rs-hot">93</td><td>78</td><td>79</td><td class="rs-warm">89</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688072" target="_blank">688072</a></td>
+                <td>拓荆科技</td>
+                <td class="num">515.02</td>
+                <td class="num"><span class="up">+1.58%</span></td>
+                <td class="rs-hot">93</td><td class="rs-warm">85</td><td class="rs-hot">92</td><td class="rs-warm">88</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301358" target="_blank">301358</a></td>
+                <td>湖南裕能</td>
+                <td class="num">98.16</td>
+                <td class="num"><span class="down">-2.48%</span></td>
+                <td class="rs-hot">93</td><td>70</td><td class="rs-hot">93</td><td class="rs-warm">87</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688258" target="_blank">688258</a></td>
+                <td>卓易信息</td>
+                <td class="num">141.86</td>
+                <td class="num"><span class="up">+2.06%</span></td>
+                <td class="rs-hot">93</td><td class="rs-hot">95</td><td>65</td><td class="rs-warm">86</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301319" target="_blank">301319</a></td>
+                <td>唯特偶</td>
+                <td class="num">100.53</td>
+                <td class="num"><span class="up">+4.24%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">97</td><td class="rs-hot">98</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002580" target="_blank">002580</a></td>
+                <td>圣阳股份</td>
+                <td class="num">34.80</td>
+                <td class="num"><span class="up">+1.84%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">96</td><td class="rs-hot">98</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300489" target="_blank">300489</a></td>
+                <td>光智科技</td>
+                <td class="num">123.00</td>
+                <td class="num"><span class="down">-2.42%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">97</td><td class="rs-hot">98</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300769" target="_blank">300769</a></td>
+                <td>德方纳米</td>
+                <td class="num">78.60</td>
+                <td class="num"><span class="up">+1.89%</span></td>
+                <td class="rs-hot">92</td><td class="rs-warm">81</td><td class="rs-hot">96</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688677" target="_blank">688677</a></td>
+                <td>海泰新光</td>
+                <td class="num">138.30</td>
+                <td class="num"><span class="down">-2.95%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">97</td><td class="rs-hot">99</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600961" target="_blank">600961</a></td>
+                <td>株冶集团</td>
+                <td class="num">29.38</td>
+                <td class="num"><span class="down">-3.13%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">92</td><td class="rs-warm">89</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688416" target="_blank">688416</a></td>
+                <td>恒烁股份</td>
+                <td class="num">126.60</td>
+                <td class="num"><span class="up">+1.43%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">92</td><td>78</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002938" target="_blank">002938</a></td>
+                <td>鹏鼎控股</td>
+                <td class="num">87.23</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">90</td><td class="rs-warm">88</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688379" target="_blank">688379</a></td>
+                <td>华光新材</td>
+                <td class="num">76.73</td>
+                <td class="num"><span class="up">+1.16%</span></td>
+                <td class="rs-hot">92</td><td class="rs-warm">87</td><td class="rs-hot">91</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002436" target="_blank">002436</a></td>
+                <td>兴森科技</td>
+                <td class="num">34.19</td>
+                <td class="num"><span class="up">+2.21%</span></td>
+                <td class="rs-hot">92</td><td class="rs-warm">86</td><td class="rs-hot">91</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300042" target="_blank">300042</a></td>
+                <td>朗科科技</td>
+                <td class="num">70.25</td>
+                <td class="num"><span class="up">+7.91%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">95</td><td class="rs-hot">97</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600152" target="_blank">600152</a></td>
+                <td>维科技术</td>
+                <td class="num">14.68</td>
+                <td class="num"><span class="up">+3.23%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">93</td><td class="rs-hot">96</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603002" target="_blank">603002</a></td>
+                <td>宏昌电子</td>
+                <td class="num">16.19</td>
+                <td class="num"><span class="up">+7.22%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">95</td><td class="rs-hot">95</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300857" target="_blank">300857</a></td>
+                <td>协创数据</td>
+                <td class="num">300.99</td>
+                <td class="num"><span class="up">+11.24%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">91</td><td class="rs-hot">90</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300868" target="_blank">300868</a></td>
+                <td>杰美特</td>
+                <td class="num">93.27</td>
+                <td class="num"><span class="down">-2.91%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">98</td><td class="rs-hot">99</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688312" target="_blank">688312</a></td>
+                <td>燕麦科技</td>
+                <td class="num">85.78</td>
+                <td class="num"><span class="up">+2.36%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">97</td><td class="rs-hot">96</td><td class="rs-hot">94</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688390" target="_blank">688390</a></td>
+                <td>固德威</td>
+                <td class="num">120.53</td>
+                <td class="num"><span class="up">+2.40%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">92</td><td class="rs-warm">88</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301387" target="_blank">301387</a></td>
+                <td>光大同创</td>
+                <td class="num">86.11</td>
+                <td class="num"><span class="down">-1.54%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">94</td><td class="rs-hot">91</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002851" target="_blank">002851</a></td>
+                <td>麦格米特</td>
+                <td class="num">137.86</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">92</td><td class="rs-warm">87</td><td>72</td><td class="rs-warm">89</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300131" target="_blank">300131</a></td>
+                <td>英唐智控</td>
+                <td class="num">20.32</td>
+                <td class="num"><span class="up">+6.89%</span></td>
+                <td class="rs-hot">92</td><td class="rs-warm">83</td><td class="rs-warm">81</td><td class="rs-warm">89</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300839" target="_blank">300839</a></td>
+                <td>博汇股份</td>
+                <td class="num">19.19</td>
+                <td class="num"><span class="up">+12.16%</span></td>
+                <td class="rs-hot">92</td><td>75</td><td class="rs-hot">94</td><td class="rs-warm">88</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300201" target="_blank">300201</a></td>
+                <td>海伦哲</td>
+                <td class="num">14.13</td>
+                <td class="num"><span class="up">+2.17%</span></td>
+                <td class="rs-hot">92</td><td class="rs-hot">96</td><td class="rs-hot">95</td><td class="rs-warm">86</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300331" target="_blank">300331</a></td>
+                <td>苏大维格</td>
+                <td class="num">55.20</td>
+                <td class="num"><span class="down">-2.78%</span></td>
+                <td class="rs-hot">92</td><td class="rs-warm">88</td><td>76</td><td class="rs-warm">86</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300632" target="_blank">300632</a></td>
+                <td>光莆股份</td>
+                <td class="num">30.73</td>
+                <td class="num"><span class="up">+7.98%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">95</td><td class="rs-hot">98</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300745" target="_blank">300745</a></td>
+                <td>欣锐科技</td>
+                <td class="num">48.58</td>
+                <td class="num"><span class="up">+6.47%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">90</td><td class="rs-hot">96</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301603" target="_blank">301603</a></td>
+                <td>乔锋智能</td>
+                <td class="num">136.95</td>
+                <td class="num"><span class="up">+3.00%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">91</td><td class="rs-hot">97</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=000811" target="_blank">000811</a></td>
+                <td>冰轮环境</td>
+                <td class="num">31.80</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">94</td><td class="rs-hot">96</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301055" target="_blank">301055</a></td>
+                <td>张小泉</td>
+                <td class="num">40.86</td>
+                <td class="num"><span class="up">+16.78%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">92</td><td class="rs-hot">97</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301196" target="_blank">301196</a></td>
+                <td>唯科科技</td>
+                <td class="num">169.00</td>
+                <td class="num"><span class="up">+10.68%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">95</td><td class="rs-hot">98</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688800" target="_blank">688800</a></td>
+                <td>瑞可达</td>
+                <td class="num">136.12</td>
+                <td class="num"><span class="down">-0.46%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">93</td><td class="rs-hot">94</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002208" target="_blank">002208</a></td>
+                <td>合肥城建</td>
+                <td class="num">18.00</td>
+                <td class="num"><span class="up">+10.02%</span></td>
+                <td class="rs-hot">91</td><td class="rs-warm">82</td><td class="rs-warm">85</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688037" target="_blank">688037</a></td>
+                <td>芯源微</td>
+                <td class="num">274.37</td>
+                <td class="num"><span class="up">+0.23%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">94</td><td class="rs-warm">88</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=601778" target="_blank">601778</a></td>
+                <td>晶科科技</td>
+                <td class="num">7.14</td>
+                <td class="num"><span class="up">+0.56%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">92</td><td class="rs-hot">92</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688409" target="_blank">688409</a></td>
+                <td>富创精密</td>
+                <td class="num">133.57</td>
+                <td class="num"><span class="up">+2.34%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">92</td><td class="rs-warm">89</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301295" target="_blank">301295</a></td>
+                <td>美硕科技</td>
+                <td class="num">49.70</td>
+                <td class="num"><span class="up">+0.87%</span></td>
+                <td class="rs-hot">91</td><td class="rs-warm">85</td><td class="rs-hot">90</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300246" target="_blank">300246</a></td>
+                <td>宝莱特</td>
+                <td class="num">19.66</td>
+                <td class="num"><span class="down">-2.33%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">94</td><td class="rs-hot">90</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603698" target="_blank">603698</a></td>
+                <td>航天工程</td>
+                <td class="num">42.46</td>
+                <td class="num"><span class="down">-1.12%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">94</td><td>71</td><td class="rs-hot">90</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603228" target="_blank">603228</a></td>
+                <td>景旺电子</td>
+                <td class="num">78.12</td>
+                <td class="num"><span class="up">+2.56%</span></td>
+                <td class="rs-hot">91</td><td>60</td><td class="rs-warm">82</td><td class="rs-warm">89</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1 TA-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603316" target="_blank">603316</a></td>
+                <td>诚邦股份</td>
+                <td class="num">18.88</td>
+                <td class="num"><span class="up">+1.51%</span></td>
+                <td class="rs-hot">91</td><td>70</td><td class="rs-warm">87</td><td class="rs-warm">89</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688378" target="_blank">688378</a></td>
+                <td>奥来德</td>
+                <td class="num">48.30</td>
+                <td class="num"><span class="up">+1.13%</span></td>
+                <td class="rs-hot">91</td><td class="rs-warm">89</td><td class="rs-warm">81</td><td class="rs-warm">89</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300444" target="_blank">300444</a></td>
+                <td>双杰电气</td>
+                <td class="num">17.76</td>
+                <td class="num"><span class="up">+1.49%</span></td>
+                <td class="rs-hot">91</td><td class="rs-warm">88</td><td>71</td><td class="rs-warm">88</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300567" target="_blank">300567</a></td>
+                <td>精测电子</td>
+                <td class="num">168.85</td>
+                <td class="num"><span class="up">+2.08%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">95</td><td class="rs-warm">84</td><td class="rs-warm">88</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688059" target="_blank">688059</a></td>
+                <td>华锐精密</td>
+                <td class="num">154.93</td>
+                <td class="num"><span class="up">+2.26%</span></td>
+                <td class="rs-hot">91</td><td class="rs-hot">92</td><td class="rs-hot">93</td><td class="rs-warm">86</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=605598" target="_blank">605598</a></td>
+                <td>上海港湾</td>
+                <td class="num">59.48</td>
+                <td class="num"><span class="up">+2.91%</span></td>
+                <td class="rs-hot">91</td><td class="rs-warm">88</td><td>43</td><td class="rs-warm">85</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300283" target="_blank">300283</a></td>
+                <td>温州宏丰</td>
+                <td class="num">17.20</td>
+                <td class="num"><span class="down">-0.86%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">94</td><td class="rs-hot">97</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603399" target="_blank">603399</a></td>
+                <td>永杉锂业</td>
+                <td class="num">23.21</td>
+                <td class="num"><span class="down">-3.61%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">93</td><td class="rs-hot">98</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002552" target="_blank">002552</a></td>
+                <td>宝鼎科技</td>
+                <td class="num">34.81</td>
+                <td class="num"><span class="up">+4.03%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">93</td><td class="rs-hot">95</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=605222" target="_blank">605222</a></td>
+                <td>起帆电缆</td>
+                <td class="num">41.83</td>
+                <td class="num"><span class="up">+2.02%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">95</td><td class="rs-hot">97</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002484" target="_blank">002484</a></td>
+                <td>江海股份</td>
+                <td class="num">47.29</td>
+                <td class="num"><span class="up">+6.63%</span></td>
+                <td class="rs-hot">90</td><td class="rs-warm">88</td><td class="rs-hot">94</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300518" target="_blank">300518</a></td>
+                <td>新迅达</td>
+                <td class="num">30.37</td>
+                <td class="num"><span class="up">+4.69%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">91</td><td class="rs-hot">90</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+2-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=000967" target="_blank">000967</a></td>
+                <td>盈峰环境</td>
+                <td class="num">15.07</td>
+                <td class="num"><span class="up">+8.81%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">95</td><td class="rs-hot">97</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">CDL+1 TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603052" target="_blank">603052</a></td>
+                <td>可川科技</td>
+                <td class="num">104.89</td>
+                <td class="num"><span class="up">+10.01%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">98</td><td class="rs-hot">92</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688652" target="_blank">688652</a></td>
+                <td>京仪装备</td>
+                <td class="num">152.00</td>
+                <td class="num"><span class="up">+7.00%</span></td>
+                <td class="rs-hot">90</td><td class="rs-warm">82</td><td class="rs-warm">83</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-double">双强</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603203" target="_blank">603203</a></td>
+                <td>快克智能</td>
+                <td class="num">61.53</td>
+                <td class="num"><span class="up">+9.99%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">92</td><td class="rs-hot">94</td><td class="rs-hot">93</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002475" target="_blank">002475</a></td>
+                <td>立讯精密</td>
+                <td class="num">80.15</td>
+                <td class="num"><span class="up">+3.83%</span></td>
+                <td class="rs-hot">90</td><td>79</td><td class="rs-hot">93</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688400" target="_blank">688400</a></td>
+                <td>凌云光</td>
+                <td class="num">66.58</td>
+                <td class="num"><span class="up">+1.88%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">90</td><td class="rs-hot">91</td><td class="rs-hot">92</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688200" target="_blank">688200</a></td>
+                <td>华峰测控</td>
+                <td class="num">399.27</td>
+                <td class="num"><span class="up">+6.87%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">95</td><td class="rs-warm">87</td><td class="rs-hot">91</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688150" target="_blank">688150</a></td>
+                <td>莱特光电</td>
+                <td class="num">59.74</td>
+                <td class="num"><span class="down">-1.14%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">96</td><td class="rs-hot">97</td><td class="rs-warm">88</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688170" target="_blank">688170</a></td>
+                <td>德龙激光</td>
+                <td class="num">68.99</td>
+                <td class="num"><span class="up">+4.50%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">94</td><td class="rs-hot">95</td><td class="rs-warm">88</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688155" target="_blank">688155</a></td>
+                <td>先惠技术</td>
+                <td class="num">103.30</td>
+                <td class="num"><span class="down">-0.56%</span></td>
+                <td class="rs-hot">90</td><td class="rs-warm">89</td><td>64</td><td class="rs-warm">87</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=605299" target="_blank">605299</a></td>
+                <td>舒华体育</td>
+                <td class="num">24.62</td>
+                <td class="num"><span class="down">-1.44%</span></td>
+                <td class="rs-hot">90</td><td class="rs-hot">97</td><td class="rs-hot">97</td><td class="rs-warm">85</td>
+                <td><span class="badge ds-robust">稳健龙头</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300408" target="_blank">300408</a></td>
+                <td>三环集团</td>
+                <td class="num">90.69</td>
+                <td class="num"><span class="up">+2.81%</span></td>
+                <td class="rs-warm">89</td><td class="rs-hot">90</td><td class="rs-hot">95</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600156" target="_blank">600156</a></td>
+                <td>华升股份</td>
+                <td class="num">12.90</td>
+                <td class="num"><span class="up">+9.97%</span></td>
+                <td class="rs-warm">89</td><td class="rs-warm">84</td><td class="rs-hot">93</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688234" target="_blank">688234</a></td>
+                <td>天岳先进</td>
+                <td class="num">146.63</td>
+                <td class="num"><span class="up">+12.78%</span></td>
+                <td class="rs-warm">89</td><td class="rs-hot">94</td><td class="rs-hot">94</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002081" target="_blank">002081</a></td>
+                <td>金螳螂</td>
+                <td class="num">7.88</td>
+                <td class="num"><span class="down">-1.25%</span></td>
+                <td class="rs-warm">88</td><td class="rs-hot">95</td><td class="rs-hot">97</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002903" target="_blank">002903</a></td>
+                <td>宇环数控</td>
+                <td class="num">48.56</td>
+                <td class="num"><span class="down">-0.08%</span></td>
+                <td class="rs-warm">88</td><td class="rs-hot">93</td><td class="rs-hot">98</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688719" target="_blank">688719</a></td>
+                <td>爱科赛博</td>
+                <td class="num">76.27</td>
+                <td class="num"><span class="down">-1.14%</span></td>
+                <td class="rs-warm">88</td><td class="rs-hot">92</td><td class="rs-hot">93</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002203" target="_blank">002203</a></td>
+                <td>海亮股份</td>
+                <td class="num">23.03</td>
+                <td class="num"><span class="up">+0.57%</span></td>
+                <td class="rs-warm">88</td><td class="rs-hot">94</td><td class="rs-hot">95</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=605006" target="_blank">605006</a></td>
+                <td>山东玻纤</td>
+                <td class="num">16.01</td>
+                <td class="num"><span class="down">-5.77%</span></td>
+                <td class="rs-warm">88</td><td class="rs-hot">94</td><td class="rs-hot">96</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688456" target="_blank">688456</a></td>
+                <td>有研粉材</td>
+                <td class="num">86.26</td>
+                <td class="num"><span class="up">+4.43%</span></td>
+                <td class="rs-warm">88</td><td class="rs-hot">91</td><td class="rs-hot">90</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600714" target="_blank">600714</a></td>
+                <td>金瑞矿业</td>
+                <td class="num">25.47</td>
+                <td class="num"><span class="up">+0.28%</span></td>
+                <td class="rs-warm">88</td><td class="rs-hot">92</td><td class="rs-hot">95</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300571" target="_blank">300571</a></td>
+                <td>平治信息</td>
+                <td class="num">62.99</td>
+                <td class="num"><span class="up">+9.76%</span></td>
+                <td class="rs-warm">87</td><td class="rs-hot">94</td><td class="rs-hot">98</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=601991" target="_blank">601991</a></td>
+                <td>大唐发电</td>
+                <td class="num">7.37</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-warm">87</td><td class="rs-hot">92</td><td class="rs-hot">97</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603688" target="_blank">603688</a></td>
+                <td>石英股份</td>
+                <td class="num">76.19</td>
+                <td class="num"><span class="up">+4.00%</span></td>
+                <td class="rs-warm">87</td><td class="rs-hot">92</td><td class="rs-hot">96</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300398" target="_blank">300398</a></td>
+                <td>飞凯材料</td>
+                <td class="num">41.81</td>
+                <td class="num"><span class="up">+7.65%</span></td>
+                <td class="rs-warm">87</td><td class="rs-hot">90</td><td class="rs-hot">91</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688123" target="_blank">688123</a></td>
+                <td>聚辰股份</td>
+                <td class="num">168.36</td>
+                <td class="num"><span class="up">+6.09%</span></td>
+                <td class="rs-warm">87</td><td>58</td><td>70</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002990" target="_blank">002990</a></td>
+                <td>盛视科技</td>
+                <td class="num">63.10</td>
+                <td class="num"><span class="up">+6.95%</span></td>
+                <td class="rs-warm">86</td><td class="rs-hot">94</td><td class="rs-hot">98</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">CDL+1 TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301629" target="_blank">301629</a></td>
+                <td>矽电股份</td>
+                <td class="num">404.38</td>
+                <td class="num"><span class="down">-1.83%</span></td>
+                <td class="rs-warm">86</td><td class="rs-hot">93</td><td class="rs-warm">88</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">CDL+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300323" target="_blank">300323</a></td>
+                <td>华灿光电</td>
+                <td class="num">14.70</td>
+                <td class="num"><span class="down">-0.61%</span></td>
+                <td class="rs-warm">86</td><td class="rs-hot">91</td><td class="rs-hot">95</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600769" target="_blank">600769</a></td>
+                <td>祥龙电业</td>
+                <td class="num">22.00</td>
+                <td class="num"><span class="up">+5.67%</span></td>
+                <td class="rs-warm">86</td><td class="rs-warm">87</td><td class="rs-hot">96</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688041" target="_blank">688041</a></td>
+                <td>海光信息</td>
+                <td class="num">348.19</td>
+                <td class="num"><span class="down">-0.29%</span></td>
+                <td class="rs-warm">86</td><td class="rs-warm">85</td><td class="rs-warm">89</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300938" target="_blank">300938</a></td>
+                <td>信测标准</td>
+                <td class="num">62.91</td>
+                <td class="num"><span class="up">+2.63%</span></td>
+                <td class="rs-warm">85</td><td class="rs-hot">94</td><td class="rs-hot">95</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1-1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603285" target="_blank">603285</a></td>
+                <td>键邦股份</td>
+                <td class="num">52.34</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-warm">85</td><td class="rs-hot">92</td><td class="rs-warm">89</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=605168" target="_blank">605168</a></td>
+                <td>三人行</td>
+                <td class="num">60.23</td>
+                <td class="num"><span class="up">+10.01%</span></td>
+                <td class="rs-warm">85</td><td class="rs-hot">94</td><td class="rs-warm">89</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002805" target="_blank">002805</a></td>
+                <td>丰元股份</td>
+                <td class="num">27.30</td>
+                <td class="num"><span class="up">+9.99%</span></td>
+                <td class="rs-warm">85</td><td class="rs-warm">85</td><td class="rs-hot">95</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=300776" target="_blank">300776</a></td>
+                <td>帝尔激光</td>
+                <td class="num">126.38</td>
+                <td class="num"><span class="up">+6.78%</span></td>
+                <td class="rs-warm">85</td><td class="rs-hot">91</td><td class="rs-warm">87</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=000636" target="_blank">000636</a></td>
+                <td>风华高科</td>
+                <td class="num">29.57</td>
+                <td class="num"><span class="up">+0.41%</span></td>
+                <td class="rs-warm">85</td><td class="rs-warm">88</td><td class="rs-warm">89</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=605358" target="_blank">605358</a></td>
+                <td>立昂微</td>
+                <td class="num">52.66</td>
+                <td class="num"><span class="up">+3.19%</span></td>
+                <td class="rs-warm">85</td><td class="rs-warm">83</td><td class="rs-warm">84</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603063" target="_blank">603063</a></td>
+                <td>禾望电气</td>
+                <td class="num">61.86</td>
+                <td class="num"><span class="up">+9.99%</span></td>
+                <td class="rs-warm">84</td><td class="rs-hot">93</td><td class="rs-hot">97</td><td class="rs-hot">98</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=001339" target="_blank">001339</a></td>
+                <td>智微智能</td>
+                <td class="num">104.74</td>
+                <td class="num"><span class="up">+1.22%</span></td>
+                <td class="rs-warm">84</td><td class="rs-hot">91</td><td class="rs-hot">96</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=001266" target="_blank">001266</a></td>
+                <td>宏英智能</td>
+                <td class="num">46.07</td>
+                <td class="num"><span class="up">+3.41%</span></td>
+                <td class="rs-warm">84</td><td class="rs-warm">83</td><td class="rs-warm">88</td><td class="rs-hot">95</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688531" target="_blank">688531</a></td>
+                <td>日联科技</td>
+                <td class="num">129.88</td>
+                <td class="num"><span class="down">-1.75%</span></td>
+                <td class="rs-warm">83</td><td class="rs-hot">90</td><td class="rs-hot">94</td><td class="rs-hot">99</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688515" target="_blank">688515</a></td>
+                <td>裕太微</td>
+                <td class="num">215.80</td>
+                <td class="num"><span class="up">+2.81%</span></td>
+                <td class="rs-warm">83</td><td class="rs-hot">94</td><td class="rs-hot">96</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+2</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688502" target="_blank">688502</a></td>
+                <td>茂莱光学</td>
+                <td class="num">581.00</td>
+                <td class="num"><span class="up">+3.57%</span></td>
+                <td class="rs-warm">82</td><td class="rs-warm">87</td><td class="rs-hot">93</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=603139" target="_blank">603139</a></td>
+                <td>康惠股份</td>
+                <td class="num">40.07</td>
+                <td class="num"><span class="up">+3.27%</span></td>
+                <td class="rs-warm">82</td><td class="rs-hot">90</td><td class="rs-hot">95</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688603" target="_blank">688603</a></td>
+                <td>天承科技</td>
+                <td class="num">136.50</td>
+                <td class="num"><span class="up">+3.60%</span></td>
+                <td class="rs-warm">82</td><td class="rs-warm">88</td><td class="rs-hot">96</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-none">—</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688001" target="_blank">688001</a></td>
+                <td>华兴源创</td>
+                <td class="num">62.41</td>
+                <td class="num"><span class="down">-0.43%</span></td>
+                <td class="rs-warm">81</td><td class="rs-hot">94</td><td class="rs-hot">97</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">CDL+1 TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=002929" target="_blank">002929</a></td>
+                <td>润建股份</td>
+                <td class="num">87.78</td>
+                <td class="num"><span class="up">+10.00%</span></td>
+                <td class="rs-warm">80</td><td class="rs-hot">94</td><td class="rs-hot">97</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=600208" target="_blank">600208</a></td>
+                <td>衢州发展</td>
+                <td class="num">5.30</td>
+                <td class="num"><span class="up">+2.12%</span></td>
+                <td class="rs-warm">80</td><td>73</td><td class="rs-warm">89</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=688536" target="_blank">688536</a></td>
+                <td>思瑞浦</td>
+                <td class="num">302.00</td>
+                <td class="num"><span class="up">+1.85%</span></td>
+                <td class="rs-warm">80</td><td class="rs-hot">92</td><td class="rs-hot">94</td><td class="rs-hot">97</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+            <tr>
+                <td><a class="code-link" href="../pattern-scan/?code=301169" target="_blank">301169</a></td>
+                <td>零点有数</td>
+                <td class="num">88.00</td>
+                <td class="num"><span class="up">+2.90%</span></td>
+                <td class="rs-warm">80</td><td class="rs-hot">92</td><td class="rs-hot">91</td><td class="rs-hot">96</td>
+                <td><span class="badge ds-burst">加速爆发</span></td>
+                <td><span class="sig-text">TA+1</span></td>
+            </tr>
+</tbody>
+</table>
+</div>
+
+<div class="footer">
+  每日自动扫描 · 数据来源 stock_rs_daily · 引擎: Pocket Pivot / Double Bottom / Breakout / Flat Base / TA-Lib CDL
+</div>
+</div>
+
+<script>
+// 简易表格排序
+function sortTable(col) {
+  const table = document.getElementById('stock-table');
+  const tbody = table.querySelector('tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const isNum = [false, false, true, true, true, true, true, true, false, false][col];
+  
+  rows.sort((a, b) => {
+    let va = a.cells[col].textContent.replace(/[%+\-]/g,'').trim();
+    let vb = b.cells[col].textContent.replace(/[%+\-]/g,'').trim();
+    if (isNum) { va = parseFloat(va)||0; vb = parseFloat(vb)||0; }
+    return vb > va ? 1 : vb < va ? -1 : 0;
+  });
+  
+  // 默认降序
+  if (col >= 2 && col <= 7) rows.reverse();
+  
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+// 主题切换
+document.querySelector('.theme-toggle').addEventListener('click', () => {
+  const html = document.documentElement;
+  html.dataset.theme = html.dataset.theme === 'light' ? 'dark' : 'light';
+  document.querySelector('.theme-toggle').textContent = html.dataset.theme === 'light' ? '🌙' : '☀️';
+});
+
+// 默认按 RS_250 降序
+sortTable(4);
+</script>
+</body>
+</html>

@@ -37,6 +37,13 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('date-start').value = start.toISOString().slice(0, 10);
   document.getElementById('date-end').value = end.toISOString().slice(0, 10);
 
+  // URL 参数预填股票代码 (如 ?code=600519)
+  var urlParams = new URLSearchParams(window.location.search);
+  var urlCode = urlParams.get('code');
+  if (urlCode) {
+    document.getElementById('code').value = urlCode;
+  }
+
   state.chart = echarts.init(document.getElementById('chart'));
 
   // 主题切换
@@ -116,7 +123,7 @@ function buildMaps(engines) {
   engines.forEach(function (eng) {
     state.displayNameMap[eng.name] = eng.display_name || eng.name;
     if (eng.name === 'pocket_pivot') {
-      state.colorMap[eng.name] = { color: '#E53935', symbol: 'pin', size: 15 };
+      state.colorMap[eng.name] = { color: '#FD03E7', symbol: 'pin', size: 15 };
     } else if (eng.category === 'candlestick') {
       state.colorMap[eng.name + '_bullish'] = { color: '#9C27B0', symbol: 'emptyCircle', size: 10 };
       state.colorMap[eng.name + '_bearish'] = { color: '#333333', symbol: 'emptyCircle', size: 10 };
@@ -259,7 +266,7 @@ function renderChart() {
     var sigs = signalsByIndex[idx];
     var k = ck[idx];
     var range = k.high - k.low;
-    var gap = Math.max(range * 0.25, 0.03);  // 至少 0.03 间距
+    var gap = Math.max(range * 0.50, 0.06);  // 拉开距离，避免遮盖 K 线
 
     sigs.forEach(function (sig, i) {
       var name = '';

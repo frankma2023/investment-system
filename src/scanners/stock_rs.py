@@ -284,12 +284,15 @@ if __name__ == "__main__":
         rows.append((
             row['stock_code'], str(latest_date),
             row['adj_close'], row['adj_close'],
-            row['ret_20'], row['ret_250'],
-            row['rps_20'], row['rps_250'],
+            row['ret_20'], row['ret_60'], row['ret_120'], row['ret_250'],
+            row['rps_20'], row['rps_60'], row['rps_120'], row['rps_250'],
             row['rs_line_norm'], row['amount'],
         ))
     conn.executemany(
-        "INSERT INTO stock_rs_daily (stock_code, date, close, adj_close, ret_20, ret_250, rps_20, rps_250, rs_line, amount) VALUES (?,?,?,?,?,?,?,?,?,?)",
+        """INSERT INTO stock_rs_daily
+        (stock_code, date, close, adj_close, ret_20, ret_60, ret_120, ret_250,
+         rps_20, rps_60, rps_120, rps_250, rs_line, amount)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         rows
     )
     conn.commit()
