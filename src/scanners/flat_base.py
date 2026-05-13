@@ -95,7 +95,7 @@ def detect(klines, params=None):
             bi = i - P['bb_width_window']
             if 0 <= bi < len(bb_history):
                 bb_w = bb_history[bi]
-                better = sum(1 for h in bb_history[max(0,len(bb_history)-P['bb_lookback']):] if h > bb_w)
+                better = sum(1 for h in bb_history[max(0,len(bb_history)-P['bb_lookback']):] if h < bb_w)
                 total = min(P['bb_lookback'], len(bb_history))
                 bb_p = better/total if total > 0 else 1
                 bb_ok = bb_p <= P['bb_pct_max']
