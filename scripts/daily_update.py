@@ -27,6 +27,11 @@ from datetime import datetime, date, timedelta
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(PROJECT_DIR)
 
+# 固定 Python 解释器（避免 conda 环境下 talib 缺失）
+PYTHON_EXE = r"C:\Program Files\Python312\python.exe"
+if not os.path.exists(PYTHON_EXE):
+    PYTHON_EXE = sys.executable  # 回退
+
 # ── 解析参数 ──
 SKIP_RS = "--skip-rs" in sys.argv
 TARGET_DATE = None
@@ -105,22 +110,22 @@ log(f"🐺 每日盘后更新开始 — {today_str}")
 log(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
 TASKS = [
-    ("📋 股票状态",         [sys.executable, "scripts/fetch_stock_basic.py"]),
-    ("📊 指数日K线",       [sys.executable, "scripts/fetch_index_daily_kline.py", "--start", three_days_ago, "--end", today_str]),
-    ("📈 个股日K线",       [sys.executable, "scripts/fetch_stock_daily_kline.py"]),
-    ("💰 个股基本面",      [sys.executable, "scripts/fetch_fundamental_nonfinancial.py", "--incremental", "--workers", "4"]),
-    ("📐 指数拥挤度",      [sys.executable, "src/scanners/index_crowding.py", "--date", today_str]),
-    ("🔄 融资融券(新API)", [sys.executable, "scripts/fetch_margin_daily.py"]),
-    ("💊 大盘健康度",      [sys.executable, "src/scanners/market_health.py", "--date", today_str]),
-    ("📸 大盘扫描快照",    [sys.executable, "scripts/compute_market_snapshot.py", "--date", today_str]),
+    ("📋 股票状态",         [PYTHON_EXE, "scripts/fetch_stock_basic.py"]),
+    ("📊 指数日K线",       [PYTHON_EXE, "scripts/fetch_index_daily_kline.py", "--start", three_days_ago, "--end", today_str]),
+    ("📈 个股日K线",       [PYTHON_EXE, "scripts/fetch_stock_daily_kline.py"]),
+    ("💰 个股基本面",      [PYTHON_EXE, "scripts/fetch_fundamental_nonfinancial.py", "--incremental", "--workers", "4"]),
+    ("📐 指数拥挤度",      [PYTHON_EXE, "src/scanners/index_crowding.py", "--date", today_str]),
+    ("🔄 融资融券(新API)", [PYTHON_EXE, "scripts/fetch_margin_daily.py"]),
+    ("💊 大盘健康度",      [PYTHON_EXE, "src/scanners/market_health.py", "--date", today_str]),
+    ("📸 大盘扫描快照",    [PYTHON_EXE, "scripts/compute_market_snapshot.py", "--date", today_str]),
 ]
 
 if not SKIP_RS:
-    TASKS.append(("💪 个股RS强度", [sys.executable, "src/scanners/stock_rs.py", "--date", today_str]))
-    TASKS.append(("📊 指数RS强度", [sys.executable, "src/scanners/index_rs.py", "--date", today_str]))
+    TASKS.append(("💪 个股RS强度", [PYTHON_EXE, "src/scanners/stock_rs.py", "--date", today_str]))
+    TASKS.append(("📊 指数RS强度", [PYTHON_EXE, "src/scanners/index_rs.py", "--date", today_str]))
 
 # 步骤7：双强股批量形态扫描（依赖个股RS完成）
-TASKS.append(("🔎 双强形态扫描", [sys.executable, "scripts/daily_pattern_scan.py", "--date", today_str]))
+TASKS.append(("🔎 双强形态扫描", [PYTHON_EXE, "scripts/daily_pattern_scan.py", "--date", today_str]))
 
 for label, cmd in TASKS:
     lbl, ok, elapsed, _ = run_task(label, cmd)
