@@ -425,6 +425,8 @@ def score_i(db, stock_code, target_date, p):
             score += inc_s[0]; bd['inst_change'] = {'value': '+{}'.format(delta), 'score': inc_s[0]}
         elif delta > 0:
             score += inc_s[1]; bd['inst_change'] = {'value': '+{}'.format(delta), 'score': inc_s[1]}
+        else:
+            bd['inst_change'] = {'value': '{}'.format(delta), 'score': 0}
 
     # Analyst coverage (table may not exist)
     ld = cfg.get('analyst_lookback_days', 90)
