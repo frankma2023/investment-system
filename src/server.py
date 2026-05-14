@@ -28,6 +28,7 @@ from detectors.divergence import (
 )
 from engine_registry import discover_engines, get_engine_list, run_all_engines
 from scanners.recommend import generate as generate_recommendation
+from scanners.canslim_score import score_stock as canslim_score_stock, load_params as canslim_load_params
 import numpy as np
 import talib
 
@@ -2074,6 +2075,29 @@ def _sanitize_indicators(indicators, target_len):
             arr = arr[-target_len:]  # 取尾部，与 klines_out 对齐
         result[key] = arr
     return result
+
+# ═══════════════════════════════════════════════
+# CAN SLIM 评分 API — /api/canslim-score
+# ═══════════════════════════════════════════════
+
+@app.route('/api/canslim-score', methods=['GET', 'POST', 'OPTIONS'])
+def api_canslim_score():
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    if request.method == 'POST':
+        # 保存结果到数据库
+        data = request.get_json()
+        stock_code = data.get('stock_code', '600519')
+        target_date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
+        result = canslim_score_stock(stock_code, target_date, save=True)
+        return jsonify({'saved': True, 'score': result['score'], 'grade': result['grade']})
+
+    # GET: 计算并返回评分
+    code = request.args.get('code', '600519')
+    target_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    result = canslim_score_stock(code, target_date, save=False)
+    return jsonify(result)
 
 # ═══════════════════════════════════════════════
 # CORS
