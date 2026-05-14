@@ -40,7 +40,6 @@ DB_PATH = SCRIPT_DIR.parent / "data" / "lixinger.db"
 ENV_PATH = Path.home() / ".hermes" / ".env"
 
 LIXINGER_BASE = "https://open.lixinger.com/api/cn"
-EASTMONEY_BASE = "https://datacenter-web.eastmoney.com/api/data/v1/get"
 
 DEFAULT_TIMEOUT = 60
 BATCH_DELAY = 0.8          # 每只股票间延迟（秒）
@@ -125,45 +124,6 @@ def lixinger_post(path: str, payload: dict, timeout: int = DEFAULT_TIMEOUT):
             time.sleep(2 * (attempt + 1))
     raise RuntimeError(f"请求失败 (重试3次): {url}")
 
-EASTMONEY_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-    "Referer": "https://data.eastmoney.com/",
-}
-
-def eastmoney_get(report_name: str, stock_code: str, columns: str,
-                  page_size: int = 500, max_pages: int = 5) -> list:
-    """东方财富数据查询"""
-    all_data = []
-    for page in range(1, max_pages + 1):
-        params = {
-            "reportName": report_name,
-            "columns": columns,
-            "filter": f'(SECURITY_CODE="{stock_code}")',
-            "pageNumber": page,
-            "pageSize": page_size,
-            "sortColumns": "END_DATE",
-            "sortTypes": -1,
-            "source": "WEB",
-            "client": "WEB",
-        }
-        try:
-            r = requests.get(EASTMONEY_BASE, params=params,
-                           headers=EASTMONEY_HEADERS, timeout=30)
-            d = r.json()
-            if not d.get("success"):
-                break
-            data = d.get("result", {}).get("data") or []
-            if not data:
-                break
-            all_data.extend(data)
-            if len(data) < page_size:
-                break
-        except Exception as e:
-            print(f"    [{stock_code}] 东方财富 {report_name} page={page}: {e}")
-            break
-        time.sleep(0.15)
-    return all_data
-
 # ═══════════════════════════════════════════════
 # 数据库
 # ═══════════════════════════════════════════════
@@ -172,7 +132,7 @@ CREATE_SUMMARY_SQL = """
 CREATE TABLE IF NOT EXISTS stock_institutional_holdings (
     stock_code              TEXT NOT NULL,
     date                    TEXT NOT NULL,
-    data_source             TEXT NOT NULL,     -- 'lixinger' / 'eastmoney' / 'merged'
+    data_source             TEXT NOT NULL,     -- 'lixinger'
     -- 公募基金 (理杏仁)
     fund_count              INTEGER,
     fund_holdings_total     REAL,              -- 基金持股市值合计(元)
@@ -453,112 +413,6 @@ def fetch_lixinger_float_top10(stock_code: str, start_date: str, end_date: str) 
     }
 
 # ═══════════════════════════════════════════════
-# 东方财富 数据拉取
-# ═══════════════════════════════════════════════
-
-def fetch_em_top10_holders(stock_code: str) -> dict:
-    """东方财富十大股东"""
-    COLUMNS = "SECURITY_CODE,END_DATE,HOLDER_NAME,HOLD_NUM,HOLD_NUM_RATIO,HOLDER_RANK"
-    data = eastmoney_get("RPT_F10_EH_HOLDERS", stock_code, COLUMNS, page_size=20, max_pages=2)
-    if not data:
-        return {"em_top10_holder_count": 0, "em_top10_inst_count": 0,
-                "em_top10_inst_prop": 0, "date": None, "detail": []}
-
-    # 取最新报告期
-    date_groups = defaultdict(list)
-    for r in data:
-        end_date = r.get("END_DATE", "")[:10] if r.get("END_DATE") else ""
-        if end_date:
-            date_groups[end_date].append(r)
-    if not date_groups:
-        return {"em_top10_holder_count": 0, "em_top10_inst_count": 0,
-                "em_top10_inst_prop": 0, "date": None, "detail": []}
-
-    latest_date = sorted(date_groups.keys())[-1]
-    latest = date_groups[latest_date]
-
-    INST_KEYWORDS = ["基金", "QFII", "社保", "保险", "信托", "券商", "银行", "资产管理",
-                     "投资公司", "香港中央结算", "中央汇金", "证金", "养老金", "企业年金",
-                     "私募", "资管", "理财"]
-    inst_count = 0
-    inst_prop = 0.0
-    detail = []
-
-    for r in latest:
-        name = r.get("HOLDER_NAME", "")
-        prop = float(r.get("HOLD_NUM_RATIO", 0) or 0)
-        rank = int(r.get("HOLDER_RANK", 0) or 0)
-        is_inst = any(kw in name for kw in INST_KEYWORDS) and "自然人" not in name
-        if is_inst:
-            inst_count += 1
-            inst_prop += prop
-        detail.append({
-            "holder_name": name,
-            "holdings": float(r.get("HOLD_NUM", 0) or 0),
-            "proportion": prop,
-            "holder_rank": rank,
-            "is_institution": is_inst,
-        })
-
-    return {
-        "em_top10_holder_count": len(latest),
-        "em_top10_inst_count": inst_count,
-        "em_top10_inst_prop": round(inst_prop, 2),
-        "date": latest_date,
-        "detail": detail,
-    }
-
-def fetch_em_freeholders(stock_code: str) -> dict:
-    """东方财富十大流通股东"""
-    COLUMNS = "SECURITY_CODE,END_DATE,HOLDER_NAME,HOLD_NUM,FREE_HOLDNUM_RATIO,HOLDER_RANK"
-    data = eastmoney_get("RPT_F10_EH_FREEHOLDERS", stock_code, COLUMNS, page_size=20, max_pages=2)
-    if not data:
-        return {"em_top10_float_count": 0, "em_top10_float_inst": 0,
-                "em_top10_float_inst_prop": 0, "date": None, "detail": []}
-
-    date_groups = defaultdict(list)
-    for r in data:
-        end_date = r.get("END_DATE", "")[:10] if r.get("END_DATE") else ""
-        if end_date:
-            date_groups[end_date].append(r)
-    if not date_groups:
-        return {"em_top10_float_count": 0, "em_top10_float_inst": 0,
-                "em_top10_float_inst_prop": 0, "date": None, "detail": []}
-
-    latest_date = sorted(date_groups.keys())[-1]
-    latest = date_groups[latest_date]
-
-    INST_KEYWORDS = ["基金", "QFII", "社保", "保险", "信托", "券商", "银行", "资产管理",
-                     "投资公司", "香港中央结算", "中央汇金", "证金", "养老金", "企业年金",
-                     "私募", "资管", "理财"]
-    inst_count = 0
-    inst_prop = 0.0
-    detail = []
-
-    for r in latest:
-        name = r.get("HOLDER_NAME", "")
-        prop = float(r.get("FREE_HOLDNUM_RATIO", 0) or 0)
-        rank = int(r.get("HOLDER_RANK", 0) or 0)
-        is_inst = any(kw in name for kw in INST_KEYWORDS) and "自然人" not in name
-        if is_inst:
-            inst_count += 1
-            inst_prop += prop
-        detail.append({
-            "holder_name": name,
-            "holdings": float(r.get("HOLD_NUM", 0) or 0),
-            "proportion": prop,
-            "holder_rank": rank,
-            "is_institution": is_inst,
-        })
-
-    return {
-        "em_top10_float_count": len(latest),
-        "em_top10_float_inst": inst_count,
-        "em_top10_float_inst_prop": round(inst_prop, 2),
-        "date": latest_date,
-        "detail": detail,
-    }
-
 # ═══════════════════════════════════════════════
 # 汇总 & 入库
 # ═══════════════════════════════════════════════
