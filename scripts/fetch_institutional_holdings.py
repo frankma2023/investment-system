@@ -1,19 +1,14 @@
 """
-机构持股数据全量拉取 — 理杏仁 + 东方财富 双源
+机构持股数据全量拉取 — 理杏仁
 
 数据源:
   理杏仁:
     - /api/cn/company/fund-shareholders    公募基金持股（基金粒度）
     - /api/cn/company/majority-shareholders 前十大股东（股东粒度）
     - /api/cn/company/nolimit-shareholders  前十大流通股东
-  东方财富:
-    - RPT_F10_EH_HOLDERS                    十大股东
-    - RPT_F10_EH_FREEHOLDERS                十大流通股东
 
 用法:
-  python fetch_institutional_holdings.py                        # 全量A股，双源拉取
-  python fetch_institutional_holdings.py --source lixinger      # 仅理杏仁
-  python fetch_institutional_holdings.py --source eastmoney     # 仅东方财富
+  python fetch_institutional_holdings.py                        # 全量A股
   python fetch_institutional_holdings.py --limit 200            # 前200只
   python fetch_institutional_holdings.py 600519                 # 单只股票
   python fetch_institutional_holdings.py --date 2026-05-14      # 指定截止日期
@@ -188,14 +183,6 @@ CREATE TABLE IF NOT EXISTS stock_institutional_holdings (
     -- 前十大流通机构 (理杏仁)
     top10_float_inst_count  INTEGER,
     top10_float_inst_prop   REAL,
-    -- 东方财富十大股东
-    em_top10_holder_count   INTEGER,
-    em_top10_inst_count     INTEGER,           -- 其中机构数
-    em_top10_inst_prop      REAL,              -- 机构持股占比合计
-    -- 东方财富十大流通股东
-    em_top10_float_count    INTEGER,
-    em_top10_float_inst     INTEGER,
-    em_top10_float_inst_prop REAL,
     -- 汇总
     total_inst_count        INTEGER,
     total_inst_proportion   REAL,
@@ -326,6 +313,10 @@ def fetch_lixinger_fund(stock_code: str, start_date: str, end_date: str) -> dict
             "holder_rank": r.get("marketCapRank", 0),
         })
 
+    # 归一化：理杏仁API返回的 proportion 可能为百分比(>1)或小数，统一存小数
+    if prop_sum > 1.0:
+        prop_sum = prop_sum / 100.0
+
     return {
         "fund_count": len(fund_codes),
         "fund_holdings_total": total_market_cap,
@@ -390,6 +381,10 @@ def fetch_lixinger_majority(stock_code: str, start_date: str, end_date: str) -> 
             "proportion": prop,
             "is_institution": is_inst,
         })
+
+    # 归一化：理杏仁API返回比例可能>1(百分比)，统一存小数
+    if total_inst_prop > 1.0:
+        total_inst_prop = total_inst_prop / 100.0
 
     return {
         "top10_inst_count": len(inst_names),
@@ -568,22 +563,15 @@ def fetch_em_freeholders(stock_code: str) -> dict:
 # 汇总 & 入库
 # ═══════════════════════════════════════════════
 
-def merge_results(lx_fund, lx_majority, lx_float, em_top10, em_freeholders):
+def merge_results(lx_fund, lx_majority, lx_float):
     """
-    合并双源数据。
+    合并理杏仁三源数据。
 
-    优先级规则：
-      - 公募基金：仅理杏仁（无重复风险）
-      - 前十大股东：理杏仁优先（可筛机构/自然人），东方财富为降级备份
-      - 前十大流通股东：同上
-      - 综合占比：取各源最大值，不叠加（避免双重计数）
-
-    返回值中 lx_* 和 em_* 字段为分源原始值，
-    top10_inst_* / total_inst_* 为首选源合并值。
+    综合占比取各源最大值（不叠加，防止双重计数）。
     """
     result = {}
 
-    # ── 理杏仁数据（首选源）──
+    # ── 理杏仁数据 ──
     if lx_fund:
         result.update({k: lx_fund[k] for k in
                        ["fund_count", "fund_holdings_total", "fund_proportion_sum"]})
@@ -593,20 +581,15 @@ def merge_results(lx_fund, lx_majority, lx_float, em_top10, em_freeholders):
     if lx_float:
         result.update({k: lx_float[k] for k in
                        ["top10_float_inst_count", "top10_float_inst_prop"]})
-    # 东方财富
-    if em_top10:
-        result.update({k: em_top10[k] for k in
-                       ["em_top10_holder_count", "em_top10_inst_count", "em_top10_inst_prop"]})
-    if em_freeholders:
-        result.update({k: em_freeholders[k] for k in
-                       ["em_top10_float_count", "em_top10_float_inst", "em_top10_float_inst_prop"]})
+    # 综合估算（归一化）
+    def norm_prop(v):
+        return v / 100.0 if v > 1.0 else v
 
-    # 综合估算
     props = []
-    for v in [lx_fund, lx_majority, em_top10]:
+    for v in [lx_fund, lx_majority]:
         if v:
-            p = v.get("fund_proportion_sum") or v.get("top10_inst_proportion") or v.get("em_top10_inst_prop") or 0
-            props.append(p)
+            p = v.get("fund_proportion_sum") or v.get("top10_inst_proportion") or 0
+            props.append(norm_prop(p))
     result["total_inst_proportion"] = max(props) if props else 0
     result["total_inst_count"] = max(
         lx_fund.get("fund_count", 0) if lx_fund else 0,
@@ -616,27 +599,24 @@ def merge_results(lx_fund, lx_majority, lx_float, em_top10, em_freeholders):
 
     # 最新日期
     dates = []
-    for v in [lx_fund, lx_majority, lx_float, em_top10, em_freeholders]:
+    for v in [lx_fund, lx_majority, lx_float]:
         if v and v.get("date"):
             dates.append(v["date"])
     result["date"] = max(dates) if dates else date.today().strftime("%Y-%m-%d")
 
     return result
 
-def save_summary(stock_code: str, date_str: str, result: dict,
-                 data_source: str = "merged"):
+def save_summary(stock_code: str, date_str: str, result: dict):
     conn = sqlite3.connect(str(DB_PATH))
     conn.execute("""
         INSERT OR REPLACE INTO stock_institutional_holdings
         (stock_code, date, data_source, fund_count, fund_holdings_total,
          fund_proportion_sum, top10_inst_count, top10_inst_proportion,
          top10_float_inst_count, top10_float_inst_prop,
-         em_top10_holder_count, em_top10_inst_count, em_top10_inst_prop,
-         em_top10_float_count, em_top10_float_inst, em_top10_float_inst_prop,
          total_inst_count, total_inst_proportion, org_categories_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, 'lixinger', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        stock_code, date_str, data_source,
+        stock_code, date_str,
         result.get("fund_count", 0),
         result.get("fund_holdings_total", 0),
         result.get("fund_proportion_sum", 0),
@@ -644,12 +624,6 @@ def save_summary(stock_code: str, date_str: str, result: dict,
         result.get("top10_inst_proportion", 0),
         result.get("top10_float_inst_count", 0),
         result.get("top10_float_inst_prop", 0),
-        result.get("em_top10_holder_count", 0),
-        result.get("em_top10_inst_count", 0),
-        result.get("em_top10_inst_prop", 0),
-        result.get("em_top10_float_count", 0),
-        result.get("em_top10_float_inst", 0),
-        result.get("em_top10_float_inst_prop", 0),
         result.get("total_inst_count", 0),
         result.get("total_inst_proportion", 0),
         json.dumps(result.get("categories", {}), ensure_ascii=False),
@@ -685,62 +659,35 @@ def save_detail(stock_code: str, date_str: str, source: str,
 # 单只 & 批量
 # ═══════════════════════════════════════════════
 
-def fetch_one_stock(stock_code: str, start_date: str, end_date: str,
-                    sources: set):
+def fetch_one_stock(stock_code: str, start_date: str, end_date: str):
     """
     拉取单只股票的全部机构持股数据。
-
-    数据源优先级（避免重复计算）：
-      1. 公募基金持股 → 仅理杏仁（东方财富无此数据）
-      2. 前十大股东     → 理杏仁优先（shareholderCategory 可筛机构/自然人），
-                         失败则降级到东方财富
-      3. 前十大流通股东  → 同上，理杏仁优先，东方财富降级
+    数据源：理杏仁（公募基金 + 前十大股东 + 前十大流通股东）
     """
     result = {}
     all_details = []
-    use_lx = "lixinger" in sources
-    use_em = "eastmoney" in sources
 
-    # ── ① 公募基金持股 — 仅理杏仁 ──
-    lx_fund = fetch_lixinger_fund(stock_code, start_date, end_date) if use_lx else None
+    # ① 公募基金持股
+    lx_fund = fetch_lixinger_fund(stock_code, start_date, end_date)
     if lx_fund and lx_fund.get("detail"):
         all_details.append(("lixinger", "fund", lx_fund["detail"]))
 
-    # ── ② 前十大股东 — 理杏仁优先，东方财富降级 ──
-    lx_majority = None
-    em_top10 = None
-    if use_lx:
-        lx_majority = fetch_lixinger_majority(stock_code, start_date, end_date)
-    # 理杏仁失败或无数据 → 尝试东方财富
-    if (not lx_majority or not lx_majority.get("top10_inst_count")) and use_em:
-        em_top10 = fetch_em_top10_holders(stock_code)
-    else:
-        em_top10 = None  # 理杏仁成功，不调东方财富（节省API调用）
+    # ② 前十大股东
+    lx_majority = fetch_lixinger_majority(stock_code, start_date, end_date)
     if lx_majority and lx_majority.get("detail"):
         all_details.append(("lixinger", "majority", lx_majority["detail"]))
-    elif em_top10 and em_top10.get("detail"):
-        all_details.append(("eastmoney", "majority", em_top10["detail"]))
 
-    # ── ③ 前十大流通股东 — 理杏仁优先，东方财富降级 ──
-    lx_float = None
-    em_freeholders = None
-    if use_lx:
-        lx_float = fetch_lixinger_float_top10(stock_code, start_date, end_date)
-    if (not lx_float or not lx_float.get("top10_float_inst_count")) and use_em:
-        em_freeholders = fetch_em_freeholders(stock_code)
-    else:
-        em_freeholders = None
+    # ③ 前十大流通股东
+    lx_float = fetch_lixinger_float_top10(stock_code, start_date, end_date)
     if lx_float and lx_float.get("detail"):
         all_details.append(("lixinger", "freeholders", lx_float["detail"]))
-    elif em_freeholders and em_freeholders.get("detail"):
-        all_details.append(("eastmoney", "freeholders", em_freeholders["detail"]))
 
-    result = merge_results(lx_fund, lx_majority, lx_float, em_top10, em_freeholders)
+    result = merge_results(lx_fund, lx_majority, lx_float)
     result["_details"] = all_details
     return result
 
 def batch_fetch(stock_list: list, start_date: str, end_date: str,
-                sources: set, delay: float = BATCH_DELAY):
+                delay: float = BATCH_DELAY):
     """批量拉取全量A股"""
     total = len(stock_list)
     init_db()
@@ -748,18 +695,14 @@ def batch_fetch(stock_list: list, start_date: str, end_date: str,
     for i, (code, name) in enumerate(stock_list):
         print(f"[{i+1}/{total}] {code} {name}", end="", flush=True)
         try:
-            r = fetch_one_stock(code, start_date, end_date, sources)
-            # 入库汇总
-            save_summary(code, r.get("date", end_date), r, "merged")
-            # 入库明细
+            r = fetch_one_stock(code, start_date, end_date)
+            save_summary(code, r.get("date", end_date), r)
             for src, htype, details in r.get("_details", []):
                 save_detail(code, r.get("date", end_date), src, htype, details)
             # 输出摘要
             print(f"  基金{r.get('fund_count',0)}家 "
                   f"十大机构{r.get('top10_inst_count',0)}家 "
-                  f"占比{r.get('total_inst_proportion',0)*100:.1f}% "
-                  f"| EM:{r.get('em_top10_inst_count',0)}家 "
-                  f"浮{r.get('em_top10_float_inst',0)}家")
+                  f"占比{r.get('total_inst_proportion',0)*100:.1f}%")
         except Exception as e:
             print(f"  ERROR: {e}")
 
@@ -776,17 +719,11 @@ def main():
     end_date = date.today().strftime("%Y-%m-%d")
     start_date = (date.today() - timedelta(days=365)).strftime("%Y-%m-%d")
     limit = None
-    sources = {"lixinger", "eastmoney"}
 
     i = 0
     while i < len(args):
         a = args[i]
-        if a == "--source":
-            sources = {args[i+1]}
-            if args[i+1] not in ("lixinger", "eastmoney", "all"):
-                sources = {"lixinger", "eastmoney"}
-            i += 2
-        elif a == "--limit":
+        if a == "--limit":
             limit = int(args[i+1])
             i += 2
         elif a == "--date":
@@ -802,15 +739,14 @@ def main():
     if stock_code:
         # 单只模式
         print(f"单只: {stock_code}  范围: {start_date} ~ {end_date}")
-        r = fetch_one_stock(stock_code, start_date, end_date, sources)
-        print(f"\n{'='*50}")
-        print(f"股票: {stock_code}")
-        print(f"数据日期: {r.get('date')}")
-        print(f"  理杏仁-基金: {r.get('fund_count',0)}家, 占比{r.get('fund_proportion_sum',0)*100:.2f}%")
-        print(f"  理杏仁-十大机构: {r.get('top10_inst_count',0)}家, 占比{r.get('top10_inst_proportion',0)*100:.2f}%")
-        print(f"  东方财富-十大机构: {r.get('em_top10_inst_count',0)}家, 占比{r.get('em_top10_inst_prop',0):.1f}%")
-        print(f"  东方财富-流通机构: {r.get('em_top10_float_inst',0)}家, 占比{r.get('em_top10_float_inst_prop',0):.1f}%")
-        print(f"  综合机构占比: {r.get('total_inst_proportion',0)*100:.2f}%")
+        r = fetch_one_stock(stock_code, start_date, end_date)
+        print("\n" + "="*50)
+        print("Stock: %s" % stock_code)
+        print("Date: %s" % r.get('date'))
+        print("  Fund: %d, Prop: %.2f%%" % (r.get('fund_count',0), r.get('fund_proportion_sum',0)*100))
+        print("  Top10 Inst: %d, Prop: %.2f%%" % (r.get('top10_inst_count',0), r.get('top10_inst_proportion',0)*100))
+        print("  Float Inst: %d, Prop: %.2f%%" % (r.get('top10_float_inst_count',0), r.get('top10_float_inst_prop',0)*100))
+        print("  Total Prop: %.2f%%" % (r.get('total_inst_proportion',0)*100))
         cats = r.get("categories", {})
         if cats:
             print(f"  机构类别分布:")
@@ -820,11 +756,10 @@ def main():
 
     # 批量模式
     stocks = get_all_stocks(limit)
-    print(f"全量A股机构持股拉取: {len(stocks)} 只")
-    print(f"数据源: {sources}")
-    print(f"时间范围: {start_date} ~ {end_date}")
+    print("A股机构持股拉取: %d 只" % len(stocks))
+    print("Time: %s ~ %s" % (start_date, end_date))
     print()
-    batch_fetch(stocks, start_date, end_date, sources)
+    batch_fetch(stocks, start_date, end_date)
 
 if __name__ == "__main__":
     main()
