@@ -113,7 +113,7 @@ def score_a(db, stock_code, target_date, p):
     # 3Y CAGR
     lat = anns[0].get('net_profit') or 0
     old = anns[3].get('net_profit') if len(anns) > 3 else (anns[-1].get('net_profit') or 0)
-    cagr = ((lat / old) ** (1/3) - 1) * 100 if old > 0 else 0
+    cagr = ((lat / old) ** (1.0/3.0) - 1) * 100 if (old > 0 and lat > 0) else 0
     tiers = cfg.get('eps_cagr_3y_tiers', [25, 15, 5])
     scs = cfg.get('eps_cagr_scores', [9, 6, 3])
     cagr_sc = 0
