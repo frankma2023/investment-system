@@ -176,7 +176,6 @@ function saveConfig() {
   document.querySelectorAll('.param-card-bd input').forEach(function(inp) {
     var path = inp.dataset.path;
     var val = inp.value;
-    // Try to parse as array if contains comma
     if (val.indexOf(',') >= 0) {
       val = val.split(',').map(function(s) { var n = parseFloat(s.trim()); return isNaN(n) ? s.trim() : n; });
     } else {
@@ -192,10 +191,11 @@ function saveConfig() {
     obj[keys[keys.length - 1]] = val;
   });
 
+  // 直接发送 config dict，不用 wrapper
   fetch(API_CFG, {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({signal_type: 'canslim_scorecard', config: config})
+    headers: {'Content-Type': 'text/plain'},
+    body: JSON.stringify(config)
   })
   .then(function(r) { return r.json(); })
   .then(function() {
@@ -208,8 +208,9 @@ function saveConfig() {
 function loadConfig() {
   fetch(API_CFG)
     .then(function(r) { return r.json(); })
-    .then(function(d) {
-      var cfg = (d && d.config) ? d.config : {};
+    .then(function(cfg) {
+      // API返回的就是配置dict，直接用
+      if (!cfg || Object.keys(cfg).length === 0) return;
       var sections = {
         'c': [['c_current_earnings.eps_yoy_tiers', 'EPS增速阈值', '25,18,10'],
               ['c_current_earnings.eps_yoy_scores', '对应得分', '12,8,5'],

@@ -22,55 +22,53 @@ a_annual_earnings:
 
 n_new:
   high_lookback_days:     5                   # 回溯天数
-  decay_factors:          [1.0, 0.8, 0.6, 0.4, 0.4]  # 第1~5天衰减系数
+  decay_factors:          [1.0, 0.8, 0.6, 0.4, 0.4]
   engine_scores:
-    breakout:             5                   # 标准突破基础分
-    pocket_pivot:         4                   # 口袋支点
-    double_bottom:        3                   # 双重底
-    flat_base:            3                   # 扁平基部
-    cdl_bullish:          2                   # K线看涨(每个)
-    cdl_bullish_max:      4                   # CDL看涨累计上限
-    talib_bullish:        1                   # TA-Lib看涨(每个)
-    talib_bullish_max:    3                   # TA-Lib累计上限
-  high52_tiers:           [-5, -15]          # 距52周高点阈值(%): 5%/15%
-  high52_scores:          [7, 5]             # 对应得分
+    breakout:             5
+    pocket_pivot:         4
+    double_bottom:        3
+    flat_base:            3
+    cdl_bullish:          2
+    cdl_bullish_max:      4
+    talib_bullish:        1
+    talib_bullish_max:    3
+  high52_tiers:           [-5, -15]
+  high52_scores:          [7, 5]
 
 s_supply_demand:
   market_cap_tiers:       [50, 200, 500]     # 流通市值分档(亿)
   market_cap_scores:      [4, 2, 1]          # 对应得分
-  vol_ratio_tiers:        [1.5, 1.2]         # 5日均量/50日均量
-  vol_ratio_scores:       [3, 2]             # 对应得分
-  buyback_ratio_tiers:    [1.0, 0.5]         # 回购/总市值阈值(%)
-  buyback_scores:         [2, 1]             # 对应得分
+  vol_ratio_tiers:        [1.5, 1.2]
+  vol_ratio_scores:       [3, 2]
+  buyback_ratio_tiers:    [1.0, 0.5]
+  buyback_scores:         [2, 1]
 
 l_leader:
-  rs250_tiers:            [95, 90, 80, 70]   # RS_250阈值
-  rs250_scores:           [11, 9, 6, 3]      # 对应得分
-  rs_momentum_score:      2                   # RS加速(RS20>RS60>RS120)加分
-  rs_momentum_penalty:    -2                  # RS减速扣分
-  industry_rs_threshold:  80                  # 行业RS阈值(%)
-  industry_rs_score_high: 5                   # 行业RS≥80加分
-  industry_rs_score_mid:  2                   # 行业RS 70~79加分
-  excess_return_threshold: 5                  # 20日超额收益阈值(%)
-  excess_return_scores:   [3, 1]             # 超额收益得分
+  rs250_tiers:            [95, 90, 80, 70]
+  rs250_scores:           [11, 9, 6, 3]
+  rs_momentum_score:      2
+  rs_momentum_penalty:    -2
+  industry_rs_threshold:  80
+  industry_rs_score_high: 5
+  industry_rs_score_mid:  2
+  excess_return_threshold: 5
+  excess_return_scores:   [3, 1]
 
 i_institutional:
-  inst_holding_tiers:     [15, 5, 1]         # 机构持股/总股本阈值(%)
-  inst_holding_scores:    [5, 3, 1]          # 对应得分
-  inst_count_increase:    10                  # 机构数增加≥此值额外加分
-  inst_count_score:       [5, 2]             # [增加≥10, 增加1~9]加分
-  analyst_coverage_tiers: [3, 1]             # 研报覆盖机构数
-  analyst_coverage_score: 3                   # 研报加分
-  first_coverage_score:   2                   # 首次覆盖加分
-  rating_upgrade_score:   1                   # 评级上调加分
-  analyst_lookback_days:  90                  # 研报回溯天数
-  debt_ratio_warning:     60                  # 负债率>此值警告(%)
-  debt_ratio_ok:           2                  # 负债率<30%加分
-  debt_ratio_penalty:     -2                  # 负债率>60%扣分
+  inst_holding_tiers:     [15, 5, 1]
+  inst_holding_scores:    [5, 3, 1]
+  inst_count_increase:    10
+  inst_count_score:       [5, 2]
+  analyst_coverage_tiers: [3, 1]
+  analyst_coverage_score: 3
+  first_coverage_score:   2
+  rating_upgrade_score:   1
+  analyst_lookback_days:  90
+  debt_ratio_warning:     60
+  debt_ratio_ok:           2
+  debt_ratio_penalty:     -2
 
-# 仓位管理因子(M): 不参与评分，仅作仓位参考
 m_market:
-  health_strong:          70                  # 大盘健康度≥此值→满仓
-  health_neutral:         50                  # ≥此值→七成仓
-  health_weak:            30                  # ≥此值→半仓
-  # <30 → 三成仓或空仓
+  health_strong:          70
+  health_neutral:         50
+  health_weak:            30

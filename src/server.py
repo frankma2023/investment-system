@@ -197,12 +197,12 @@ def _parse_yaml_val(s):
     except: return s
 
 def save_config(signal_type, raw_yaml):
-    """Save raw YAML string to config file.
-    Preserves existing location: config/market/ → config/ → default config/market/
+    """Save config to YAML file. Accepts YAML or JSON, always writes YAML.
+    Preserves existing location: config/ → config/market/ → default config/market/
     """
     candidates = [
-        os.path.join(CONFIG_DIR, f'{signal_type}.yaml'),           # config/market/
-        os.path.join(PROJECT_DIR, 'config', f'{signal_type}.yaml'), # config/
+        os.path.join(PROJECT_DIR, 'config', f'{signal_type}.yaml'),   # config/
+        os.path.join(CONFIG_DIR, f'{signal_type}.yaml'),               # config/market/
     ]
     path = None
     for p in candidates:
@@ -210,7 +210,25 @@ def save_config(signal_type, raw_yaml):
             path = p
             break
     if not path:
-        path = candidates[0]  # default: config/market/
+        # New file: prefer config/ for non-market types
+        if signal_type in ('canslim_scorecard',):
+            path = candidates[0]  # config/
+        else:
+            path = candidates[1]  # config/market/
+
+    # If the content is JSON, convert to YAML
+    content = raw_yaml.strip()
+    if content.startswith('{') or content.startswith('['):
+        try:
+            data = json.loads(content)
+            # If frontend wrapped in {signal_type: ...}, unwrap
+            if isinstance(data, dict) and signal_type in data:
+                data = data[signal_type]
+            if HAS_YAML:
+                raw_yaml = yaml.dump(data, allow_unicode=True, default_flow_style=False, sort_keys=False)
+        except json.JSONDecodeError:
+            pass  # Not valid JSON, keep as-is
+
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
         f.write(raw_yaml)
