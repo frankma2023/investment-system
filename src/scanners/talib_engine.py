@@ -196,8 +196,8 @@ def detect(klines, indicators=None):
         if widths:
             current_width = (bb_upper[n-1] - bb_lower[n-1]) / bb_middle[n-1]
             widths_sorted = sorted(widths)
-            # 当前带宽是否在历史最低10%
-            pct_rank = sum(1 for w in widths_sorted if w > current_width) / len(widths)
+            # 当前带宽是否在历史最低10%（收缩到极致）
+            pct_rank = sum(1 for w in widths_sorted if w < current_width) / len(widths)
 
             if pct_rank < 0.10:
                 signals.append({

@@ -124,8 +124,8 @@ if not SKIP_RS:
     TASKS.append(("💪 个股RS强度", [PYTHON_EXE, "src/scanners/stock_rs.py", "--date", today_str]))
     TASKS.append(("📊 指数RS强度", [PYTHON_EXE, "src/scanners/index_rs.py", "--date", today_str]))
 
-# 步骤7：双强股批量形态扫描（依赖个股RS完成）
-TASKS.append(("🔎 双强形态扫描", [PYTHON_EXE, "scripts/daily_pattern_scan.py", "--date", today_str]))
+# 步骤7：全A股形态扫描（依赖个股RS完成，每日执行）
+TASKS.append(("🔎 全A股形态扫描", [PYTHON_EXE, "scripts/daily_pattern_scan.py", "--date", today_str, "--all"]))
 
 for label, cmd in TASKS:
     lbl, ok, elapsed, _ = run_task(label, cmd)

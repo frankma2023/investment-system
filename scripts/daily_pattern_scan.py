@@ -31,39 +31,67 @@ BURST_RPS_20 = 95
 MIN_AMOUNT = 50_000_000  # 5000万
 
 
-def get_candidates(date_str, top_n=None):
-    """查询双强股票列表"""
+def get_candidates(date_str, top_n=None, all_stocks=False):
+    """查询候选股票列表。
+    all_stocks=False: 仅双强/稳健龙头/加速爆发
+    all_stocks=True:  全A股（排除ST/市值<5000万），但仍标注 RS 类型
+    """
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
 
-    query = """
-        SELECT r.stock_code, b.name, r.close, r.rps_20, r.rps_60, r.rps_120, r.rps_250,
-               rs_line, r.amount,
-               CASE
-                   WHEN r.rps_250>=? AND r.rps_20>=? AND r.rps_250>=? AND r.rps_20>=?
-                       THEN '双强'
-                   WHEN r.rps_250>=? AND r.rps_20>=? THEN '稳健龙头'
-                   WHEN r.rps_250>=? AND r.rps_20>=? THEN '加速爆发'
-               END as ds_type
-        FROM stock_rs_daily r
-        JOIN stock_basic b ON r.stock_code = b.stock_code
-        WHERE r.date = ?
-          AND ((r.rps_250 >= ? AND r.rps_20 >= ?) OR (r.rps_250 >= ? AND r.rps_20 >= ?))
-          AND b.listing_status = 'normally_listed'
-          AND b.name NOT LIKE '%ST%'
-          AND b.name NOT LIKE '%*ST%'
-          AND r.amount >= ?
-        ORDER BY r.rps_250 DESC, r.rps_20 DESC
+    ds_case = """
+        CASE
+            WHEN r.rps_250>=? AND r.rps_20>=? AND r.rps_250>=? AND r.rps_20>=?
+                THEN '双强'
+            WHEN r.rps_250>=? AND r.rps_20>=? THEN '稳健龙头'
+            WHEN r.rps_250>=? AND r.rps_20>=? THEN '加速爆发'
+        END as ds_type
     """
 
-    params = (
-        ROBUST_RPS_250, ROBUST_RPS_20, BURST_RPS_250, BURST_RPS_20,
-        ROBUST_RPS_250, ROBUST_RPS_20,
-        BURST_RPS_250, BURST_RPS_20,
-        date_str,
-        ROBUST_RPS_250, ROBUST_RPS_20, BURST_RPS_250, BURST_RPS_20,
-        MIN_AMOUNT
-    )
+    if all_stocks:
+        query = f"""
+            SELECT r.stock_code, b.name, r.close, r.rps_20, r.rps_60, r.rps_120, r.rps_250,
+                   rs_line, r.amount,
+                   {ds_case}
+            FROM stock_rs_daily r
+            JOIN stock_basic b ON r.stock_code = b.stock_code
+            WHERE r.date = ?
+              AND b.listing_status = 'normally_listed'
+              AND b.name NOT LIKE '%ST%'
+              AND b.name NOT LIKE '%*ST%'
+              AND r.amount >= ?
+            ORDER BY r.rps_250 DESC, r.rps_20 DESC
+        """
+        params = (
+            ROBUST_RPS_250, ROBUST_RPS_20, BURST_RPS_250, BURST_RPS_20,
+            ROBUST_RPS_250, ROBUST_RPS_20,
+            BURST_RPS_250, BURST_RPS_20,
+            date_str,
+            MIN_AMOUNT
+        )
+    else:
+        query = f"""
+            SELECT r.stock_code, b.name, r.close, r.rps_20, r.rps_60, r.rps_120, r.rps_250,
+                   rs_line, r.amount,
+                   {ds_case}
+            FROM stock_rs_daily r
+            JOIN stock_basic b ON r.stock_code = b.stock_code
+            WHERE r.date = ?
+              AND ((r.rps_250 >= ? AND r.rps_20 >= ?) OR (r.rps_250 >= ? AND r.rps_20 >= ?))
+              AND b.listing_status = 'normally_listed'
+              AND b.name NOT LIKE '%ST%'
+              AND b.name NOT LIKE '%*ST%'
+              AND r.amount >= ?
+            ORDER BY r.rps_250 DESC, r.rps_20 DESC
+        """
+        params = (
+            ROBUST_RPS_250, ROBUST_RPS_20, BURST_RPS_250, BURST_RPS_20,
+            ROBUST_RPS_250, ROBUST_RPS_20,
+            BURST_RPS_250, BURST_RPS_20,
+            date_str,
+            ROBUST_RPS_250, ROBUST_RPS_20, BURST_RPS_250, BURST_RPS_20,
+            MIN_AMOUNT
+        )
 
     rows = conn.execute(query, params).fetchall()
     conn.close()
@@ -137,48 +165,43 @@ def scan_stock(code, date_str):
 
 
 def format_signal_summary(signals):
-    """将信号列表压缩为一行文本"""
+    """将信号列表展开为完整描述，多信号用 <br> 分隔"""
     if not signals:
         return '—'
 
-    by_source = {}
-    for s in signals:
-        src = s['source']
-        tp = s.get('type', 'bullish')
-        if src not in by_source:
-            by_source[src] = {'bullish': 0, 'bearish': 0}
-        by_source[src][tp] += 1
+    source_names = {
+        'cdl': 'K线形态', 'talib': 'TA-Lib', 'pocket_pivot': '口袋支点',
+        'double_bottom': '双重底', 'breakout': '标准突破', 'flat_base': '扁平基部'
+    }
 
     parts = []
-    # 顺序：自研形态在前，指标/cdl在后
-    order = ['pocket_pivot', 'double_bottom', 'breakout', 'flat_base', 'cdl', 'talib']
-    labels = {
-        'pocket_pivot': 'PP', 'double_bottom': 'DB', 'breakout': 'BK',
-        'flat_base': 'FB', 'cdl': 'CDL', 'talib': 'TA'
-    }
-    for src in order:
-        if src in by_source:
-            counts = by_source[src]
-            label = labels.get(src, src)
-            if counts['bullish'] > 0 and counts['bearish'] > 0:
-                parts.append('%s+%d-%d' % (label, counts['bullish'], counts['bearish']))
-            elif counts['bullish'] > 0:
-                parts.append('%s+%d' % (label, counts['bullish']))
-            elif counts['bearish'] > 0:
-                parts.append('%s-%d' % (label, counts['bearish']))
+    for s in signals:
+        src = source_names.get(s['source'], s['source'])
+        tp = '看跌' if s.get('type') == 'bearish' else '看涨'
+        desc = ''
+        det = s.get('details', {})
+        if det:
+            desc = det.get('cdl_name') or det.get('description') or det.get('signal_type') or ''
+        if desc:
+            parts.append('%s·%s（%s）' % (src, tp, desc))
+        else:
+            parts.append('%s·%s' % (src, tp))
 
-    return ' '.join(parts) if parts else '—'
+    return '<br>'.join(parts)
 
 
-def generate_html(candidates, date_str, elapsed):
+def generate_html(candidates, date_str, elapsed, all_stocks=False):
     """生成静态HTML看板"""
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    title = '全市场股票形态扫描'
+    subtitle = '—— 双强精选' if not all_stocks else '—— 全量扫描'
 
     rows_html = ''
     for i, c in enumerate(candidates):
         code = c['stock_code']
         name = c['name']
-        ds = c['ds_type']
+        ds = c['ds_type'] or ''
         ds_badge = ''
         if ds == '双强':
             ds_badge = '<span class="badge ds-double">双强</span>'
@@ -186,6 +209,8 @@ def generate_html(candidates, date_str, elapsed):
             ds_badge = '<span class="badge ds-robust">稳健龙头</span>'
         elif ds == '加速爆发':
             ds_badge = '<span class="badge ds-burst">加速爆发</span>'
+        else:
+            ds_badge = '<span class="badge">—</span>'
 
         # RS 值着色
         def rs_td(val):
@@ -199,16 +224,16 @@ def generate_html(candidates, date_str, elapsed):
         chg_cls = 'up' if change > 0 else 'down' if change < 0 else ''
         chg_html = '<span class="%s">%+.2f%%</span>' % (chg_cls, change)
 
+        signals = c.get('signals', [])
         signal_txt = c.get('signal_summary', '—')
 
-        # 信号摘要：如果有具体信号类型，高亮显示
-        if signal_txt != '—' and '+' in signal_txt:
+        if signals:
             signal_html = '<span class="sig-text">%s</span>' % signal_txt
         else:
-            signal_html = '<span class="sig-none">%s</span>' % signal_txt
+            signal_html = '<span class="sig-none">—</span>'
 
         rows_html += '''
-            <tr>
+            <tr data-ds="%s">
                 <td><a class="code-link" href="../pattern-scan/?code=%s" target="_blank">%s</a></td>
                 <td>%s</td>
                 <td class="num">%.2f</td>
@@ -217,7 +242,7 @@ def generate_html(candidates, date_str, elapsed):
                 <td>%s</td>
                 <td>%s</td>
             </tr>''' % (
-            code, code, name, c['close'], chg_html,
+            ds, code, code, name, c['close'], chg_html,
             rs_td(c['rps_250']), rs_td(c['rps_120']),
             rs_td(c['rps_60']), rs_td(c['rps_20']),
             ds_badge, signal_html
@@ -240,12 +265,24 @@ body { font-family: var(--font-display); }
 .top-bar h1 { font-size:1.1rem; margin:0; }
 .top-bar .meta { font-size:0.65rem; color:var(--text-tertiary); }
 .table-wrap { background:var(--card-bg); border-radius:18px; padding:10px; box-shadow:0 1px 6px rgba(0,0,0,0.04); overflow-x:auto; }
-table { width:100%; border-collapse:collapse; font-size:0.7rem; }
-th { padding:8px 6px; text-align:left; font-weight:700; color:var(--text-secondary); font-size:0.6rem; border-bottom:2px solid var(--divider); white-space:nowrap; position:sticky; top:0; background:var(--card-bg); cursor:pointer; }
+table { width:100%; border-collapse:collapse; font-size:0.7rem; table-layout:fixed; }
+#stock-table th:nth-child(1),
+#stock-table th:nth-child(2),
+#stock-table th:nth-child(3),
+#stock-table th:nth-child(4),
+#stock-table th:nth-child(5),
+#stock-table th:nth-child(6),
+#stock-table th:nth-child(7),
+#stock-table th:nth-child(8),
+#stock-table th:nth-child(9) { width:85px; }
+th { padding:8px 8px; text-align:right; font-weight:700; color:var(--text-secondary); font-size:0.6rem; border-bottom:2px solid var(--divider); white-space:nowrap; position:sticky; top:0; background:var(--card-bg); cursor:pointer; }
 th:hover { color:var(--color-accent); }
-td { padding:6px; border-bottom:1px solid var(--divider); white-space:nowrap; }
+td { padding:6px 8px; border-bottom:1px solid var(--divider); white-space:nowrap; text-align:right; }
 tr:hover { background:var(--color-accent-subtle); }
-.num { text-align:right; }
+#stock-table th:nth-child(10) { text-align:center; width:auto; }
+#stock-table td:nth-child(10) { text-align:left; padding-left:10px; width:auto; white-space:normal; }
+.num { font-variant-numeric:tabular-nums; }
+.num span { font-variant-numeric:tabular-nums; }
 .code-link { color:var(--color-accent); font-weight:700; text-decoration:none; }
 .code-link:hover { text-decoration:underline; }
 .up { color:#E53935; font-weight:700; }
@@ -265,12 +302,25 @@ tr:hover { background:var(--color-accent-subtle); }
 .nav-dropdown-menu a:hover { background:var(--color-accent-subtle); color:var(--color-accent); }
 .nav-dropdown-menu a.active { color:var(--color-accent); font-weight:700; }
 .footer { text-align:center; padding:16px; font-size:0.6rem; color:var(--text-tertiary); }
+.filter-bar { display:flex; gap:6px; align-items:center; padding:8px 0; margin-bottom:6px; }
+.filter-bar .filter-label { font-size:0.62rem; font-weight:600; color:var(--text-tertiary); }
+.filter-bar .filter-btn { padding:3px 10px; border:1px solid var(--divider); border-radius:8px; background:var(--card-bg); color:var(--text-secondary); font-size:0.62rem; cursor:pointer; }
+.filter-bar .filter-btn:hover { border-color:var(--color-accent); color:var(--color-accent); }
+.filter-bar .filter-btn.active { background:var(--color-accent); color:#FFF; border-color:var(--color-accent); font-weight:700; }
+.pager-bar { display:flex; gap:6px; align-items:center; padding:6px 0; font-size:0.62rem; color:var(--text-secondary); }
+.pager-bar .pager-info { margin-right:8px; color:var(--text-tertiary); }
+.pager-bar .pager-btn { padding:2px 8px; border:1px solid var(--divider); border-radius:6px; background:var(--card-bg); color:var(--text-secondary); cursor:pointer; font-size:0.6rem; }
+.pager-bar .pager-btn:hover { border-color:var(--color-accent); color:var(--color-accent); }
+.pager-bar .pager-btn:disabled { opacity:0.3; cursor:default; }
+.pager-bar .pager-cur { font-weight:700; min-width:50px; text-align:center; }
+.pager-bar .pager-label { font-size:0.58rem; color:var(--text-tertiary); }
+.pager-bar .pager-size { padding:2px 4px; border:1px solid var(--divider); border-radius:6px; background:var(--card-bg); color:var(--text-secondary); font-size:0.6rem; }
 </style>
 </head>
 <body>
 <div class="app-container">
 <nav class="top-nav">
-  <div class="nav-brand"><span class="nav-fox">📋</span><span>每日双强形态扫描</span></div>
+  <div class="nav-brand"><span class="nav-fox">📋</span><span>全市场股票形态扫描</span></div>
   <div class="nav-links">
     <a href="../" class="nav-item">🏠 看板</a>
     <div class="nav-dropdown"><a href="#" class="nav-item">回测 ▾</a><div class="nav-dropdown-menu">
@@ -289,11 +339,44 @@ tr:hover { background:var(--color-accent-subtle); }
 
 <div class="top-bar">
   <div>
-    <h1>📋 双强股形态扫描 <span style="font-size:0.65rem;font-weight:400;color:var(--text-tertiary)">—— 稳健龙头 + 加速爆发</span></h1>
+    <h1>📋 ''' + title + ''' <span style="font-size:0.65rem;font-weight:400;color:var(--text-tertiary)">''' + subtitle + '''</span></h1>
   </div>
   <div class="meta">
     扫描日期: ''' + date_str + ''' | 股票数: ''' + str(len(candidates)) + ''' | 耗时: ''' + str(round(elapsed, 1)) + '''s | 生成: ''' + now + '''
   </div>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-label">RS类型：</span>
+  <button class="filter-btn active" onclick="filterDS('all')">全部</button>
+  <button class="filter-btn" onclick="filterDS('双强')">双强</button>
+  <button class="filter-btn" onclick="filterDS('稳健龙头')">稳健龙头</button>
+  <button class="filter-btn" onclick="filterDS('加速爆发')">加速爆发</button>
+  <button class="filter-btn" onclick="filterDS('有信号')">有信号</button>
+  <button class="filter-btn" onclick="filterDS('看涨')">看涨</button>
+  <button class="filter-btn" onclick="filterDS('看跌')">看跌</button>
+  <button class="filter-btn" onclick="filterDS('标准突破')">标准突破</button>
+  <button class="filter-btn" onclick="filterDS('口袋支点')">口袋支点</button>
+  <button class="filter-btn" onclick="filterDS('双重底')">双重底</button>
+  <button class="filter-btn" onclick="filterDS('扁平基部')">扁平基部</button>
+</div>
+
+<div class="pager-bar" id="pager-top">
+  <span class="pager-info" id="pager-info-top">共 0 条</span>
+  <button class="pager-btn" onclick="goPage(1)">««</button>
+  <button class="pager-btn" onclick="goPage(currentPage-1)">«</button>
+  <span class="pager-cur" id="pager-cur-top">第 1 页</span>
+  <button class="pager-btn" onclick="goPage(currentPage+1)">»</button>
+  <button class="pager-btn" onclick="goPage(99999)">»»</button>
+  <span class="pager-label">每页</span>
+  <select class="pager-size" onchange="setPageSize(parseInt(this.value))">
+    <option value="50">50</option>
+    <option value="100">100</option>
+    <option value="200" selected>200</option>
+    <option value="500">500</option>
+    <option value="99999">全部</option>
+  </select>
+  <span class="pager-label">条</span>
 </div>
 
 <div class="table-wrap">
@@ -309,7 +392,7 @@ tr:hover { background:var(--color-accent-subtle); }
   <th onclick="sortTable(6)">RS_60</th>
   <th onclick="sortTable(7)">RS_20</th>
   <th onclick="sortTable(8)">类型</th>
-  <th>信号摘要</th>
+  <th onclick="sortTable(9)">信号摘要</th>
 </tr>
 </thead>
 <tbody>
@@ -318,41 +401,163 @@ tr:hover { background:var(--color-accent-subtle); }
 </table>
 </div>
 
+<div class="pager-bar" id="pager-bottom">
+  <span class="pager-info" id="pager-info-bottom">共 0 条</span>
+  <button class="pager-btn" onclick="goPage(1)">««</button>
+  <button class="pager-btn" onclick="goPage(currentPage-1)">«</button>
+  <span class="pager-cur" id="pager-cur-bottom">第 1 页</span>
+  <button class="pager-btn" onclick="goPage(currentPage+1)">»</button>
+  <button class="pager-btn" onclick="goPage(99999)">»»</button>
+</div>
+
 <div class="footer">
   每日自动扫描 · 数据来源 stock_rs_daily · 引擎: Pocket Pivot / Double Bottom / Breakout / Flat Base / TA-Lib CDL
 </div>
 </div>
 
 <script>
-// 简易表格排序
-function sortTable(col) {
-  const table = document.getElementById('stock-table');
-  const tbody = table.querySelector('tbody');
-  const rows = Array.from(tbody.querySelectorAll('tr'));
-  const isNum = [false, false, true, true, true, true, true, true, false, false][col];
-  
-  rows.sort((a, b) => {
-    let va = a.cells[col].textContent.replace(/[%+\\-]/g,'').trim();
-    let vb = b.cells[col].textContent.replace(/[%+\\-]/g,'').trim();
-    if (isNum) { va = parseFloat(va)||0; vb = parseFloat(vb)||0; }
-    return vb > va ? 1 : vb < va ? -1 : 0;
+// ── RS 类型筛选 ──
+function filterDS(type) {
+  // 信号类筛选关键词
+  var sigFilters = ['看涨', '看跌', '标准突破', '口袋支点', '双重底', '扁平基部'];
+  var rows = document.querySelectorAll('#stock-table tbody tr');
+  rows.forEach(function(r) {
+    if (type === 'all') {
+      r.style.display = '';
+    } else if (type === '有信号') {
+      var txt = r.cells[9].textContent.trim();
+      r.style.display = (txt !== '—') ? '' : 'none';
+    } else if (sigFilters.indexOf(type) >= 0) {
+      var txt = r.cells[9].textContent.trim();
+      r.style.display = (txt.indexOf(type) >= 0) ? '' : 'none';
+    } else {
+      var ds = r.getAttribute('data-ds') || '';
+      r.style.display = (ds === type) ? '' : 'none';
+    }
   });
-  
-  // 默认降序
-  if (col >= 2 && col <= 7) rows.reverse();
-  
-  rows.forEach(r => tbody.appendChild(r));
+  // 按钮激活态（信号类按钮的文字本身即是 type，直接比较即可）
+  document.querySelectorAll('.filter-btn').forEach(function(b) {
+    b.className = 'filter-btn' + (b.textContent === type || (type === 'all' && b.textContent === '全部') ? ' active' : '');
+  });
+  // 筛选后回到第1页
+  currentPage = 1;
+  applyPage();
+}
+
+// ── 分页 ──
+var pageSize = 200;
+var currentPage = 1;
+var allRows = [];
+
+function initPage() {
+  allRows = Array.from(document.querySelectorAll('#stock-table tbody tr'));
+  applyPage();
+}
+
+function setPageSize(size) {
+  pageSize = size;
+  currentPage = 1;
+  applyPage();
+}
+
+function goPage(n) {
+  var visible = getVisibleRows();
+  var totalPages = Math.ceil(visible.length / pageSize) || 1;
+  if (n < 1) n = 1;
+  if (n > totalPages) n = totalPages;
+  currentPage = n;
+  applyPage();
+}
+
+function getVisibleRows() {
+  return allRows.filter(function(r) { return r.style.display !== 'none'; });
+}
+
+function applyPage() {
+  var visible = getVisibleRows();
+  var total = visible.length;
+  var totalPages = Math.ceil(total / pageSize) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  var start = (currentPage - 1) * pageSize;
+  var end = Math.min(start + pageSize, total);
+
+  allRows.forEach(function(r) {
+    if (r.style.display === 'none') return; // already hidden by filter
+    r.classList.add('page-hidden');
+  });
+
+  for (var i = start; i < end; i++) {
+    visible[i].classList.remove('page-hidden');
+  }
+
+  updatePagerUI(total, totalPages);
+}
+
+function updatePagerUI(total, totalPages) {
+  var ids = ['top', 'bottom'];
+  ids.forEach(function(id) {
+    var info = document.getElementById('pager-info-' + id);
+    var cur = document.getElementById('pager-cur-' + id);
+    if (info) info.textContent = '共 ' + total + ' 条';
+    if (cur) cur.textContent = '第 ' + currentPage + '/' + totalPages + ' 页';
+  });
+}
+
+// 隐藏非当前页的行
+var styleEl = document.createElement('style');
+styleEl.textContent = '.page-hidden { display: none !important; }';
+document.head.appendChild(styleEl);
+
+// 全列排序（点击切换升/降序，表头 ▲/▼ 指示）
+var sortCol = -1, sortDir = 1;
+function sortTable(col) {
+  var table = document.getElementById('stock-table');
+  var tbody = table.querySelector('tbody');
+  var rows = Array.from(tbody.querySelectorAll('tr'));
+
+  // 切换方向：再次点击同一列则反转
+  if (sortCol === col) { sortDir = -sortDir; } else { sortCol = col; sortDir = 1; }
+
+  // 数字列：[代码, 名称, 价格, 涨幅, RS_250, RS_120, RS_60, RS_20, 类型, 信号]
+  var isNum = [true, false, true, true, true, true, true, true, false, false];
+
+  rows.sort(function(a, b) {
+    var va = a.cells[col].textContent.trim();
+    var vb = b.cells[col].textContent.trim();
+    if (isNum[col]) {
+      va = parseFloat(va.replace(/[^0-9.\\-]/g, '')) || 0;
+      vb = parseFloat(vb.replace(/[^0-9.\\-]/g, '')) || 0;
+    }
+    if (va < vb) return -1 * sortDir;
+    if (va > vb) return 1 * sortDir;
+    return 0;
+  });
+
+  rows.forEach(function(r) { tbody.appendChild(r); });
+
+  // 刷新分页（DOM 重排后 allRows 引用失效，重新抓取）
+  allRows = Array.from(tbody.querySelectorAll('tr'));
+  applyPage();
+
+  // 更新表头排序指示
+  var ths = document.querySelectorAll('#stock-table th');
+  for (var i = 0; i < ths.length; i++) {
+    ths[i].textContent = ths[i].textContent.replace(/ [▲▼]/g, '');
+    if (i === col) ths[i].textContent += sortDir > 0 ? ' ▲' : ' ▼';
+  }
 }
 
 // 主题切换
-document.querySelector('.theme-toggle').addEventListener('click', () => {
-  const html = document.documentElement;
+document.querySelector('.theme-toggle').addEventListener('click', function() {
+  var html = document.documentElement;
   html.dataset.theme = html.dataset.theme === 'light' ? 'dark' : 'light';
   document.querySelector('.theme-toggle').textContent = html.dataset.theme === 'light' ? '🌙' : '☀️';
 });
 
-// 默认按 RS_250 降序
-sortTable(4);
+// 初始化：分页 + 默认按 RS_250 降序
+initPage();
+sortTable(4); sortDir = -1; sortTable(4);
 </script>
 </body>
 </html>'''
@@ -364,6 +569,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--date', type=str, default=None)
     parser.add_argument('--top', type=int, default=None, help='只扫描TOP N（测试用）')
+    parser.add_argument('--all', dest='all_stocks', action='store_true', help='扫描全部A股（非仅双强股）')
     args = parser.parse_args()
 
     if args.date:
@@ -383,7 +589,7 @@ def main():
     t0 = time.time()
 
     # Step 1: 获取候选
-    candidates = get_candidates(date_str, args.top)
+    candidates = get_candidates(date_str, args.top, all_stocks=args.all_stocks)
     print(f"Candidates: {len(candidates)}")
 
     if not candidates:
@@ -422,7 +628,7 @@ def main():
     print(f"JSON saved: {OUT_JSON}")
 
     # Step 4: 生成 HTML
-    html = generate_html(candidates, date_str, elapsed)
+    html = generate_html(candidates, date_str, elapsed, all_stocks=args.all_stocks)
     with open(OUT_HTML, 'w', encoding='utf-8') as f:
         f.write(html)
     print(f"HTML saved: {OUT_HTML}")
