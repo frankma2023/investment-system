@@ -15,43 +15,67 @@
 .top-bar label { display:block; font-size:0.58rem; font-weight:600; color:var(--text-tertiary); margin-bottom:2px; }
 .top-bar input { width:100%; padding:7px 8px; border:1px solid var(--divider); border-radius:10px; font-size:0.72rem; background:var(--card-bg); color:var(--text-primary); box-sizing:border-box; }
 .btn-run { padding:8px 22px; background:#FE2C55; color:#FFF; border:none; border-radius:12px; font-size:0.85rem; font-weight:800; cursor:pointer; }
-.btn-save { padding:8px 16px; background:var(--card-bg); border:1.5px solid var(--divider); border-radius:12px; font-size:0.75rem; font-weight:700; cursor:pointer; margin-left:6px; }
+.btn-run:disabled { background:#CCC; }
+.btn-save { padding:6px 14px; background:var(--card-bg); border:1.5px solid var(--divider); border-radius:10px; font-size:0.7rem; font-weight:700; cursor:pointer; }
 .btn-save:hover { border-color:var(--color-accent); color:var(--color-accent); }
-.main-grid { display:grid; grid-template-columns:2fr 1fr; gap:10px; }
-.radar-wrap { width:100%; height:420px; }
-.score-table { width:100%; border-collapse:collapse; font-size:0.72rem; }
-.score-table td { padding:6px 10px; border-bottom:1px solid var(--divider); }
-.score-table .dim { font-weight:700; }
-.score-table .pts { text-align:right; font-weight:700; }
-.grade-badge { display:inline-block; padding:4px 16px; border-radius:12px; font-size:1.2rem; font-weight:900; }
+
+/* Layout: left=params, right=results */
+.bottom-layout { display:flex; gap:12px; align-items:flex-start; }
+.bottom-left { width:340px; flex-shrink:0; display:flex; flex-direction:column; gap:8px; }
+.bottom-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:10px; }
+
+/* Radar */
+.radar-wrap { width:100%; height:420px; background:var(--card-bg); border-radius:16px; border:1px solid var(--divider); }
+
+/* Score table */
+.score-card { background:var(--card-bg); border:1px solid var(--divider); border-radius:16px; padding:14px 18px; }
+.score-card h3 { font-size:0.8rem; margin:0 0 10px; display:flex; align-items:center; gap:6px; }
+.grade-badge { display:inline-block; padding:3px 14px; border-radius:10px; font-size:1rem; font-weight:900; }
 .grade-S { background:#E8F5E9; color:#2E7D32; } .grade-A { background:#E3F2FD; color:#1565C0; }
 .grade-B { background:#FFF8E1; color:#F57F17; } .grade-C { background:#FFF3E0; color:#E65100; }
 .grade-D { background:#FFEBEE; color:#C62828; } .grade-E { background:#FCE4EC; color:#880E4F; }
-.param-card { background:var(--card-bg); border:1px solid var(--divider); border-radius:16px; overflow:hidden; margin-bottom:8px; }
-.param-card-hd { display:flex; align-items:center; padding:9px 14px; cursor:pointer; font-size:0.73rem; font-weight:800; }
-.param-card-hd .dot { width:8px; height:8px; border-radius:50%; margin-right:8px; }
-.param-card-bd { padding:0 14px 10px; } .param-card-bd.collapsed { display:none; }
+
+/* Dimension card */
+.dim-card { border-left:3px solid #ddd; padding:6px 10px; margin-bottom:4px; border-radius:0 8px 8px 0; background:var(--card-bg); }
+.dim-card .dim-header { display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; font-weight:700; }
+.dim-card .dim-detail { font-size:0.58rem; color:var(--text-tertiary); margin-top:2px; }
+.dim-card .dim-sub { font-size:0.6rem; color:var(--text-secondary); padding-left:10px; }
+.dim-c { border-left-color:#E53935; } .dim-a { border-left-color:#FF9800; } .dim-n { border-left-color:#4CAF50; }
+.dim-s { border-left-color:#2196F3; } .dim-l { border-left-color:#9C27B0; } .dim-i { border-left-color:#795548; }
+.score-pos { color:#2E7D32; } .score-neg { color:#C62828; } .score-zero { color:var(--text-tertiary); }
+
+/* Param card */
+.param-card { background:var(--card-bg); border:1px solid var(--divider); border-radius:14px; overflow:hidden; }
+.param-card-hd { display:flex; align-items:center; padding:8px 12px; cursor:pointer; font-size:0.68rem; font-weight:800; }
+.param-card-hd .dot { width:7px; height:7px; border-radius:50%; margin-right:6px; }
+.param-card-bd { padding:6px 12px 10px; }
+.param-card-bd.collapsed { display:none; }
+.param-row { display:flex; align-items:center; gap:6px; margin-bottom:2px; }
+.param-row label { width:130px; font-size:0.56rem; color:var(--text-tertiary); flex-shrink:0; }
+.param-row input { flex:1; padding:3px 6px; border:1px solid var(--divider); border-radius:6px; font-size:0.58rem; background:var(--card-bg); color:var(--text-primary); }
+
 .nav-dropdown { position:relative; display:inline-flex; }
 .nav-dropdown-menu { display:none; position:absolute; top:100%; left:0; background:var(--card-bg); border:1px solid var(--divider); border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); min-width:150px; padding:6px 0; z-index:200; white-space:nowrap; }
 .nav-dropdown:hover .nav-dropdown-menu { display:block; }
 .nav-dropdown-menu a { display:block; padding:7px 16px; font-size:0.72rem; color:var(--text-secondary); text-decoration:none; }
 .nav-dropdown-menu a:hover { background:var(--color-accent-subtle); color:var(--color-accent); }
 .nav-dropdown-menu a.active { color:var(--color-accent); font-weight:700; }
-@media (max-width:800px) { .main-grid { grid-template-columns:1fr; } }
+@media (max-width:800px) { .bottom-layout { flex-direction:column; } .bottom-left { width:100%; } }
 </style>
 </head>
 <body>
 <div class="app-container">
 <nav class="top-nav">
-  <div class="nav-brand"><span class="nav-fox">🎯</span><span>CAN SLIM 评分卡</span><span class="nav-greeting">Scorecard</span></div>
+  <div class="nav-brand"><span class="nav-fox">🎯</span><span>CAN SLIM 评分卡</span></div>
   <div class="nav-links">
     <a href="../" class="nav-item">🏠 看板</a>
     <div class="nav-dropdown"><a href="#" class="nav-item">回测 ▾</a><div class="nav-dropdown-menu">
-      <a href="../distribution-day/">📉 抛盘日</a><a href="../follow-through-day/">📈 追盘日</a><a href="../accumulation-day/">📦 吸筹日</a>
-      <a href="../index-rs-backtest/">🏆 指数RS强度</a><a href="../index-crowdedness/">📊 指数拥挤度</a><a href="../stock-rs-backtest/">💪 个股RS强度</a>
-      <a href="../index-ad-backtest/">🔍 机构吸筹/出货</a><a href="../divergence-backtest/">⚠️ 指数背离</a>
-      <a href="../strongest-index/">⭐ 最强指数</a><a href="../base-detection/">📐 标准突破</a><a href="../pocket-pivot/">🎯 口袋支点</a>
-      <a href="../pattern-scan/">🔎 形态识别</a>
+      <a href="../distribution-day/">📉 抛盘日</a><a href="../follow-through-day/">📈 追盘日</a>
+      <a href="../index-rs-backtest/">🏆 指数RS强度</a><a href="../index-crowdedness/">📊 指数拥挤度</a>
+      <a href="../stock-rs-backtest/">💪 个股RS强度</a><a href="../index-ad-backtest/">🔍 机构吸筹/出货</a>
+      <a href="../divergence-backtest/">⚠️ 指数背离</a>
+      <a href="../strongest-index/">⭐ 最强指数</a><a href="../base-detection/">📐 标准突破</a>
+      <a href="../pocket-pivot/">🎯 口袋支点</a><a href="../pattern-scan/">🔎 形态识别</a>
     </div></div>
     <a href="../index-scan/" class="nav-item">🔬 指数扫描</a><a href="../index-valuation/" class="nav-item">📈 指数估值</a>
     <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a><a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
@@ -62,40 +86,33 @@
 
 <div class="top-bar">
   <div class="fld" style="flex:0.7;min-width:100px"><label>股票代码</label><input type="text" id="code" value="600519" onkeydown="if(event.key==='Enter')doScore()"></div>
-  <div class="fld"><label>评分日期</label><input type="date" id="date"></div>
+  <div class="fld" style="flex:0.5"><label>评分日期</label><input type="date" id="date"></div>
   <button class="btn-run" onclick="doScore()">🎯 评分</button>
   <button class="btn-save" onclick="saveResults()">💾 保存结果</button>
   <button class="btn-save" onclick="saveConfig()">⚙️ 保存配置</button>
 </div>
 
-<div class="main-grid">
-  <div>
-    <div class="radar-wrap" id="radar-chart"></div>
-    <div style="text-align:center;padding:8px 0" id="grade-area">
-      <span class="grade-badge" id="grade-badge">—</span>
-      <span style="font-size:0.7rem;color:var(--text-tertiary);margin-left:10px" id="m-advice"></span>
-    </div>
-    <table class="score-table" id="score-table">
-      <tr><td class="dim" style="color:#E53935">C 当期盈利</td><td class="pts" id="c-score">—</td><td style="font-size:0.62rem;color:var(--text-tertiary)" id="c-detail"></td></tr>
-      <tr><td class="dim" style="color:#FF9800">A 年度盈利</td><td class="pts" id="a-score">—</td><td style="font-size:0.62rem;color:var(--text-tertiary)" id="a-detail"></td></tr>
-      <tr><td class="dim" style="color:#4CAF50">N 形态新高</td><td class="pts" id="n-score">—</td><td style="font-size:0.62rem;color:var(--text-tertiary)" id="n-detail"></td></tr>
-      <tr><td class="dim" style="color:#2196F3">S 供给需求</td><td class="pts" id="s-score">—</td><td style="font-size:0.62rem;color:var(--text-tertiary)" id="s-detail"></td></tr>
-      <tr><td class="dim" style="color:#9C27B0">L 领军股</td><td class="pts" id="l-score">—</td><td style="font-size:0.62rem;color:var(--text-tertiary)" id="l-detail"></td></tr>
-      <tr><td class="dim" style="color:#795548">I 机构认同</td><td class="pts" id="i-score">—</td><td style="font-size:0.62rem;color:var(--text-tertiary)" id="i-detail"></td></tr>
-      <tr style="border-top:2px solid var(--divider)"><td class="dim">综合评分</td><td class="pts" id="total-score" style="font-size:1rem">—</td><td></td></tr>
-    </table>
+<div class="bottom-layout">
+  <!-- Left: Parameter Config -->
+  <div class="bottom-left" id="param-panel">
+    <div class="param-card" id="param-c"><div class="param-card-hd" onclick="document.getElementById('body-c').classList.toggle('collapsed')"><span class="dot" style="background:#E53935"></span>C 当期盈利(23分) ▸</div><div class="param-card-bd" id="body-c"></div></div>
+    <div class="param-card" id="param-a"><div class="param-card-hd" onclick="document.getElementById('body-a').classList.toggle('collapsed')"><span class="dot" style="background:#FF9800"></span>A 年度盈利(17分) ▸</div><div class="param-card-bd" id="body-a"></div></div>
+    <div class="param-card" id="param-n"><div class="param-card-hd" onclick="document.getElementById('body-n').classList.toggle('collapsed')"><span class="dot" style="background:#4CAF50"></span>N 形态新高(14分) ▸</div><div class="param-card-bd" id="body-n"></div></div>
+    <div class="param-card" id="param-s"><div class="param-card-hd" onclick="document.getElementById('body-s').classList.toggle('collapsed')"><span class="dot" style="background:#2196F3"></span>S 供给需求(9分) ▸</div><div class="param-card-bd" id="body-s"></div></div>
+    <div class="param-card" id="param-l"><div class="param-card-hd" onclick="document.getElementById('body-l').classList.toggle('collapsed')"><span class="dot" style="background:#9C27B0"></span>L 领军股(21分) ▸</div><div class="param-card-bd" id="body-l"></div></div>
+    <div class="param-card" id="param-i"><div class="param-card-hd" onclick="document.getElementById('body-i').classList.toggle('collapsed')"><span class="dot" style="background:#795548"></span>I 机构认同(18分) ▸</div><div class="param-card-bd" id="body-i"></div></div>
   </div>
-  <div>
-    <div class="param-card"><div class="param-card-hd" onclick="this.nextElementSibling.classList.toggle('collapsed')"><span class="dot" style="background:#E53935"></span>C 当期盈利 ▸</div><div class="param-card-bd collapsed" id="params-c"></div></div>
-    <div class="param-card"><div class="param-card-hd" onclick="this.nextElementSibling.classList.toggle('collapsed')"><span class="dot" style="background:#FF9800"></span>A 年度盈利 ▸</div><div class="param-card-bd collapsed" id="params-a"></div></div>
-    <div class="param-card"><div class="param-card-hd" onclick="this.nextElementSibling.classList.toggle('collapsed')"><span class="dot" style="background:#4CAF50"></span>N 形态新高 ▸</div><div class="param-card-bd collapsed" id="params-n"></div></div>
-    <div class="param-card"><div class="param-card-hd" onclick="this.nextElementSibling.classList.toggle('collapsed')"><span class="dot" style="background:#2196F3"></span>S 供给需求 ▸</div><div class="param-card-bd collapsed" id="params-s"></div></div>
-    <div class="param-card"><div class="param-card-hd" onclick="this.nextElementSibling.classList.toggle('collapsed')"><span class="dot" style="background:#9C27B0"></span>L 领军股 ▸</div><div class="param-card-bd collapsed" id="params-l"></div></div>
-    <div class="param-card"><div class="param-card-hd" onclick="this.nextElementSibling.classList.toggle('collapsed')"><span class="dot" style="background:#795548"></span>I 机构认同 ▸</div><div class="param-card-bd collapsed" id="params-i"></div></div>
-  </div>
-</div>
-</div>
 
+  <!-- Right: Results -->
+  <div class="bottom-right">
+    <div class="score-card">
+      <h3>📊 评分明细 <span id="grade-badge" class="grade-badge">—</span> <span style="font-size:0.65rem;color:var(--text-tertiary)" id="m-advice"></span></h3>
+      <div id="dim-results"></div>
+    </div>
+    <div class="radar-wrap" id="radar-chart"></div>
+  </div>
+</div>
+</div>
 <script src="app.js"></script>
 </body>
 </html>

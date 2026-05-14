@@ -327,15 +327,16 @@ def score_i(db, stock_code, target_date, p):
     cfg = p.get('i_institutional', {})
     score = 0; detail = []; bd = {}
 
-    # Institution holdings (table may not exist yet)
+    # Institution holdings (may have no data)
     ir = None
     try:
         ir = db.execute("""SELECT total_inst_proportion, fund_count, top10_inst_count
             FROM stock_institutional_holdings
             WHERE stock_code=? AND data_type='combined'
             ORDER BY date DESC LIMIT 1""", (stock_code,)).fetchone()
-    except sqlite3.OperationalError:
-        pass
+    except: pass
+    if not ir:
+        bd['inst_holding'] = {'value': '-', 'score': 0, 'note': 'run fetch script'}
 
     if ir and ir['total_inst_proportion']:
         ip = ir['total_inst_proportion'] * 100
@@ -355,6 +356,12 @@ def score_i(db, stock_code, target_date, p):
             ORDER BY date DESC LIMIT 2""", (stock_code,)).fetchall()
     except sqlite3.OperationalError:
         irs = []
+    if len(irs) >= 2:
+        # fallthrough to populate values
+        pass
+    else:
+        bd['inst_change'] = {'value': '-', 'score': 0, 'note': 'no data'}
+        irs = []  # dummy
     if len(irs) >= 2:
         cur = irs[0]['fund_count'] + irs[0]['top10_inst_count']
         prev = irs[1]['fund_count'] + irs[1]['top10_inst_count']
@@ -385,17 +392,26 @@ def score_i(db, stock_code, target_date, p):
         elif oc >= at[1]:
             score += 1
             bd['analyst'] = {'value': '{}covers'.format(oc), 'score': 1}
+        else:
+            bd['analyst'] = {'value': '{}covers'.format(oc), 'score': 0}
         detail.append('Analyst {}'.format(oc))
 
         if ar['first_coverage']:
             score += cfg.get('first_coverage_score', 2)
             bd['first_cov'] = {'value': 'yes', 'score': cfg.get('first_coverage_score', 2)}
-            detail.append('FirstCover')
+        else:
+            bd['first_cov'] = {'value': 'no', 'score': 0}
 
         uc = ar['upgrade_count'] or 0
         if uc > 0:
             score += cfg.get('rating_upgrade_score', 1)
             bd['rating_up'] = {'value': '+{}'.format(uc), 'score': cfg.get('rating_upgrade_score', 1)}
+        else:
+            bd['rating_up'] = {'value': '0', 'score': 0}
+    else:
+        bd['analyst'] = {'value': '-', 'score': 0, 'note': 'run fetch script'}
+        bd['first_cov'] = {'value': '-', 'score': 0}
+        bd['rating_up'] = {'value': '-', 'score': 0}
 
     # Debt ratio
     qs = get_quarterly(db, stock_code, target_date, 1)
