@@ -230,7 +230,7 @@ def score_s(db, stock_code, target_date, p):
 
     # Market cap
     row = db.execute("""SELECT value FROM fundamental_indicator
-        WHERE stock_code=? AND metric_code='market_cap' AND date<=?
+        WHERE stock_code=? AND metric_code='mc' AND date<=?
         ORDER BY date DESC LIMIT 1""",
         (stock_code, target_date)).fetchone()
     mcap = (row['value'] or 0) / 1e8 if row else 0
@@ -261,7 +261,39 @@ def score_s(db, stock_code, target_date, p):
         bd['vol_ratio'] = {'value': round(vr, 2), 'score': vol_sc}
         detail.append('Vol {:.1f}x'.format(vr))
 
-    bd['buyback'] = {'value': 0, 'score': 0, 'note': 'data pending'}
+    # 回购注销 — stock_buyback 表（只查实施中的，不限制公告日期）
+    try:
+        bb_row = db.execute("""SELECT SUM(amount_yuan) as total_amount, MAX(is_cancellation) as has_cancel
+            FROM stock_buyback
+            WHERE stock_code=? AND progress='001'""",
+            (stock_code,)).fetchone()
+        if bb_row and bb_row['total_amount']:
+            bb_amount = bb_row['total_amount']
+            # 获取市值用于计算比例
+            mc_row = db.execute("""SELECT value FROM fundamental_indicator
+                WHERE stock_code=? AND metric_code='mc' AND date<=?
+                ORDER BY date DESC LIMIT 1""",
+                (stock_code, target_date)).fetchone()
+            mc = (mc_row['value'] or 1) if mc_row else 1
+            if mc > 0:
+                bb_ratio = bb_amount / mc * 100
+                bb_tiers = cfg.get('buyback_ratio_tiers', [1.0, 0.5])
+                bb_scores = cfg.get('buyback_scores', [2, 1])
+                bb_sc = 0
+                for i, t in enumerate(bb_tiers):
+                    if bb_ratio >= t:
+                        bb_sc = bb_scores[i]
+                        break
+                score += bb_sc
+                bd['buyback'] = {'value': round(bb_ratio, 2), 'score': bb_sc}
+                if bb_row['has_cancel']:
+                    bd['buyback']['note'] = 'incl. cancellation'
+            else:
+                bd['buyback'] = {'value': 0, 'score': 0}
+        else:
+            bd['buyback'] = {'value': 0, 'score': 0}
+    except sqlite3.OperationalError:
+        bd['buyback'] = {'value': 0, 'score': 0, 'note': 'no table'}
     return {"score": min(score, 9), "detail": ", ".join(detail), "breakdown": bd}
 
 

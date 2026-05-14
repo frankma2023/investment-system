@@ -139,6 +139,12 @@ if date.today().weekday() == 0:
 else:
     log(f"⏭️  跳过研报拉取（非周一）")
 
+# 步骤10：回购数据拉取（每周一执行）
+if date.today().weekday() == 0:
+    TASKS.append(("🔄 回购数据", [PYTHON_EXE, "scripts/fetch_buyback.py"]))
+else:
+    log(f"⏭️  跳过回购数据（非周一）")
+
 for label, cmd in TASKS:
     lbl, ok, elapsed, _ = run_task(label, cmd)
     tasks.append((lbl, ok, elapsed))
