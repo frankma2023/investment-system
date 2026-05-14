@@ -296,8 +296,30 @@ def score_l(db, stock_code, target_date, p):
         score += cfg.get('rs_momentum_penalty', -2)
         bd['rs_momentum'] = {'value': 'decel', 'score': cfg.get('rs_momentum_penalty', -2)}
 
-    # Industry RS (mapping pending, default 0)
-    bd['industry_rs'] = {'value': 'pending', 'score': 0, 'note': 'mapping TBD'}
+    # Industry RS — 取所属全部指数中 RS_20 最高值
+    try:
+        ind_rs_row = db.execute("""
+            SELECT MAX(rs.rs_20) as best_rs
+            FROM index_constituents ic
+            JOIN index_rs_daily rs ON ic.index_code = rs.stock_code
+                AND rs.date = (SELECT MAX(date) FROM index_rs_daily WHERE stock_code=ic.index_code)
+            WHERE ic.stock_code=?
+        """, (stock_code,)).fetchone()
+        if ind_rs_row and ind_rs_row['best_rs'] is not None:
+            ind_rs = ind_rs_row['best_rs']
+            th = cfg.get('industry_rs_threshold', 80)
+            if ind_rs >= th:
+                score += cfg.get('industry_rs_score_high', 5)
+                bd['industry_rs'] = {'value': ind_rs, 'score': cfg.get('industry_rs_score_high', 5)}
+            elif ind_rs >= 70:
+                score += cfg.get('industry_rs_score_mid', 2)
+                bd['industry_rs'] = {'value': ind_rs, 'score': cfg.get('industry_rs_score_mid', 2)}
+            else:
+                bd['industry_rs'] = {'value': ind_rs, 'score': 0}
+        else:
+            bd['industry_rs'] = {'value': '-', 'score': 0, 'note': 'no index data'}
+    except sqlite3.OperationalError:
+        bd['industry_rs'] = {'value': '-', 'score': 0, 'note': 'no table'}
 
     # Excess return
     rows = db.execute("""SELECT close FROM daily_kline
