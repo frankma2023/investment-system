@@ -2,7 +2,7 @@
 
 > 引擎：SQLite，WAL 模式，PRAGMA synchronous=NORMAL  
 > 数据库文件：`data/lixinger.db`  
-> 更新时间：2026-05-04
+> 更新时间：2026-05-14
 
 ---
 
@@ -1156,7 +1156,125 @@
 
 ---
 
-## 表索引
+## 46. stock_institutional_holdings — 机构持股汇总
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| stock_code | TEXT | **PK(1)**，股票代码 |
+| date | TEXT | **PK(2)**，报告期 YYYY-MM-DD |
+| data_source | TEXT | **PK(3)**，数据源 `lixinger` |
+| fund_count | INTEGER | 公募基金持有数 |
+| fund_holdings_total | REAL | 基金持股市值合计(元) |
+| fund_proportion_sum | REAL | 流通A股占比合计（归一化0~1） |
+| top10_inst_count | INTEGER | 前十大中机构数 |
+| top10_inst_proportion | REAL | 前十大机构持股占比 |
+| top10_float_inst_count | INTEGER | 前十流通中机构数 |
+| top10_float_inst_prop | REAL | 前十流通机构占比 |
+| total_inst_count | INTEGER | 总机构数(基金+十大) |
+| total_inst_proportion | REAL | 综合机构持股占比(max) |
+| org_categories_json | TEXT | 机构类别分布 JSON |
+| updated_at | TEXT | 更新时间 |
+
+**数据量**：~5300/季  
+**数据来源**：理杏仁 fund-shareholders + majority-shareholders + nolimit-shareholders  
+**写入脚本**：`scripts/fetch_institutional_holdings.py`（每周一）  
+**读取场景**：CANSLIM I维机构持股比例、机构数量变化
+
+---
+
+## 47. stock_inst_holders_detail — 机构持股明细
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| stock_code | TEXT | 股票代码 |
+| date | TEXT | 报告期 |
+| data_source | TEXT | 数据源 |
+| holder_type | TEXT | 类型 fund/majority/freeholders |
+| holder_name | TEXT | 持有人名称 |
+| holder_code | TEXT | 持有人代码 |
+| holdings | REAL | 持股数 |
+| market_cap | REAL | 持股市值 |
+| proportion | REAL | 占比 |
+| holder_category | TEXT | 持有人类别 |
+| holder_rank | INTEGER | 排名 |
+
+**数据来源**：理杏仁（同上）  
+**读取场景**：机构持股明细查询
+
+---
+
+## 48. stock_analyst_reports — 研报覆盖统计
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| stock_code | TEXT | **PK(1)** |
+| date | TEXT | **PK(2)**，统计日期 |
+| lookback_days | INTEGER | **PK(3)**，回溯天数(90) |
+| report_count | INTEGER | 研报总数 |
+| org_count | INTEGER | 覆盖机构数(去重) |
+| first_coverage | INTEGER | 是否有首次覆盖 0/1 |
+| upgrade_count | INTEGER | 评级上调数 |
+| downgrade_count | INTEGER | 评级下调数 |
+| maintain_count | INTEGER | 评级维持数 |
+| buy_count | INTEGER | 买入推荐数 |
+| overweight_count | INTEGER | 增持数 |
+| neutral_count | INTEGER | 中性/持有数 |
+| reduce_count | INTEGER | 减持数 |
+| lx_pe_ttm / lx_pb / lx_mc / lx_shn / lx_shn_change | REAL | 理杏仁辅助指标 |
+| orgs_json | TEXT | 机构列表 JSON |
+| top_orgs_json | TEXT | TOP机构 JSON |
+| updated_at | TEXT | 更新时间 |
+
+**数据来源**：东方财富 reportapi.eastmoney.com/report/list  
+**写入脚本**：`scripts/fetch_stock_reports.py`（每周一）  
+**读取场景**：CANSLIM I维研报覆盖、首次覆盖、评级上调
+
+---
+
+## 49. stock_report_raw — 研报原始记录
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER | **PK**，自增 |
+| stock_code | TEXT | 股票代码 |
+| report_date | TEXT | 研报日期 |
+| org_name | TEXT | 机构名称 |
+| author_name | TEXT | 作者 |
+| title | TEXT | 研报标题 |
+| rating_name | TEXT | 评级名称 |
+| rating_change | TEXT | 评级变化 |
+| is_first | INTEGER | 是否首次覆盖 0/1 |
+| info_code | TEXT | **UNIQUE**，东方财富研报ID |
+| updated_at | TEXT | 更新时间 |
+
+**索引**：`idx_report_raw_stock(stock_code, report_date)`  
+**数据来源**：东方财富（同上）  
+**读取场景**：研报明细追溯
+
+---
+
+## 50. stock_buyback — 股票回购
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| stock_code | TEXT | **PK(1)** |
+| buyback_code | TEXT | **PK(2)**，回购编号 |
+| notice_date | TEXT | 公告日期 |
+| progress | TEXT | 进度 001=实施中 002=已完成 |
+| objective | TEXT | 回购目的（含"注销"关键词） |
+| amount_yuan | REAL | 累计已回购金额(元) |
+| ratio_pct | REAL | 占总股本比例(%) |
+| is_cancellation | INTEGER | 是否注销回购 0/1 |
+| updated_at | TEXT | 更新时间 |
+
+**数据量**：~5100条(全量) / ~62条(实施中)  
+**数据来源**：东方财富 RPTA_WEB_GETHGLIST_NEW  
+**写入脚本**：`scripts/fetch_buyback.py`（每周一）  
+**读取场景**：CANSLIM S维回购注销评分
+
+---
+
+## 51. cansim_scores — CAN SLIM评分结果
 
 | # | 表名 | 行数 | 说明 |
 |---|------|------|------|
@@ -1203,8 +1321,13 @@
 | 41 | backtest_stats | ~0 | 回测统计 |
 | 42 | canslim_quarterly_eps | ~97,713 | CANSLIM季度EPS |
 | 43 | canslim_annual_eps | ~17,781 | CANSLIM年度EPS |
-| 44 | canslim_institutional | ~7,088 | 基金持股 |
-| 45 | canslim_scores | ~0 | CANSLIM评分 |
+| 44 | canslim_institutional | ~7,088 | 基金持股(旧) |
+| 45 | stock_institutional_holdings | ~5300/季 | 机构持股汇总(新) |
+| 46 | stock_inst_holders_detail | — | 机构持股明细 |
+| 47 | stock_analyst_reports | — | 研报覆盖统计 |
+| 48 | stock_report_raw | — | 研报原始记录 |
+| 49 | stock_buyback | ~62(活跃) | 股票回购 |
+| 50 | cansim_scores | — | CAN SLIM评分(新) |
 
 ---
 
@@ -1212,7 +1335,7 @@
 
 | 指标 | 数值 |
 |------|------|
-| 总表数 | 45 |
+| 总表数 | 50 |
 | 最大表 | fundamental_indicator (~1.25亿行) |
 | K线数据 | daily_kline ~1794万 + weekly_kline ~222万 |
 | RS数据 | rs_daily ~527万 |
@@ -1220,4 +1343,4 @@
 | 指数成分 | constituents ~62万 + weightings ~119万 |
 | 财务数据 | quarterly ~16万 + annual ~5.7万 + financial_statement ~2.8万 |
 | CANSLIM | quarterly_eps ~9.8万 + annual_eps ~1.8万 |
-| DB文件大小 | ~12GB |
+| DB文件大小 | ~41GB |
