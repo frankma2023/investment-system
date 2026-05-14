@@ -332,7 +332,7 @@ def score_i(db, stock_code, target_date, p):
     try:
         ir = db.execute("""SELECT total_inst_proportion, fund_count, top10_inst_count
             FROM stock_institutional_holdings
-            WHERE stock_code=? AND data_type='combined'
+            WHERE stock_code=?
             ORDER BY date DESC LIMIT 1""", (stock_code,)).fetchone()
     except: pass
     if not ir:
@@ -352,7 +352,7 @@ def score_i(db, stock_code, target_date, p):
     # Institution count change
     try:
         irs = db.execute("""SELECT fund_count, top10_inst_count FROM stock_institutional_holdings
-            WHERE stock_code=? AND data_type='combined'
+            WHERE stock_code=?
             ORDER BY date DESC LIMIT 2""", (stock_code,)).fetchall()
     except sqlite3.OperationalError:
         irs = []
