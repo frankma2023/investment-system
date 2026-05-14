@@ -11,8 +11,19 @@ document.addEventListener('DOMContentLoaded', function() {
     this.textContent = html.dataset.theme === 'light' ? '🌙' : '☀️';
   });
   loadConfig();
+  fetchName();
   doScore();
 });
+
+function fetchName() {
+  var code = document.getElementById('code').value.trim();
+  fetch('http://localhost:8788/api/stock-name?code=' + code + '&mode=stock')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      document.getElementById('stock-name').textContent = d.name || '';
+    })
+    .catch(function() { document.getElementById('stock-name').textContent = ''; });
+}
 
 function doScore() {
   var code = document.getElementById('code').value.trim();

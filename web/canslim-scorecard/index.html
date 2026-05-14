@@ -85,7 +85,8 @@
 </nav>
 
 <div class="top-bar">
-  <div class="fld" style="flex:0.7;min-width:100px"><label>股票代码</label><input type="text" id="code" value="600519" onkeydown="if(event.key==='Enter')doScore()"></div>
+  <div class="fld" style="flex:0 0 110px;min-width:90px"><label>股票代码</label><input type="text" id="code" value="600519" style="width:100px" onkeydown="if(event.key==='Enter')doScore()" onchange="fetchName()"></div>
+  <span id="stock-name" style="font-size:0.7rem;font-weight:700;color:var(--text-primary);padding-top:14px;flex-shrink:0;min-width:60px"></span>
   <div class="fld" style="flex:0.5"><label>评分日期</label><input type="date" id="date"></div>
   <button class="btn-run" onclick="doScore()">🎯 评分</button>
   <button class="btn-save" onclick="saveResults()">💾 保存结果</button>
