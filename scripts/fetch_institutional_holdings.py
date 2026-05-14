@@ -540,20 +540,39 @@ def fetch_one_stock(stock_code: str, start_date: str, end_date: str):
     result["_details"] = all_details
     return result
 
+def get_recently_fetched(days: int = 30) -> set:
+    """查询最近N天内已拉取过的股票代码集合"""
+    if not DB_PATH.exists():
+        return set()
+    conn = sqlite3.connect(str(DB_PATH))
+    cutoff = (date.today() - timedelta(days=days)).strftime("%Y-%m-%d")
+    cur = conn.execute(
+        "SELECT DISTINCT stock_code FROM stock_institutional_holdings WHERE updated_at >= ?",
+        (cutoff,)
+    )
+    result = {r[0] for r in cur.fetchall()}
+    conn.close()
+    return result
+
+
 def batch_fetch(stock_list: list, start_date: str, end_date: str,
-                delay: float = BATCH_DELAY):
-    """批量拉取全量A股"""
+                skip_set: set = None, delay: float = BATCH_DELAY):
+    """批量拉取全量A股。skip_set 中的股票跳过（30天内已拉取过）。"""
     total = len(stock_list)
+    skip_set = skip_set or set()
+    skipped = 0
     init_db()
 
     for i, (code, name) in enumerate(stock_list):
+        if code in skip_set:
+            skipped += 1
+            continue
         print(f"[{i+1}/{total}] {code} {name}", end="", flush=True)
         try:
             r = fetch_one_stock(code, start_date, end_date)
             save_summary(code, r.get("date", end_date), r)
             for src, htype, details in r.get("_details", []):
                 save_detail(code, r.get("date", end_date), src, htype, details)
-            # 输出摘要
             print(f"  基金{r.get('fund_count',0)}家 "
                   f"十大机构{r.get('top10_inst_count',0)}家 "
                   f"占比{r.get('total_inst_proportion',0)*100:.1f}%")
@@ -562,6 +581,9 @@ def batch_fetch(stock_list: list, start_date: str, end_date: str,
 
         if i < total - 1:
             time.sleep(delay)
+
+    if skipped:
+        print(f"\n跳过 {skipped} 只（30天内已拉取）")
 
 # ═══════════════════════════════════════════════
 # 主入口
@@ -573,11 +595,15 @@ def main():
     end_date = date.today().strftime("%Y-%m-%d")
     start_date = (date.today() - timedelta(days=365)).strftime("%Y-%m-%d")
     limit = None
+    force = False
 
     i = 0
     while i < len(args):
         a = args[i]
-        if a == "--limit":
+        if a == "--force":
+            force = True
+            i += 1
+        elif a == "--limit":
             limit = int(args[i+1])
             i += 2
         elif a == "--date":
@@ -608,12 +634,20 @@ def main():
                 print(f"    {cat}: {info['count']}家 {info['proportion']*100:.2f}%")
         return
 
-    # 批量模式
+    # 批量模式（增量：默认跳过30天内已拉取的股票）
     stocks = get_all_stocks(limit)
-    print("A股机构持股拉取: %d 只" % len(stocks))
+    skip_set = set() if force else get_recently_fetched(30)
+    todo = [s for s in stocks if s[0] not in skip_set]
+
+    print("A股机构持股: %d 只" % len(stocks))
+    if not force and skip_set:
+        print("  30天内已拉取: %d 只，跳过" % len(skip_set))
+    print("  本次: %d 只" % len(todo))
     print("Time: %s ~ %s" % (start_date, end_date))
     print()
-    batch_fetch(stocks, start_date, end_date)
+
+    if todo:
+        batch_fetch(todo, start_date, end_date, skip_set=None)
 
 if __name__ == "__main__":
     main()

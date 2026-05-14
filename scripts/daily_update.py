@@ -127,6 +127,18 @@ if not SKIP_RS:
 # 步骤7：全A股形态扫描（依赖个股RS完成，每日执行）
 TASKS.append(("🔎 全A股形态扫描", [PYTHON_EXE, "scripts/daily_pattern_scan.py", "--date", today_str, "--all"]))
 
+# 步骤8：机构持股拉取（每周一执行，增量模式）
+if date.today().weekday() == 0:
+    TASKS.append(("🏦 机构持股拉取", [PYTHON_EXE, "scripts/fetch_institutional_holdings.py"]))
+else:
+    log(f"⏭️  跳过机构持股（非周一，weekday={date.today().weekday()}）")
+
+# 步骤9：研报拉取（每周一执行）
+if date.today().weekday() == 0:
+    TASKS.append(("📝 研报拉取", [PYTHON_EXE, "scripts/fetch_stock_reports.py"]))
+else:
+    log(f"⏭️  跳过研报拉取（非周一）")
+
 for label, cmd in TASKS:
     lbl, ok, elapsed, _ = run_task(label, cmd)
     tasks.append((lbl, ok, elapsed))
