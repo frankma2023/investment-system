@@ -3,6 +3,12 @@ var API_CFG = 'http://localhost:8788/api/config?signal_type=canslim_scorecard';
 var chart = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+  // URL 参数预填（最优先）
+  var p = new URLSearchParams(window.location.search);
+  var c = p.get('code');
+  var inp = document.getElementById('code');
+  if (c) inp.value = c; else if (!inp.value) inp.value = '600519';
+
   document.getElementById('date').value = new Date().toISOString().slice(0, 10);
   chart = echarts.init(document.getElementById('radar-chart'));
   document.querySelector('.theme-toggle').addEventListener('click', function() {
@@ -10,12 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
     html.dataset.theme = html.dataset.theme === 'light' ? 'dark' : 'light';
     this.textContent = html.dataset.theme === 'light' ? '🌙' : '☀️';
   });
-
-  // URL 参数预填股票代码
-  var p = new URLSearchParams(window.location.search);
-  var c = p.get('code');
-  if (c) document.getElementById('code').value = c;
-
   loadConfig();
   fetchName();
   doScore();

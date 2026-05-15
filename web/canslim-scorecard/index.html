@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAN SLIM 评分卡 · 投资手账本</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <title>CAN SLIM 评分卡 · 投资手账本</title>
 <link rel="stylesheet" href="../shared/css/theme.css">
 <link rel="stylesheet" href="../shared/css/base.css">
 <link rel="stylesheet" href="../shared/css/xhs-cards.css">
@@ -85,7 +86,7 @@
 </nav>
 
 <div class="top-bar">
-  <div class="fld" style="flex:0 0 110px;min-width:90px"><label>股票代码</label><input type="text" id="code" value="600519" style="width:100px" onkeydown="if(event.key==='Enter')doScore()" onchange="fetchName()"></div>
+  <div class="fld" style="flex:0 0 110px;min-width:90px"><label>股票代码</label><input type="text" id="code" style="width:100px" placeholder="600519" onkeydown="if(event.key==='Enter')doScore()" onchange="fetchName()"></div>
   <span id="stock-name" style="font-size:0.7rem;font-weight:700;color:var(--text-primary);padding-top:14px;flex-shrink:0;min-width:60px"></span>
   <div class="fld" style="flex:0.5"><label>评分日期</label><input type="date" id="date"></div>
   <button class="btn-run" onclick="doScore()">🎯 评分</button>
