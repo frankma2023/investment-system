@@ -10,6 +10,12 @@ document.addEventListener('DOMContentLoaded', function() {
     html.dataset.theme = html.dataset.theme === 'light' ? 'dark' : 'light';
     this.textContent = html.dataset.theme === 'light' ? '🌙' : '☀️';
   });
+
+  // URL 参数预填股票代码
+  var p = new URLSearchParams(window.location.search);
+  var c = p.get('code');
+  if (c) document.getElementById('code').value = c;
+
   loadConfig();
   fetchName();
   doScore();
