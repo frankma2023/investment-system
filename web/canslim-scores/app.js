@@ -5,6 +5,7 @@ var currentPage = 1;
 var pageSize = 200;
 var sortCol = 3;
 var sortDir = -1;
+var colNames = ['#','代码','名称','总评分','C 当期盈利','A 年度盈利','N 形态新高','S 供给需求','L 领军股','I 机构认同'];
 
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('date').value = new Date().toISOString().slice(0, 10);
@@ -47,6 +48,7 @@ function filterTable() {
   currentPage = 1;
   renderTable();
   renderPager();
+  updateSortHeaders();
 }
 
 function sortBy(col) {
@@ -68,6 +70,7 @@ function sortBy(col) {
   currentPage = 1;
   renderTable();
   renderPager();
+  updateSortHeaders();
 }
 
 function renderTable() {
@@ -131,6 +134,18 @@ function setPageSize(n) {
   currentPage = 1;
   renderTable();
   renderPager();
+  updateSortHeaders();
+}
+
+function updateSortHeaders() {
+  var ths = document.querySelectorAll('#tbl thead th');
+  for (var i = 0; i < ths.length; i++) {
+    var arrow = '';
+    if (i === sortCol) {
+      arrow = sortDir === 1 ? ' ▴' : ' ▾';
+    }
+    ths[i].innerHTML = colNames[i] + arrow;
+  }
 }
 
 function fmt(v) {

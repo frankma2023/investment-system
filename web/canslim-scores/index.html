@@ -17,7 +17,7 @@
 .btn-run { padding:8px 22px; background:#FE2C55; color:#FFF; border:none; border-radius:12px; font-size:0.85rem; font-weight:800; cursor:pointer; }
 .table-wrap { background:var(--card-bg); border-radius:18px; padding:10px; box-shadow:0 1px 6px rgba(0,0,0,0.04); overflow-x:auto; }
 table { width:100%; border-collapse:collapse; font-size:0.7rem; }
-th { padding:8px 6px; font-weight:700; color:var(--text-secondary); font-size:0.6rem; border-bottom:2px solid var(--divider); cursor:pointer; white-space:nowrap; position:sticky; top:0; background:var(--card-bg); }
+th { padding:8px 6px; font-weight:700; color:var(--text-secondary); font-size:0.6rem; border-bottom:2px solid var(--divider); cursor:pointer; white-space:nowrap; position:sticky; top:0; background:var(--card-bg); text-align:center; }
 th:hover { color:var(--color-accent); }
 td { padding:5px 6px; border-bottom:1px solid var(--divider); text-align:center; }
 tr:hover { background:var(--color-accent-subtle); }
@@ -26,7 +26,7 @@ tr:hover { background:var(--color-accent-subtle); }
 .grade-S { color:#2E7D32; font-weight:900; } .grade-A { color:#1565C0; font-weight:700; }
 .grade-B { color:#F57F17; font-weight:700; } .grade-C { color:#E65100; font-weight:600; }
 .grade-D { color:#C62828; } .grade-E { color:#880E4F; }
-.num { text-align:right; font-variant-numeric:tabular-nums; }
+.num { text-align:center; font-variant-numeric:tabular-nums; }
 .pager { display:flex; gap:6px; align-items:center; padding:8px 0; font-size:0.62rem; color:var(--text-secondary); justify-content:center; }
 .pager button { padding:3px 10px; border:1px solid var(--divider); border-radius:6px; background:var(--card-bg); cursor:pointer; font-size:0.6rem; }
 .pager button:hover { border-color:var(--color-accent); color:var(--color-accent); }
@@ -55,9 +55,12 @@ tr:hover { background:var(--color-accent-subtle); }
       <a href="../divergence-backtest/">⚠️ 指数背离</a>
       <a href="../strongest-index/">⭐ 最强指数</a><a href="../base-detection/">📐 标准突破</a>
       <a href="../pocket-pivot/">🎯 口袋支点</a><a href="../pattern-scan/">🔎 形态识别</a>
+            <a href="../canslim-scorecard/">🎯 CAN SLIM 评分卡</a>
     </div></div>
     <a href="../index-scan/" class="nav-item">🔬 指数扫描</a><a href="../index-valuation/" class="nav-item">📈 指数估值</a>
     <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a><a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
+        <a href="../daily-pattern-scan/" class="nav-item">📋 形态扫描</a>
+        <a href="../canslim-scores/" class="nav-item">🎯 CAN SLIM</a>
     <a href="../pattern-scan/" class="nav-item">🔎 形态识别</a>
     <button class="theme-toggle">🌙</button>
   </div>
