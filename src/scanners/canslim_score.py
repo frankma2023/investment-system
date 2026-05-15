@@ -372,6 +372,8 @@ def score_l(db, stock_code, target_date, p):
                 score += ex_s[0]; bd['excess'] = {'value': round(excess, 1), 'score': ex_s[0]}
             elif excess > 0:
                 score += ex_s[1]; bd['excess'] = {'value': round(excess, 1), 'score': ex_s[1]}
+            else:
+                bd['excess'] = {'value': round(excess, 1), 'score': 0}
             detail.append('Excess {:.1f}%'.format(excess))
 
     return {"score": max(0, min(score, 21)), "detail": ", ".join(detail), "breakdown": bd}
