@@ -1,0 +1,54 @@
+# 碟形基部参数
+# 形态切割法 + 突破日驱动 + 参数即标准
+# 参数分为两大阵营：必要条件（不通过=不是碟形）和开关（可关）
+
+saucer_base:
+  # ── 前置条件（全部必要） ──
+  min_prior_advance: 0.30          # 前置最小涨幅（验证牛市中途）
+  prior_advance_lookback: 120      # 前置上涨回溯天数
+  min_market_cap_strict: 50        # 市值过滤阈值（亿），0=关闭
+  min_market_cap_warn: 200         # 低于此值标记 market_cap_flag: small
+
+  # ── 碟底定位 ──
+  min_bottom_age_days: 10          # 碟底距检测日最少天数
+  bottom_scan_max_days: 120        # 碟底距检测日最多天数
+  bottom_to_t_max_chg: 0.20        # 碟底到检测日最大涨幅（排除V形反转）
+
+  # ── 形态切割法 ──
+  cut_pct: 0.20                    # 切割B：前高前方大波动阈值
+  cut_check_A_pct: 0.05            # 切割A：前高上限 = 检测日收盘×(1+N)
+  min_descent_weeks: 3             # 前高到碟底最少周数
+  correction_min: 0.08             # 切割C：最小回调深度
+  correction_max: 0.20             # 切割C：最大回调深度
+
+  # ── 碟底平坦性验证 ──
+  bottom_flat_window_days: 5       # 碟底主区间半宽（天）
+  bottom_flatness_max: 0.05        # 碟底主区间最大振幅
+  bottom_flat_window_wide: 10      # 碟底扩展区间半宽（天）
+  bottom_flatness_wide: 0.08       # 碟底扩展区间最大振幅
+  bottom_flat_wide_required: false # 扩展区间是否升级为必要条件
+  bottom_slope_max: 0.0005         # 碟底区间最大日均斜率
+
+  # ── 弧线圆润性 ──
+  arc_smoothness_std: 0.008        # 下行段日收益标准差上限
+  segment_slope_max: 0.004         # 下行各段最大日均跌幅
+  ascent_symmetry_enabled: true    # 是否验证上行对称性
+  ascent_symmetry_ratio: 1.5       # 上行/下行标准差倍数上限
+
+  # ── 成交量 ──
+  vol_bottom_max: 0.50             # 碟底量/50日均量上限
+  vol_contraction: 0.60            # 下行后半量/下行前半量上限
+  vol_spike_check: true            # 是否检查底部异常放量
+  vol_spike_ratio: 1.2             # 异常放量阈值
+
+  # ── 柄部检测（可关开关） ──
+  handle_enabled: true             # 是否检测柄部
+  handle_required: false           # 无柄是否不输出信号
+  handle_min_weeks: 1              # 柄部最小周数
+  handle_max_drawdown: 0.15        # 柄部最大回撤
+  handle_vol_ratio: 0.70           # 柄部量/基部均量上限
+
+  # ── 突破信号 ──
+  breakout_buffer: 0.01            # 突破买点缓冲（元）
+  breakout_vol_ratio: 1.3          # 突破日量/50日均量下限
+  close_position_min: 0.50         # 收盘在当日区间最小分位

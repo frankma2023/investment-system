@@ -713,6 +713,64 @@ def api_pocket_pivot_rs():
     return jsonify(rs or {'rs_20': None, 'rs_250': None})
 
 # ═══════════════════════════════════════════════
+# API: GET /api/saucer-base?stock=XXX&date=YYYY-MM-DD
+# ═══════════════════════════════════════════════
+
+@app.route('/api/saucer-base')
+def api_saucer_base():
+    """单股票碟形基部检测"""
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    
+    db = get_db()
+    
+    # 获取K线（回溯400天）
+    klines = db.execute("""
+        SELECT date, open, high, low, close, volume
+        FROM daily_kline
+        WHERE stock_code = ? AND date <= ? AND date >= date(?, '-400 days')
+        ORDER BY date
+    """, (code, date_str, date_str)).fetchall()
+    
+    if not klines:
+        return jsonify({'signals': [], 'error': 'No kline data'})
+    
+    daily = [dict(r) for r in klines]
+    
+    # 获取市值
+    mkt = db.execute("""
+        SELECT value FROM fundamental_indicator
+        WHERE stock_code = ? AND data_type = 'mktcap' AND date <= ?
+        ORDER BY date DESC LIMIT 1
+    """, (code, date_str)).fetchone()
+    market_cap = float(mkt['value']) / 1e8 if mkt else None
+    
+    from scanners.saucer_base import detect, load_params
+    params = load_params()
+    signals = detect(daily, params, market_cap)
+    
+    # 过滤出指定日期的信号
+    filtered = [s for s in signals if s['signal_date'] == date_str]
+    
+    for s in filtered:
+        s['stock_code'] = code
+    
+    return jsonify({'signals': filtered})
+
+
+@app.route('/api/saucer-base/scan')
+def api_saucer_base_scan():
+    """批量扫描碟形基部"""
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    pool = request.args.get('pool', 'all')
+    
+    from scanners.saucer_base import scan_batch, load_params
+    params = load_params()
+    results = scan_batch(date_str, pool, params)
+    
+    return jsonify({'results': results, 'count': len(results), 'date': date_str, 'pool': pool})
+
+# ═══════════════════════════════════════════════
 # API: POST /api/breakout
 # ═══════════════════════════════════════════════
 
