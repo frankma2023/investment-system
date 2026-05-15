@@ -71,7 +71,7 @@ a:hover{color:var(--color-accent-hover)}
 .nav-brand{display:flex;align-items:center;gap:var(--space-sm);font-weight:800;font-size:0.95rem;font-family:var(--font-display);color:var(--text-primary)}
 .nav-fox{font-size:1.3rem}
 .nav-greeting{font-size:0.72rem;color:var(--text-tertiary);font-weight:500;margin-left:var(--space-xs)}
-.nav-links{display:flex;gap:var(--space-xs);align-items:center}
+.nav-links{display:flex;gap:var(--space-xs);align-items:center;flex-wrap:nowrap;overflow-x:auto}
 
 .nav-item{
   padding:6px 16px;border-radius:var(--radius-full);
