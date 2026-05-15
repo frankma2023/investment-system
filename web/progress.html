@@ -45,11 +45,11 @@
 
     <header class="panel-header">
       <h1>📋 欧奈尔投资系统 · 项目进展</h1>
-      <p>2026-05-14</p>
+      <p>2026-05-15</p>
     </header>
 
     <div class="pg-stats">
-      <div class="pg-stat"><div class="n" style="color:#4CAF50">27</div><div class="l">已完成</div></div>
+      <div class="pg-stat"><div class="n" style="color:#4CAF50">32</div><div class="l">已完成</div></div>
       <div class="pg-stat"><div class="n" style="color:#FF9800">1</div><div class="l">进行中</div></div>
       <div class="pg-stat"><div class="n">8</div><div class="l">待开发</div></div>
     </div>
@@ -96,29 +96,33 @@
       </div>
 
       <div class="pg-card">
-        <h3>🔧 基础设施 <span class="badge" style="background:#ECEFF1;color:#546E7A">11项</span></h3>
+        <h3>🔧 基础设施 <span class="badge" style="background:#ECEFF1;color:#546E7A">16项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-done"></span>理杏仁数据拉取</td><td>scripts/fetch_*</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>每日更新脚本</td><td>daily_update.py</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>融资融券历史</td><td>fetch_stock_margin_history</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>每日更新脚本(14步)</td><td>daily_update.py</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>看板样式系统</td><td>xhs-cards.css</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>回测配置持久化</td><td>YAML ↔ API</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>开发标准文档</td><td>docs/dev/</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>TA-Lib 指标引擎</td><td>src/scanners/talib_engine</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>K线形态引擎(14种)</td><td>src/scanners/cdl_engine</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>建议合成规则引擎</td><td>src/scanners/recommend</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>引擎自动发现框架</td><td>src/engine_registry</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>RPS_60/120存储</td><td>stock_rs -> stock_rs_daily</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>TA-Lib 指标引擎</td><td>talib_engine</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>K线形态引擎(14种)</td><td>cdl_engine</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>建议合成引擎</td><td>recommend</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>引擎自动发现框架</td><td>engine_registry</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>RPS_60/120存储</td><td>stock_rs → stock_rs_daily</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>机构持股拉取(理杏仁)</td><td>fetch_institutional_holdings</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>研报拉取(东方财富)</td><td>fetch_stock_reports</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>回购数据拉取(东财)</td><td>fetch_buyback</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>机构持股8季回补</td><td>backfill_institutional</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>CAN SLIM评分引擎</td><td>canslim_score</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>批量评分脚本</td><td>batch_canslim_score</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>数据库Schema文档</td><td>DATABASE_SCHEMA.md</td></tr>
         </table>
       </div>
 
       <div class="pg-card">
-        <h3>🔎 形态与信号 <span class="badge" style="background:#FCE4EC;color:#C62828">4项</span></h3>
+        <h3>🎯 CAN SLIM <span class="badge" style="background:#FCE4EC;color:#C62828">3项</span></h3>
         <table class="pg-table">
-          <tr><td><span class="pg-dot dot-done"></span>🔎 形态识别看板</td><td>/pattern-scan/</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>📋 全市场每日扫描</td><td>/daily-pattern-scan/</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>插件化引擎架构</td><td>ENGINE_META + detect()</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>扁平基部识别引擎</td><td>/flat-base/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🎯 评分卡看板</td><td>/canslim-scorecard/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>📊 全市场评分查询</td><td>/canslim-scores/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>📋 全市场形态扫描</td><td>/daily-pattern-scan/</td></tr>
         </table>
       </div>
 
@@ -157,6 +161,13 @@
     <div class="lesson-card"><div class="ln">16. 插件化架构的核心是函数签名兼容</div><div class="ld">用 inspect.signature 动态适配不同引擎的 detect() 参数差异（indicators/params/rs_info），避免改旧代码。约定优于配置。</div></div>
     <div class="lesson-card"><div class="ln">17. conda 环境与系统 Python 的包隔离</div><div class="ld">daily_update 用 sys.executable 引入 conda 环境但 talib 装在系统 Python 下。固定 PYTHON_EXE 路径避坑。</div></div>
     <div class="lesson-card"><div class="ln">18. 全市场扫描需控制 HTML 体积</div><div class="ld">4333只股票的39K行HTML用客户端分页+筛选处理，后端只生成一次。JSON 存档、HTML 是分发格式，不实时查API。</div></div>
+    <div class="lesson-card"><div class="ln">19. 表格对齐不要用 table-layout:fixed</div><div class="ld">fixed + 固定 width 导致列头与内容错位。让浏览器 auto 分配列宽，th/td 统一 text-align:center，仅 th 加 nowrap。数字用 tabular-nums 等宽。参考 canslim-scores 的实现。</div></div>
+    <div class="lesson-card"><div class="ln">20. 理杏仁API proportion 单位不统一</div><div class="ld">fund-shareholders 的 proportionOfOutstandingSharesA 对大盘股返小数（0.0115）、小盘股返百分比（68.0）。入库前统一归一化：>1.0 除以100。</div></div>
+    <div class="lesson-card"><div class="ln">21. 双源数据取 max 不叠加</div><div class="ld">机构持股理杏仁+东方财富数据来源同一季报，占比取 max(props) 防止双重计数。最终砍掉东方财富，只保留理杏仁三API。</div></div>
+    <div class="lesson-card"><div class="ln">22. INSERT OR REPLACE 断送历史对比</div><div class="ld">机构持股每次 INSERT OR REPLACE 覆盖上季数据，机构数量变化无法计算。需保留多季数据（PK含report_date），或独立回补脚本拉8季历史。</div></div>
+    <div class="lesson-card"><div class="ln">23. YAML 被 JSON 覆盖</div><div class="ld">前端 saveConfig 发 JSON 到 /api/config，直接覆写 YAML 文件导致 yaml.safe_load 失败。修复：API 层检测 JSON 自动转 YAML，前端不包 wrapper。</div></div>
+    <div class="lesson-card"><div class="ln">24. CAGR 负数底数导致复数</div><div class="ld">3年EPS CAGR 公式 (latest/old)**(1/3)，old 为负时产生复数 → score_a 崩溃。加 old>0 and lat>0 前置守卫。</div></div>
+    <div class="lesson-card"><div class="ln">25. 评分维度子项必须设 fallback</div><div class="ld">inst_change/excess/buyback 等子项在数据缺失或负值时漏设 bd key，前端显示空白。所有子项必须有 else 分支显式设 0 或 fallback 值。</div></div>
 
     <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>
