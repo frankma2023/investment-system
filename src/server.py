@@ -2118,6 +2118,54 @@ def api_canslim_score():
     return jsonify(result)
 
 # ═══════════════════════════════════════════════
+# CAN SLIM 评分查询 API — /api/canslim-scores
+# ═══════════════════════════════════════════════
+
+@app.route('/api/canslim-scores', methods=['GET', 'OPTIONS'])
+def api_canslim_scores():
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    target_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    db = get_db()
+
+    # 如果没有指定日期的数据，取最近可用日期
+    check = db.execute("SELECT MAX(date) FROM cansim_scores").fetchone()
+    if not check or not check[0]:
+        return jsonify({'scores': [], 'date': target_date, 'count': 0})
+
+    latest = check[0]
+    if target_date != latest:
+        target_date = latest
+
+    rows = db.execute("""
+        SELECT s.stock_code, b.name, s.score, s.grade,
+               s.score_c, s.score_a, s.score_n, s.score_s, s.score_l, s.score_i
+        FROM cansim_scores s
+        JOIN stock_basic b ON s.stock_code = b.stock_code
+        WHERE s.date = ?
+        ORDER BY s.score DESC, s.stock_code
+    """, (target_date,)).fetchall()
+
+    scores = []
+    for i, r in enumerate(rows):
+        scores.append({
+            'rank': i + 1,
+            'stock_code': r['stock_code'],
+            'name': r['name'],
+            'score': r['score'],
+            'grade': r['grade'],
+            'c': r['score_c'],
+            'a': r['score_a'],
+            'n': r['score_n'],
+            's': r['score_s'],
+            'l': r['score_l'],
+            'i': r['score_i'],
+        })
+
+    return jsonify({'scores': scores, 'date': target_date, 'count': len(scores)})
+
+# ═══════════════════════════════════════════════
 # CORS
 # ═══════════════════════════════════════════════
 
