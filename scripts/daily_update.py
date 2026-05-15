@@ -11,9 +11,17 @@
   1. 股票状态更新       (fetch_stock_basic)
   2. 指数日K线          (fetch_index_daily_kline)
   3. 个股日K线          (fetch_stock_daily_kline)
-  4. 个股基本面         (fetch_fundamental_nonfinancial)   ← 含融资融券
-  5. 指数拥挤度         (src/scanners/index_crowding)
-  6. 个股RS强度         (src/scanners/stock_rs)
+  4. 个股基本面         (fetch_fundamental_nonfinancial)
+  5. 指数拥挤度         (index_crowding)
+  6. 融资融券           (fetch_margin_daily)
+  7. 大盘健康度         (market_health)
+  8. 大盘扫描快照       (compute_market_snapshot)
+  9. 个股RS+指数RS      (stock_rs + index_rs)
+  10. 全A股形态扫描     (daily_pattern_scan — 每日)
+  11. 机构持股拉取      (fetch_institutional_holdings — 周一)
+  12. 研报拉取          (fetch_stock_reports — 周一)
+  13. 回购数据          (fetch_buyback — 周一)
+  14. CAN SLIM评分      (batch_canslim_score — 周一)
 
 步骤 1~3 可并行，但为简单起见串行执行，出错时终止。
 """
