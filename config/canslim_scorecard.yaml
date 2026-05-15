@@ -1,82 +1,75 @@
-# CAN SLIM 评分卡参数配置
-# 修改阈值后保存，评分引擎立即生效
-
 c_current_earnings:
-  # === 当期盈利（C维，满分23）===
-  eps_yoy_tiers:          [25, 18, 10]       # EPS同比增速三档(%)：≥25优秀 / 18~25良好 / 10~18及格
-  eps_yoy_scores:         [12, 8, 5]         # 对应三档得分
-  eps_accel_threshold:    10                  # 增速提高≥此值(%)额外加分
-  eps_accel_score:        4                   # 加速度加分
-  eps_decel_penalty:      -2                  # 增速放缓>5%扣分
-  revenue_yoy_tiers:      [25, 15]           # 营收同比增速(%)：≥25优秀 / 15~25良好
-  revenue_yoy_scores:     [4, 2]             # 对应得分
-  nonrecurring_ratio:     90                  # 扣非/净利润≥此值(%)加纯度分
-  nonrecurring_score:     3                   # 扣非纯度加分
-  nonrecurring_warning:   -3                  # 扣非<70%警告扣分
-
+  eps_yoy_tiers:
+  - 25
+  - 18
+  - 10
+  eps_yoy_scores:
+  - 12
+  - 8
+  - 5
+  eps_accel_threshold: 10
+  revenue_yoy_tiers:
+  - 25
+  - 15
+  revenue_yoy_scores:
+  - 4
+  - 2
+  nonrecurring_ratio: 90
 a_annual_earnings:
-  # === 年度盈利（A维，满分17）===
-  eps_cagr_3y_tiers:      [25, 15, 5]        # 3年EPS复合增速(%)：≥25优秀 / 15~25良好 / 5~15及格
-  eps_cagr_scores:        [9, 6, 3]          # 对应得分
-  positive_years_score:   [5, 2]             # 正增长年数加分：[3年均正, 2年正]
-  stability_cv_threshold: 30                  # 盈利稳定性：变异系数<此值(%)加分
-  stability_score:        3                   # 稳定性加分
-
+  eps_cagr_3y_tiers:
+  - 25
+  - 15
+  - 5
+  eps_cagr_scores:
+  - 9
+  - 6
+  - 3
+  stability_cv_threshold: 30
 n_new:
-  # === 形态新高（N维，满分14）===
-  high52_tiers:           [-5, -15]          # 距52周高点(%)：>-5%强势 / -15%~-5%正常
-  high52_scores:          [7, 5]             # 对应得分
-  high_lookback_days:     5                   # 形态信号回溯天数
-  decay_factors:          [1.0, 0.8, 0.6, 0.4, 0.4]  # 1~5天衰减系数：当天×1.0，逐日递减
-  engine_scores:                              # 各引擎信号基础分
-    breakout:             5                   #   标准突破：峰谷结构突破
-    pocket_pivot:         4                   #   口袋支点：欧奈尔经典买点
-    double_bottom:        3                   #   双重底：W底颈线突破
-    flat_base:            3                   #   扁平基部：窄幅横盘突破
-    cdl_bullish:          2                   #   K线看涨（每个）：吞没/锤子/晨星等
-    cdl_bullish_max:      4                   #   K线形态累计上限
-    talib_bullish:        1                   #   TA-Lib看涨（每个）：金叉/放量/RSI超卖等
-    talib_bullish_max:    3                   #   TA-Lib累计上限
-
+  high52_tiers:
+  - -5
+  - -15
+  high52_scores:
+  - 7
+  - 5
+  high_lookback_days: 5
 s_supply_demand:
-  # === 供给需求（S维，满分9）===
-  market_cap_tiers:       [50, 200, 500]     # 流通市值分档(亿)：<50稀缺 / 50~200次优 / 200~500一般
-  market_cap_scores:      [4, 2, 1]          # 对应得分：小市值供给稀缺加分更高
-  vol_ratio_tiers:        [1.5, 1.2]         # 5日/50日均量比：>1.5需求强 / 1.2~1.5温和
-  vol_ratio_scores:       [3, 2]             # 对应得分
-  buyback_ratio_tiers:    [1.0, 0.5]         # 回购/总市值(%)：≥1%积极 / 0.5~1%有限（暂未接入）
-  buyback_scores:         [2, 1]             # 对应得分
-
+  market_cap_tiers:
+  - 100
+  - 500
+  - 1000
+  market_cap_scores:
+  - 4
+  - 2
+  - 1
+  vol_ratio_tiers:
+  - 1.5
+  - 1.2
+  vol_ratio_scores:
+  - 3
+  - 2
 l_leader:
-  # === 领军股（L维，满分21）===
-  rs250_tiers:            [95, 90, 80, 70]   # RS_250全市场排名：≥95顶级 / 90~94优秀 / 80~89良好
-  rs250_scores:           [11, 9, 6, 3]      # 对应得分
-  rs_momentum_score:      2                   # RS加速加分：RS20 > RS60 > RS120 动量向上
-  rs_momentum_penalty:    -2                  # RS减速扣分：RS20 < RS120 动量衰减
-  industry_rs_threshold:  80                  # 行业RS阈值（暂未接入映射）
-  industry_rs_score_high: 5                   # 行业RS≥80加分
-  industry_rs_score_mid:  2                   # 行业RS 70~79加分
-  excess_return_threshold: 5                  # 20日超额收益(%)：个股涨−指数涨≥此值
-  excess_return_scores:   [3, 1]             # [高于阈值, 有超额]对应加分
-
+  rs250_tiers:
+  - 95
+  - 90
+  - 80
+  - 70
+  rs250_scores:
+  - 11
+  - 9
+  - 6
+  - 3
+  excess_return_threshold: 5
 i_institutional:
-  # === 机构认同（I维，满分18）===
-  inst_holding_tiers:     [15, 5, 1]         # 机构持股/总股本(%)：≥15高 / 5~15中 / 1~5低
-  inst_holding_scores:    [5, 3, 1]          # 对应得分
-  inst_count_increase:    10                  # 机构数增加≥此值额外加分
-  inst_count_score:       [5, 2]             # [增加≥10家, 增加1~9家]加分
-  analyst_coverage_tiers: [3, 1]             # 研报覆盖机构数：≥3家 / 1~2家
-  analyst_coverage_score: 3                   # 研报覆盖加分
-  first_coverage_score:   2                   # 首次覆盖加分（90天内有新机构首次研报）
-  rating_upgrade_score:   1                   # 评级上调加分
-  analyst_lookback_days:  90                  # 研报回溯天数
-  debt_ratio_warning:     60                  # 资产负债率>此值(%)警告扣分
-  debt_ratio_ok:           2                  # 负债率<30%健康加分
-  debt_ratio_penalty:     -2                  # 负债率>60%高杠杆扣分
-
-m_market:
-  # === 市场方向（M因子，不参与评分，仅仓位参考）===
-  health_strong:          70                  # 大盘健康度≥70 → 满仓
-  health_neutral:         50                  # 大盘健康度≥50 → 七成仓
-  health_weak:            30                  # 大盘健康度≥30 → 半仓
-                                              # <30 → 三成仓或空仓
+  inst_holding_tiers:
+  - 15
+  - 5
+  - 1
+  inst_holding_scores:
+  - 5
+  - 3
+  - 1
+  analyst_coverage_tiers:
+  - 3
+  - 1
+  debt_ratio_warning: 60
