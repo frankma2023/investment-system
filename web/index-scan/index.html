@@ -2,12 +2,14 @@
 <html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="UTF-8">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>指数扫描看板 · 投资手账本</title>
 <link rel="stylesheet" href="../shared/css/theme.css">
 <link rel="stylesheet" href="../shared/css/base.css">
 <link rel="stylesheet" href="../shared/css/xhs-cards.css">
+<link rel="stylesheet" href="../shared/css/components.css">
 <script src="../shared/js/echarts.min.js"></script>
+<script src="../shared/js/theme.js"></script>
 <style>
 /* ── 指数扫描 · 小红书风格 ── */
 .scan-stats { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
@@ -72,32 +74,24 @@
 
 <div class="app-container">
 <nav class="top-nav">
-  <div class="nav-brand"><span class="nav-fox">🦊</span><span>指数扫描</span><span class="nav-greeting">Index Scan Dashboard</span></div>
+  <div class="nav-brand"><span class="nav-fox">🔬</span><span>指数扫描</span></div>
   <div class="nav-links">
     <a href="../" class="nav-item">🏠 看板</a>
-    <div class="nav-dropdown">
-      <a href="#" class="nav-item">回测 ▾</a>
-      <div class="nav-dropdown-menu">
-        <a href="../distribution-day/">📉 抛盘日</a>
-        <a href="../follow-through-day/">📈 追盘日</a>
-        <a href="../index-rs-backtest/">🏆 指数RS强度</a>
-            <a href="../pattern-scan/">🔎 形态识别</a>
+    <div class="nav-dropdown"><a href="#" class="nav-item">回测 ▾</a><div class="nav-dropdown-menu">
+      <a href="../distribution-day/">📉 抛盘日</a><a href="../follow-through-day/">📈 追盘日</a>
+      <a href="../index-rs-backtest/">🏆 指数RS强度</a><a href="../index-crowdedness/">📊 指数拥挤度</a>
+      <a href="../stock-rs-backtest/">💪 个股RS强度</a><a href="../index-ad-backtest/">🔍 机构吸筹/出货</a>
+      <a href="../divergence-backtest/">⚠️ 指数背离</a>
+      <a href="../strongest-index/">⭐ 最强指数</a><a href="../base-detection/">📐 标准突破</a>
+      <a href="../pocket-pivot/">🎯 口袋支点</a><a href="../pattern-scan/">🔎 形态识别</a>
             <a href="../canslim-scorecard/">🎯 CAN SLIM 评分卡</a>
-        <a href="../index-crowdedness/">📊 指数拥挤度</a>
-        <a href="../stock-rs-backtest/">💪 个股RS强度</a>
-        <a href="../index-ad-backtest/">🔍 机构吸筹/出货</a>
-        <a href="../divergence-backtest/">⚠️ 指数背离</a>
-      </div>
-    </div>
-    <a href="../index-scan/" class="nav-item active">🔬 指数扫描</a>
-    <a href="../index-valuation/" class="nav-item">📈 指数估值</a>
-        <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a>
-    <a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
+    </div></div>
+    <a href="../index-scan/" class="nav-item active">🔬 指数扫描</a><a href="../index-valuation/" class="nav-item">📈 指数估值</a>
+    <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a><a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
         <a href="../daily-pattern-scan/" class="nav-item">📋 形态扫描</a>
         <a href="../canslim-scores/" class="nav-item">🎯 CAN SLIM</a>
-        <a href="../pattern-scan/" class="nav-item">🔎 形态识别</a>
-    <a href="#" class="nav-item">💰 仓位管理</a>
-    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    <a href="../pattern-scan/" class="nav-item">🔎 形态识别</a>
+    <button class="theme-toggle">🌙</button>
   </div>
 </nav>
 
