@@ -47,13 +47,13 @@
 
     <header class="panel-header">
       <h1>📋 欧奈尔投资系统 · 项目进展</h1>
-      <p>2026-05-15</p>
+      <p>2026-05-16</p>
     </header>
 
     <div class="pg-stats">
-      <div class="pg-stat"><div class="n" style="color:#4CAF50">32</div><div class="l">已完成</div></div>
-      <div class="pg-stat"><div class="n" style="color:#FF9800">1</div><div class="l">进行中</div></div>
-      <div class="pg-stat"><div class="n">8</div><div class="l">待开发</div></div>
+      <div class="pg-stat"><div class="n" style="color:#4CAF50">33</div><div class="l">已完成</div></div>
+      <div class="pg-stat"><div class="n" style="color:#FF9800">0</div><div class="l">进行中</div></div>
+      <div class="pg-stat"><div class="n">7</div><div class="l">待开发</div></div>
     </div>
 
     <div class="section-title">功能模块</div>
@@ -98,7 +98,7 @@
       </div>
 
       <div class="pg-card">
-        <h3>🔧 基础设施 <span class="badge" style="background:#ECEFF1;color:#546E7A">16项</span></h3>
+        <h3>🔧 基础设施 <span class="badge" style="background:#ECEFF1;color:#546E7A">17项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-done"></span>理杏仁数据拉取</td><td>scripts/fetch_*</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>每日更新脚本(14步)</td><td>daily_update.py</td></tr>
@@ -115,16 +115,18 @@
           <tr><td><span class="pg-dot dot-done"></span>机构持股8季回补</td><td>backfill_institutional</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>CAN SLIM评分引擎</td><td>canslim_score</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>批量评分脚本</td><td>batch_canslim_score</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>碟形基部识别引擎</td><td>saucer_base</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>数据库Schema文档</td><td>DATABASE_SCHEMA.md</td></tr>
         </table>
       </div>
 
       <div class="pg-card">
-        <h3>🎯 CAN SLIM <span class="badge" style="background:#FCE4EC;color:#C62828">3项</span></h3>
+        <h3>🎯 CAN SLIM <span class="badge" style="background:#FCE4EC;color:#C62828">4项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-done"></span>🎯 评分卡看板</td><td>/canslim-scorecard/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>📊 全市场评分查询</td><td>/canslim-scores/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>📋 全市场形态扫描</td><td>/daily-pattern-scan/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🥏 碟形基部回测</td><td>/saucer-base-backtest/</td></tr>
         </table>
       </div>
 
@@ -170,6 +172,8 @@
     <div class="lesson-card"><div class="ln">23. YAML 被 JSON 覆盖</div><div class="ld">前端 saveConfig 发 JSON 到 /api/config，直接覆写 YAML 文件导致 yaml.safe_load 失败。修复：API 层检测 JSON 自动转 YAML，前端不包 wrapper。</div></div>
     <div class="lesson-card"><div class="ln">24. CAGR 负数底数导致复数</div><div class="ld">3年EPS CAGR 公式 (latest/old)**(1/3)，old 为负时产生复数 → score_a 崩溃。加 old>0 and lat>0 前置守卫。</div></div>
     <div class="lesson-card"><div class="ln">25. 评分维度子项必须设 fallback</div><div class="ld">inst_change/excess/buyback 等子项在数据缺失或负值时漏设 bd key，前端显示空白。所有子项必须有 else 分支显式设 0 或 fallback 值。</div></div>
+    <div class="lesson-card"><div class="ln">26. overflow-x:auto 会暗中强制 overflow-y:auto</div><div class="ld">CSS 规范：一个轴的 overflow 设为非 visible 时，另一轴未显式设置则强制变为 auto。.nav-links 设了 overflow-x:auto 导致 overflow-y 也变 auto，将绝对定位的下拉菜单裁剪掉。导航栏父容器不要设 overflow。</div></div>
+    <div class="lesson-card"><div class="ln">27. href="#" 点击跳顶 + 多个Python进程占端口</div><div class="ld">导航栏占位链接用 javascript:void(0) 而非 #。端口8788累积多个僵尸Flask进程导致旧代码一直运行，需 taskkill /F /IM python.exe 全杀。</div></div>
 
     <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>
