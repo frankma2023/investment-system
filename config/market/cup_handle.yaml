@@ -1,0 +1,36 @@
+# 杯柄形态参数
+# Cup with Handle — O'Neil 经典中轴买点
+# 周线主分析 + 日线精细化
+
+cup_handle:
+  # ── 前置条件 ──
+  min_prior_advance: 0.30          # 杯左沿之前的最小涨幅
+  prior_advance_lookback: 120      # 前置上涨回溯天数
+
+  # ── 杯体（周线） ──
+  cup_depth_min: 0.12              # 最小回调深度
+  cup_depth_max: 0.33              # 最大回调深度
+  cup_duration_min_weeks: 7        # 杯体最少周数
+  cup_duration_max_weeks: 65       # 杯体最多周数
+  cup_u_shape_ratio: 0.30          # U形检测：杯底前后对称性（底前/底后时间比 ≥ 此值）
+  cup_left_lip_window: 13          # 杯左沿局部高点窗口（周）
+
+  # ── 杯柄（日线） ──
+  handle_enabled: true             # 是否检测柄部
+  handle_required: true            # 无柄是否不输出信号
+  handle_position_min: 0.50        # 柄部必须在杯体上半部（柄低点 ≥ 杯底 + N×(杯高)）
+  handle_depth_min: 0.08           # 柄部最小回撤
+  handle_depth_max: 0.12           # 柄部最大回撤（O'Neil 经典 8%-12%）
+  handle_duration_min_days: 5      # 柄部最少天数
+  handle_duration_max_days: 30     # 柄部最多天数（约4-6周）
+  handle_slope_max: 0.001          # 柄部回归斜率 ≤ 0（向下或水平，正斜率容忍）
+
+  # ── 成交量 ──
+  cup_bottom_vol_ratio: 0.60       # 杯底量/50日均量上限
+  handle_vol_ratio: 0.50           # 柄部量/杯体均量上限（极度萎缩）
+  breakout_vol_ratio: 1.5          # 突破日量/50日均量下限
+
+  # ── 突破买点 ──
+  breakout_buffer: 0.01            # 买点 = 柄部高点 + buffer（元）
+  close_position_min: 0.50         # 收盘在当日区间最小分位
+  require_green: true              # 要求阳线突破

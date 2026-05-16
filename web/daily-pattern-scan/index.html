@@ -77,7 +77,7 @@ tr:hover { background:var(--color-accent-subtle); }
       <a href="../distribution-day/">📉 抛盘日</a><a href="../follow-through-day/">📈 追盘日</a><a href="../accumulation-day/">📦 吸筹日</a>
       <a href="../index-rs-backtest/">🏆 指数RS强度</a><a href="../index-crowdedness/">📊 指数拥挤度</a><a href="../stock-rs-backtest/">💪 个股RS强度</a>
       <a href="../index-ad-backtest/">🔍 机构吸筹/出货</a><a href="../divergence-backtest/">⚠️ 指数背离</a>
-      <a href="../strongest-index/">⭐ 最强指数</a><a href="../base-detection/">📐 标准突破</a><a href="../pocket-pivot/">🎯 口袋支点</a>
+      <a href="../strongest-index/">⭐ 最强指数</a><a href="../cup-handle-backtest/">☕ 杯柄形态</a><a href="../pocket-pivot/">🎯 口袋支点</a>
       <a href="../pattern-scan/">🔎 形态识别</a>
     </div></div>
     <a href="../index-scan/" class="nav-item">🔬 指数扫描</a><a href="../index-valuation/" class="nav-item">📈 指数估值</a>
@@ -105,7 +105,7 @@ tr:hover { background:var(--color-accent-subtle); }
   <button class="filter-btn" onclick="filterDS('有信号')">有信号</button>
   <button class="filter-btn" onclick="filterDS('看涨')">看涨</button>
   <button class="filter-btn" onclick="filterDS('看跌')">看跌</button>
-  <button class="filter-btn" onclick="filterDS('标准突破')">标准突破</button>
+  <button class="filter-btn" onclick="filterDS('杯柄形态')">杯柄形态</button>
   <button class="filter-btn" onclick="filterDS('口袋支点')">口袋支点</button>
   <button class="filter-btn" onclick="filterDS('双重底')">双重底</button>
   <button class="filter-btn" onclick="filterDS('扁平基部')">扁平基部</button>
@@ -19918,7 +19918,7 @@ tr:hover { background:var(--color-accent-subtle); }
                 <td class="num"><span class="up">+10.01%</span></td>
                 <td>47</td><td>60</td><td>73</td><td>76</td>
                 <td><span class="badge">—</span></td>
-                <td><span class="sig-text">标准突破·看涨<br>TA-Lib·看跌（RSI进入超买区(>70)，注意回调风险）<br>TA-Lib·看涨（成交量放大至50日均量的2倍以上）</span></td>
+                <td><span class="sig-text">杯柄形态·看涨<br>TA-Lib·看跌（RSI进入超买区(>70)，注意回调风险）<br>TA-Lib·看涨（成交量放大至50日均量的2倍以上）</span></td>
             </tr>
             <tr data-ds="">
                 <td><a class="code-link" href="../pattern-scan/?code=688352" target="_blank">688352</a></td>
@@ -36559,7 +36559,7 @@ tr:hover { background:var(--color-accent-subtle); }
                 <td class="num"><span class="up">+11.92%</span></td>
                 <td>1</td><td>36</td><td>56</td><td class="rs-warm">81</td>
                 <td><span class="badge">—</span></td>
-                <td><span class="sig-text">标准突破·看涨<br>TA-Lib·看跌（RSI进入超买区(>70)，注意回调风险）<br>TA-Lib·看涨（成交量放大至50日均量的2倍以上）</span></td>
+                <td><span class="sig-text">杯柄形态·看涨<br>TA-Lib·看跌（RSI进入超买区(>70)，注意回调风险）<br>TA-Lib·看涨（成交量放大至50日均量的2倍以上）</span></td>
             </tr>
             <tr data-ds="">
                 <td><a class="code-link" href="../pattern-scan/?code=301336" target="_blank">301336</a></td>
@@ -39859,7 +39859,7 @@ tr:hover { background:var(--color-accent-subtle); }
 // ── RS 类型筛选 ──
 function filterDS(type) {
   // 信号类筛选关键词
-  var sigFilters = ['看涨', '看跌', '标准突破', '口袋支点', '双重底', '扁平基部'];
+  var sigFilters = ['看涨', '看跌', '杯柄形态', '口袋支点', '双重底', '扁平基部'];
   var rows = document.querySelectorAll('#stock-table tbody tr');
   rows.forEach(function(r) {
     if (type === 'all') {

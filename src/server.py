@@ -777,42 +777,42 @@ def api_saucer_base_scan():
     return jsonify({'results': results, 'count': len(results), 'date': date_str, 'pool': pool})
 
 # ═══════════════════════════════════════════════
-# API: POST /api/breakout
+# API: GET /api/cup-handle?stock=XXX&date=YYYY-MM-DD
 # ═══════════════════════════════════════════════
 
-@app.route('/api/breakout', methods=['POST', 'OPTIONS'])
-def api_breakout():
-    if request.method == 'OPTIONS': return '', 204
-    data = request.get_json()
-    stock_code = data.get('stock_code', '600519')
-    start = data.get('start', '2023-01-01')
-    end = data.get('end', datetime.now().strftime('%Y-%m-%d'))
-    mode = data.get('mode', 'stock')
-    params = data.get('params', {})
-
+@app.route('/api/cup-handle')
+def api_cup_handle():
+    """杯柄形态检测"""
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    start = request.args.get('start', None)
+    
     db = get_db()
-    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
-    kf = "AND kline_type='normal'" if mode == 'index' else ''
-
-    rows = db.execute(f"SELECT date, open, high, low, close, volume FROM {table} WHERE stock_code=? {kf} AND date>=date(?,'-200 days') AND date<=? ORDER BY date", (stock_code, start, end)).fetchall()
-    if not rows: return jsonify({'klines': [], 'signals': []})
-
-    klines_full = [dict(r) for r in rows]
-
-    merged = {}
-    cfg_path = os.path.join(PROJECT_DIR, 'config', 'market', 'breakout.yaml')
-    if os.path.exists(cfg_path):
-        import yaml
-        with open(cfg_path, encoding='utf-8') as f:
-            cfg = yaml.safe_load(f) or {}
-        merged.update(cfg.get('breakout', {}))
-    merged.update(params.get('breakout', params))
-
-    from scanners.breakout_scanner import detect
-    signals = detect(klines_full, merged)
-    klines_out = [k for k in klines_full if start <= k['date'] <= end]
-    signals_out = [s for s in signals if start <= s['date'] <= end]
-    return jsonify({'klines': klines_out, 'signals': signals_out})
+    klines = db.execute("""
+        SELECT date, open, high, low, close, volume FROM daily_kline
+        WHERE stock_code=? AND date<=? AND date>=date(?,'-600 days')
+        ORDER BY date
+    """, (code, date_str, date_str)).fetchall()
+    
+    if not klines:
+        return jsonify({'signals': [], 'klines': [], 'error': 'No data'})
+    
+    daily = [dict(r) for r in klines]
+    
+    from scanners.cup_handle import detect, load_params
+    params = load_params()
+    signals = detect(daily, params)
+    
+    filtered = [s for s in signals if s['signal_date'] == date_str]
+    for s in filtered:
+        s['stock_code'] = code
+    
+    klines_out = daily
+    if start:
+        klines_out = [k for k in daily if k['date'] >= start]
+    klines_out = klines_out[-600:]
+    
+    return jsonify({'signals': filtered, 'klines': klines_out})
 
 # ═══════════════════════════════════════════════
 # API: GET /api/market-panorama
