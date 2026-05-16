@@ -740,7 +740,7 @@ def api_saucer_base():
     # 获取市值
     mkt = db.execute("""
         SELECT value FROM fundamental_indicator
-        WHERE stock_code = ? AND data_type = 'mktcap' AND date <= ?
+        WHERE stock_code = ? AND metric_code = 'mc' AND date <= ?
         ORDER BY date DESC LIMIT 1
     """, (code, date_str)).fetchone()
     market_cap = float(mkt['value']) / 1e8 if mkt else None

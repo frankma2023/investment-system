@@ -929,7 +929,7 @@ def scan_batch(
         # 获取市值
         mkt_row = conn.execute("""
             SELECT value FROM fundamental_indicator
-            WHERE stock_code = ? AND data_type = 'mktcap' AND date <= ?
+            WHERE stock_code = ? AND metric_code = 'mc' AND date <= ?
             ORDER BY date DESC LIMIT 1
         """, (code, date_str)).fetchone()
         market_cap = float(mkt_row['value']) / 1e8 if mkt_row else None
