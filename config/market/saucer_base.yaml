@@ -1,8 +1,8 @@
 # 碟形基部参数
 saucer_base:
   correction_min: 0.08
-  correction_max: 0.2
-  min_descent_weeks: 3
+  correction_max: 0.25
+  min_descent_weeks: 2
   cut_pct: 0.2
   cut_check_A_pct: 0.05
   min_bottom_age_days: 5
@@ -12,7 +12,7 @@ saucer_base:
   bottom_slope_max: 0.0001
   arc_smoothness_std: 0.008
   segment_slope_max: 0.004
-  ascent_symmetry_enabled: true
+  ascent_symmetry_enabled: false
   vol_bottom_max: 0.5
   vol_contraction: 0.6
   vol_spike_check: true
