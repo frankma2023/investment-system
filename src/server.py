@@ -719,51 +719,49 @@ def api_pocket_pivot_rs():
 @app.route('/api/saucer-base')
 def api_saucer_base():
     """单股票碟形基部检测，同时返回K线供图表渲染"""
-    code = request.args.get('stock', '600519')
-    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
-    start = request.args.get('start', None)  # 前端可选日期范围
-    
-    db = get_db()
-    
-    # 获取K线（回溯400天用于检测）
-    klines = db.execute("""
-        SELECT date, open, high, low, close, volume
-        FROM daily_kline
-        WHERE stock_code = ? AND date <= ? AND date >= date(?, '-400 days')
-        ORDER BY date
-    """, (code, date_str, date_str)).fetchall()
-    
-    if not klines:
-        return jsonify({'signals': [], 'klines': [], 'error': 'No kline data'})
-    
-    daily = [dict(r) for r in klines]
-    
-    # 获取市值
-    mkt = db.execute("""
-        SELECT value FROM fundamental_indicator
-        WHERE stock_code = ? AND metric_code = 'mc' AND date <= ?
-        ORDER BY date DESC LIMIT 1
-    """, (code, date_str)).fetchone()
-    market_cap = float(mkt['value']) / 1e8 if mkt else None
-    
-    from scanners.saucer_base import detect, load_params
-    params = load_params()
-    signals = detect(daily, params, market_cap)
-    
-    # 过滤出指定日期的信号
-    filtered = [s for s in signals if s['signal_date'] == date_str]
-    
-    for s in filtered:
-        s['stock_code'] = code
-    
-    # 返回K线（按start参数截断前端显示范围）
-    klines_out = daily
-    if start:
-        klines_out = [k for k in daily if k['date'] >= start]
-    # 只返回最近600条K线给前端，避免过大
-    klines_out = klines_out[-600:]
-    
-    return jsonify({'signals': filtered, 'klines': klines_out})
+    try:
+        code = request.args.get('stock', '600519')
+        date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+        start = request.args.get('start', None)
+        
+        db = get_db()
+        
+        klines = db.execute("""
+            SELECT date, open, high, low, close, volume
+            FROM daily_kline
+            WHERE stock_code = ? AND date <= ? AND date >= date(?, '-400 days')
+            ORDER BY date
+        """, (code, date_str, date_str)).fetchall()
+        
+        if not klines:
+            return jsonify({'signals': [], 'klines': [], 'error': 'No kline data'})
+        
+        daily = [dict(r) for r in klines]
+        
+        mkt = db.execute("""
+            SELECT value FROM fundamental_indicator
+            WHERE stock_code = ? AND metric_code = 'mc' AND date <= ?
+            ORDER BY date DESC LIMIT 1
+        """, (code, date_str)).fetchone()
+        market_cap = float(mkt['value']) / 1e8 if mkt else None
+        
+        from scanners.saucer_base import detect, load_params
+        params = load_params()
+        signals = detect(daily, params, market_cap)
+        
+        filtered = [s for s in signals if s['signal_date'] == date_str]
+        for s in filtered:
+            s['stock_code'] = code
+        
+        klines_out = daily
+        if start:
+            klines_out = [k for k in daily if k['date'] >= start]
+        klines_out = klines_out[-600:]
+        
+        return jsonify({'signals': filtered, 'klines': klines_out})
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
 
 
 @app.route('/api/saucer-base/scan')
