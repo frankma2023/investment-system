@@ -220,19 +220,11 @@
       try {
         const start = document.getElementById('date-start').value;
         const end = document.getElementById('date-end').value;
-        const resp = await fetch('http://localhost:8788/api/saucer-base?stock=' + code + '&date=' + end);
+        const resp = await fetch('http://localhost:8788/api/saucer-base?stock=' + code + '&date=' + end + '&start=' + start);
         const data = await resp.json();
 
-        // Get klines for chart
-        const kr = await fetch('http://localhost:8788/api/pocket-pivot', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ stock_code: code, start: start, end: end, mode: 'stock', period: 'day', params: {} })
-        });
-        if (kr.ok) {
-          const kd = await kr.json();
-          ck = kd.klines || [];
-          renderChart();
-        }
+        ck = data.klines || [];
+        renderChart();
 
         cs = (data.signals || []).filter(s => s.signal_date >= start && s.signal_date <= end);
         renderTable();

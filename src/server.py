@@ -718,13 +718,14 @@ def api_pocket_pivot_rs():
 
 @app.route('/api/saucer-base')
 def api_saucer_base():
-    """单股票碟形基部检测"""
+    """单股票碟形基部检测，同时返回K线供图表渲染"""
     code = request.args.get('stock', '600519')
     date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    start = request.args.get('start', None)  # 前端可选日期范围
     
     db = get_db()
     
-    # 获取K线（回溯400天）
+    # 获取K线（回溯400天用于检测）
     klines = db.execute("""
         SELECT date, open, high, low, close, volume
         FROM daily_kline
@@ -733,7 +734,7 @@ def api_saucer_base():
     """, (code, date_str, date_str)).fetchall()
     
     if not klines:
-        return jsonify({'signals': [], 'error': 'No kline data'})
+        return jsonify({'signals': [], 'klines': [], 'error': 'No kline data'})
     
     daily = [dict(r) for r in klines]
     
@@ -755,7 +756,14 @@ def api_saucer_base():
     for s in filtered:
         s['stock_code'] = code
     
-    return jsonify({'signals': filtered})
+    # 返回K线（按start参数截断前端显示范围）
+    klines_out = daily
+    if start:
+        klines_out = [k for k in daily if k['date'] >= start]
+    # 只返回最近600条K线给前端，避免过大
+    klines_out = klines_out[-600:]
+    
+    return jsonify({'signals': filtered, 'klines': klines_out})
 
 
 @app.route('/api/saucer-base/scan')
