@@ -87,29 +87,54 @@
 
     <div class="bottom-layout">
       <div class="bottom-left">
-        <div class="param-card" id="c1"><div class="param-card-hd" onclick="tc('c1')"><span class="dot" style="background:#FE2C55"></span>🔴 杯体</div><div class="param-card-bd" id="c1-bd">
-          <div class="sr"><span class="sl">最小深度</span><input type="range" id="p-cdmin" min="8" max="20" value="12" oninput="svp('p-cdmin')"><span class="sv" id="p-cdmin-v">12%</span></div>
-          <div class="sr"><span class="sl">最大深度</span><input type="range" id="p-cdmax" min="20" max="45" value="33" oninput="svp('p-cdmax')"><span class="sv" id="p-cdmax-v">33%</span></div>
-          <div class="sr"><span class="sl">最少周数</span><input type="range" id="p-cwmin" min="5" max="15" value="7" oninput="svn('p-cwmin')"><span class="sv" id="p-cwmin-v">7</span></div>
-          <div class="sr"><span class="sl">U形对称</span><input type="range" id="p-ur" min="10" max="50" value="30" oninput="svp('p-ur')"><span class="sv" id="p-ur-v">30%</span></div>
-          <div class="sr"><span class="sl">杯底量比</span><input type="range" id="p-cv" min="30" max="80" value="60" oninput="svp('p-cv')"><span class="sv" id="p-cv-v">60%</span></div>
-        </div></div>
-
-        <div class="param-card" id="c2"><div class="param-card-hd" onclick="tc('c2')"><span class="dot" style="background:#FF9800"></span>🟠 杯柄</div><div class="param-card-bd" id="c2-bd">
-          <div class="tog-row"><span class="sl">柄部检测</span><button class="tsw on" id="p-he-on" onclick="tog('p-he-on')"></button></div>
-          <div class="tog-row"><span class="sl">必须带柄</span><button class="tsw on" id="p-hr-on" onclick="tog('p-hr-on')"></button></div>
-          <div class="sr"><span class="sl">柄最小回撤</span><input type="range" id="p-hdmin" min="5" max="15" value="8" oninput="svp('p-hdmin')"><span class="sv" id="p-hdmin-v">8%</span></div>
-          <div class="sr"><span class="sl">柄最大回撤</span><input type="range" id="p-hdmax" min="8" max="20" value="12" oninput="svp('p-hdmax')"><span class="sv" id="p-hdmax-v">12%</span></div>
-          <div class="sr"><span class="sl">柄最少天数</span><input type="range" id="p-hdmin2" min="3" max="15" value="5" oninput="svn('p-hdmin2')"><span class="sv" id="p-hdmin2-v">5</span></div>
-          <div class="sr"><span class="sl">柄部位置</span><input type="range" id="p-hp" min="30" max="70" value="50" oninput="svp('p-hp')"><span class="sv" id="p-hp-v">50%</span></div>
-          <div class="sr"><span class="sl">柄部量比</span><input type="range" id="p-hv" min="30" max="70" value="50" oninput="svp('p-hv')"><span class="sv" id="p-hv-v">50%</span></div>
-        </div></div>
-
-        <div class="param-card" id="c3"><div class="param-card-hd" onclick="tc('c3')"><span class="dot" style="background:#4CAF50"></span>🟢 突破</div><div class="param-card-bd" id="c3-bd">
-          <div class="sr"><span class="sl">量比下限</span><input type="range" id="p-bv" min="10" max="25" value="15" oninput="svs('p-bv',0.1)"><span class="sv" id="p-bv-v">1.5</span></div>
-          <div class="sr"><span class="sl">收盘位置</span><input type="range" id="p-cp" min="30" max="80" value="50" oninput="svp('p-cp')"><span class="sv" id="p-cp-v">50%</span></div>
-          <div class="tog-row"><span class="sl">要求阳线</span><button class="tsw on" id="p-gr-on" onclick="tog('p-gr-on')"></button></div>
+        <!-- 前置+杯体基础 -->
+        <div class="param-card" id="c1"><div class="param-card-hd" onclick="tc('c1')"><span class="dot" style="background:#FE2C55"></span>🔴 前置+杯体</div><div class="param-card-bd" id="c1-bd">
+          <div class="sr"><span class="sl">回溯天数</span><input type="range" id="p-lb" min="60" max="250" value="120" oninput="svn('p-lb')"><span class="sv" id="p-lb-v">120</span></div>
+          <div class="sr"><span class="sl">前高最小龄</span><input type="range" id="p-cma" min="20" max="60" value="35" oninput="svn('p-cma')"><span class="sv" id="p-cma-v">35</span></div>
+          <div class="sr"><span class="sl">前高最大龄</span><input type="range" id="p-cmx" min="100" max="400" value="325" oninput="svn('p-cmx')"><span class="sv" id="p-cmx-v">325</span></div>
+          <div class="sr"><span class="sl">最小下行</span><input type="range" id="p-md" min="5" max="20" value="10" oninput="svn('p-md')"><span class="sv" id="p-md-v">10</span></div>
+          <div class="sr"><span class="sl">最小回升</span><input type="range" id="p-ma" min="5" max="20" value="10" oninput="svn('p-ma')"><span class="sv" id="p-ma-v">10</span></div>
           <div class="sr"><span class="sl">前置涨幅</span><input type="range" id="p-pa" min="15" max="60" value="30" oninput="svp('p-pa')"><span class="sv" id="p-pa-v">30%</span></div>
+        </div></div>
+
+        <!-- 杯身 -->
+        <div class="param-card" id="c2"><div class="param-card-hd" onclick="tc('c2')"><span class="dot" style="background:#FF9800"></span>🟠 杯身</div><div class="param-card-bd" id="c2-bd">
+          <div class="sr"><span class="sl">最小深度</span><input type="range" id="p-dmin" min="8" max="20" value="12" oninput="svp('p-dmin')"><span class="sv" id="p-dmin-v">12%</span></div>
+          <div class="sr"><span class="sl">最大深度</span><input type="range" id="p-dmax" min="25" max="40" value="33" oninput="svp('p-dmax')"><span class="sv" id="p-dmax-v">33%</span></div>
+          <div class="sr"><span class="sl">回升比例</span><input type="range" id="p-rec" min="80" max="95" value="90" oninput="svp('p-rec')"><span class="sv" id="p-rec-v">90%</span></div>
+          <div class="tog-row"><span class="sl">杯底非尖</span><button class="tsw on" id="p-cbc-on" onclick="tog('p-cbc-on')"></button></div>
+          <div class="sr"><span class="sl">底振幅上限</span><input type="range" id="p-cba" min="5" max="12" value="8" oninput="svp('p-cba')"><span class="sv" id="p-cba-v">8%</span></div>
+          <div class="tog-row"><span class="sl">对称检查</span><button class="tsw on" id="p-adc-on" onclick="tog('p-adc-on')"></button></div>
+          <div class="sr"><span class="sl">对称比</span><input type="range" id="p-adr" min="30" max="80" value="50" oninput="svp('p-adr')"><span class="sv" id="p-adr-v">50%</span></div>
+        </div></div>
+
+        <!-- 成交量 -->
+        <div class="param-card" id="c3"><div class="param-card-hd" onclick="tc('c3')"><span class="dot" style="background:#4CAF50"></span>🟢 成交量</div><div class="param-card-bd" id="c3-bd">
+          <div class="sr"><span class="sl">杯底量比</span><input type="range" id="p-vb" min="40" max="80" value="60" oninput="svp('p-vb')"><span class="sv" id="p-vb-v">60%</span></div>
+          <div class="sr"><span class="sl">量缩比</span><input type="range" id="p-vc" min="50" max="85" value="65" oninput="svp('p-vc')"><span class="sv" id="p-vc-v">65%</span></div>
+        </div></div>
+
+        <!-- 柄部 -->
+        <div class="param-card" id="c4"><div class="param-card-hd" onclick="tc('c4')"><span class="dot" style="background:#2196F3"></span>🔵 柄部</div><div class="param-card-bd" id="c4-bd">
+          <div class="tog-row"><span class="sl">必须带柄</span><button class="tsw on" id="p-hr-on" onclick="tog('p-hr-on')"></button></div>
+          <div class="sr"><span class="sl">柄最少天</span><input type="range" id="p-hmin" min="3" max="10" value="5" oninput="svn('p-hmin')"><span class="sv" id="p-hmin-v">5</span></div>
+          <div class="sr"><span class="sl">柄最多天</span><input type="range" id="p-hmax" min="15" max="40" value="30" oninput="svn('p-hmax')"><span class="sv" id="p-hmax-v">30</span></div>
+          <div class="sr"><span class="sl">柄最大回撤</span><input type="range" id="p-hdd" min="8" max="15" value="12" oninput="svp('p-hdd')"><span class="sv" id="p-hdd-v">12%</span></div>
+          <div class="sr"><span class="sl">柄位置</span><input type="range" id="p-hp" min="40" max="60" value="50" oninput="svp('p-hp')"><span class="sv" id="p-hp-v">50%</span></div>
+          <div class="sr"><span class="sl">柄量比</span><input type="range" id="p-hv" min="30" max="70" value="50" oninput="svp('p-hv')"><span class="sv" id="p-hv-v">50%</span></div>
+        </div></div>
+
+        <!-- 突破 -->
+        <div class="param-card" id="c5"><div class="param-card-hd" onclick="tc('c5')"><span class="dot" style="background:#9C27B0"></span>🟣 突破</div><div class="param-card-bd" id="c5-bd">
+          <div class="sr"><span class="sl">量比下限</span><input type="range" id="p-bv" min="10" max="18" value="14" oninput="svs('p-bv',0.1)"><span class="sv" id="p-bv-v">1.4</span></div>
+          <div class="tog-row"><span class="sl">要求阳线</span><button class="tsw on" id="p-gr-on" onclick="tog('p-gr-on')"></button></div>
+          <div class="sr"><span class="sl">收盘位置</span><input type="range" id="p-cp" min="40" max="70" value="50" oninput="svp('p-cp')"><span class="sv" id="p-cp-v">50%</span></div>
+        </div></div>
+
+        <!-- RS -->
+        <div class="param-card" id="c6"><div class="param-card-hd" onclick="tc('c6')"><span class="dot" style="background:#00BCD4"></span>🩵 RS+其他</div><div class="param-card-bd" id="c6-bd">
+          <div class="tog-row"><span class="sl">RS必须</span><button class="tsw off" id="p-rsr-on" onclick="tog('p-rsr-on')"></button></div>
+          <div class="sr"><span class="sl">RS阈值</span><input type="range" id="p-rst" min="70" max="95" value="80" oninput="svn('p-rst')"><span class="sv" id="p-rst-v">80</span></div>
         </div></div>
 
         <button class="btn-run" id="btn-run">🔍 运行识别</button>
@@ -125,7 +150,7 @@
   <script src="../shared/js/theme.js"></script>
   <script src="../shared/js/api-client.js"></script>
   <script>
-    const ST = 'cup_handle';
+    const ST='cup_handle';
     function tc(id){document.getElementById(id+'-bd').classList.toggle('collapsed')}
     function tog(id){const b=document.getElementById(id);b.classList.toggle('on');b.classList.toggle('off')}
     function svp(id){const e=document.getElementById(id),v=document.getElementById(id+'-v');if(e&&v)v.textContent=e.value+'%'}
@@ -145,22 +170,32 @@
     });
 
     function gp(){return {cup_handle:{
-      cup_depth_min:parseInt(document.getElementById('p-cdmin').value)/100,
-      cup_depth_max:parseInt(document.getElementById('p-cdmax').value)/100,
-      cup_duration_min_weeks:parseInt(document.getElementById('p-cwmin').value),
-      cup_u_shape_ratio:parseInt(document.getElementById('p-ur').value)/100,
-      cup_bottom_vol_ratio:parseInt(document.getElementById('p-cv').value)/100,
-      handle_enabled:document.getElementById('p-he-on').classList.contains('on'),
+      lookback:parseInt(document.getElementById('p-lb').value),
+      cup_min_age:parseInt(document.getElementById('p-cma').value),
+      cup_max_age:parseInt(document.getElementById('p-cmx').value),
+      min_descent_days:parseInt(document.getElementById('p-md').value),
+      min_ascent_days:parseInt(document.getElementById('p-ma').value),
+      min_prior_advance:parseInt(document.getElementById('p-pa').value)/100,
+      cup_drawdown_min:parseInt(document.getElementById('p-dmin').value)/100,
+      cup_drawdown_max:parseInt(document.getElementById('p-dmax').value)/100,
+      cup_recovery:parseInt(document.getElementById('p-rec').value)/100,
+      cup_bottom_check:document.getElementById('p-cbc-on').classList.contains('on'),
+      cup_bottom_flatness:parseInt(document.getElementById('p-cba').value)/100,
+      ascent_descent_check:document.getElementById('p-adc-on').classList.contains('on'),
+      ascent_descent_ratio:parseInt(document.getElementById('p-adr').value)/100,
+      vol_bottom_max:parseInt(document.getElementById('p-vb').value)/100,
+      vol_contraction:parseInt(document.getElementById('p-vc').value)/100,
       handle_required:document.getElementById('p-hr-on').classList.contains('on'),
-      handle_depth_min:parseInt(document.getElementById('p-hdmin').value)/100,
-      handle_depth_max:parseInt(document.getElementById('p-hdmax').value)/100,
-      handle_duration_min_days:parseInt(document.getElementById('p-hdmin2').value),
-      handle_position_min:parseInt(document.getElementById('p-hp').value)/100,
+      handle_min_days:parseInt(document.getElementById('p-hmin').value),
+      handle_max_days:parseInt(document.getElementById('p-hmax').value),
+      handle_max_drawdown:parseInt(document.getElementById('p-hdd').value)/100,
+      handle_position_ratio:parseInt(document.getElementById('p-hp').value)/100,
       handle_vol_ratio:parseInt(document.getElementById('p-hv').value)/100,
       breakout_vol_ratio:parseInt(document.getElementById('p-bv').value)/10,
-      close_position_min:parseInt(document.getElementById('p-cp').value)/100,
       require_green:document.getElementById('p-gr-on').classList.contains('on'),
-      min_prior_advance:parseInt(document.getElementById('p-pa').value)/100,
+      close_position_min:parseInt(document.getElementById('p-cp').value)/100,
+      rs_required:document.getElementById('p-rsr-on').classList.contains('on'),
+      rs_threshold:parseInt(document.getElementById('p-rst').value),
     }}}
 
     async function run(){
@@ -173,8 +208,7 @@
         const start=document.getElementById('date-start').value;
         const resp=await fetch('http://localhost:8788/api/cup-handle?stock='+code+'&date='+end+'&start='+start);
         const data=await resp.json();
-        ck=data.klines||[];
-        renderChart();
+        ck=data.klines||[];renderChart();
         cs=(data.signals||[]).filter(s=>s.signal_date>=start&&s.signal_date<=end);
         renderTable();
         btn.textContent='🔄';
@@ -185,30 +219,28 @@
     function renderChart(){
       if(!chart||!ck.length)return;
       const dates=ck.map(k=>k.date);
-      const ma=function(p){const r=[];let sum=0;for(let i=0;i<ck.length;i++){if(ck[i].close!=null){sum+=ck[i].close;if(i>=p){sum-=ck[i-p].close;r.push(sum/p)}else{r.push(null)}}else{r.push(null)}}return r};
+      const ma=function(p){const r=[];let s=0;for(let i=0;i<ck.length;i++){if(ck[i].close!=null){s+=ck[i].close;if(i>=p){s-=ck[i-p].close;r.push(s/p)}else{r.push(null)}}else{r.push(null)}}return r};
       const ma50=ma(50),ma150=ma(150);
-      const points=[];
+      const pts=[];
       cs.forEach(s=>{
         const si=dates.indexOf(s.signal_date);if(si<0)return;
-        points.push({value:[si,s.buy_point||s.left_lip_price],symbol:'diamond',symbolSize:18,itemStyle:{color:'#E91E63',borderColor:'#FFF',borderWidth:1}});
-        const li=dates.indexOf(s.left_lip_date);if(li>=0)points.push({value:[li,s.left_lip_price],symbol:'circle',symbolSize:12,itemStyle:{color:'#FF9800',borderColor:'#FFF',borderWidth:0.5}});
-        const bi=dates.indexOf(s.cup_bottom_date);if(bi>=0)points.push({value:[bi,s.cup_bottom_price],symbol:'circle',symbolSize:12,itemStyle:{color:'#4CAF50',borderColor:'#FFF',borderWidth:0.5}});
+        pts.push({value:[si,s.buy_point],symbol:'diamond',symbolSize:18,itemStyle:{color:'#E91E63',borderColor:'#FFF',borderWidth:1}});
+        const pi=dates.indexOf(s.prior_high_date);if(pi>=0)pts.push({value:[pi,s.prior_high_price],symbol:'circle',symbolSize:12,itemStyle:{color:'#FF9800'}});
+        const bi=dates.indexOf(s.bottom_date);if(bi>=0)pts.push({value:[bi,s.bottom_price],symbol:'circle',symbolSize:12,itemStyle:{color:'#4CAF50'}});
       });
       const bg=document.documentElement.dataset.theme==='dark'?'#2A2627':'#fff';
       chart.setOption({
-        backgroundColor:bg,
-        tooltip:{trigger:'axis',axisPointer:{type:'cross'},backgroundColor:'rgba(255,255,255,0.75)',textStyle:{fontSize:10},
-          formatter:function(p){if(!p||!p.length)return'';const k=ck[p[0].dataIndex];if(!k)return'';const chg=k.close-k.open,cp=k.open>0?(chg/k.open*100).toFixed(2):'0.00',col=chg>=0?'#E53935':'#26C6DA';return k.date+'<br/>O:'+k.open.toFixed(2)+' H:'+k.high.toFixed(2)+' L:'+k.low.toFixed(2)+' C:<b style=color:'+col+'>'+k.close.toFixed(2)+'</b><br/>涨跌:'+(chg>=0?'+':'')+chg.toFixed(2)+'('+(chg>=0?'+':'')+cp+'%)<br/>量:'+k.volume}}},
+        backgroundColor:bg,tooltip:{trigger:'axis',axisPointer:{type:'cross'}},
         grid:[{left:'8%',right:'1%',top:8,height:'60%'},{left:'8%',right:'1%',top:'75%',height:'15%'}],
         xAxis:[{type:'category',data:dates,axisLabel:{fontSize:9}},{type:'category',data:dates,axisLabel:{show:false},gridIndex:1}],
         yAxis:[{type:'value',scale:true,axisLabel:{fontSize:9}},{type:'value',scale:true,axisLabel:{fontSize:8},gridIndex:1,splitLine:{show:false}}],
-        dataZoom:[{type:'inside',xAxisIndex:[0,1],start:0,end:100},{type:'slider',xAxisIndex:[0,1],start:0,end:100,height:16,bottom:4}],
+        dataZoom:[{type:'inside',xAxisIndex:[0,1]},{type:'slider',xAxisIndex:[0,1],height:16,bottom:4}],
         series:[
           {name:'K',type:'candlestick',data:ck.map(k=>[k.open,k.close,k.low,k.high]),itemStyle:{color:'#E53935',color0:'#26C6DA',borderColor:'#E53935',borderColor0:'#26C6DA'}},
           {name:'量',type:'bar',data:ck.map((k,i)=>({value:k.volume,itemStyle:{color:ck[i].close>=ck[i].open?'rgba(229,57,53,0.4)':'rgba(38,198,218,0.4)'}})),xAxisIndex:1,yAxisIndex:1},
           {name:'MA50',type:'line',data:ma50,smooth:true,symbol:'none',lineStyle:{width:1.5,color:'#2196F3'}},
           {name:'MA150',type:'line',data:ma150,smooth:true,symbol:'none',lineStyle:{width:1,color:'#9C27B0'}},
-          {name:'标记',type:'scatter',data:points,z:10}
+          {name:'标记',type:'scatter',data:pts,z:10}
         ]
       });
     }
@@ -216,28 +248,39 @@
     function renderTable(){
       const div=document.getElementById('table');
       if(!cs.length){div.innerHTML='<div style=padding:24px;text-align:center;color:var(--text-tertiary)>无杯柄形态突破信号</div>';return}
-      let h='<table><thead><tr><th>#</th><th>日期</th><th>类型</th><th>左沿</th><th>杯底</th><th>回调</th><th>周数</th><th>买点</th><th>量比</th><th>柄回撤</th></tr></thead><tbody>';
-      [...cs].reverse().forEach((s,i)=>{h+=`<tr><td>${cs.length-i}</td><td style="font-weight:700">${s.signal_date}</td><td>${s.pattern_type==='cup_with_handle'?'☕带柄杯形':'☕杯形'}</td><td class="t-up">${s.left_lip_price}</td><td>${s.cup_bottom_price}</td><td>${s.cup_drawdown_pct}%</td><td>${s.cup_duration_weeks}</td><td>${s.buy_point}</td><td>${s.breakout_vol_ratio}</td><td>${s.handle_drawdown_pct!=null?s.handle_drawdown_pct+'%':'—'}</td></tr>`});
+      let h='<table><thead><tr><th>#</th><th>日期</th><th>类型</th><th>前高</th><th>杯底</th><th>回调</th><th>买点</th><th>量比</th><th>柄回撤</th></tr></thead><tbody>';
+      [...cs].reverse().forEach((s,i)=>{h+=`<tr><td>${cs.length-i}</td><td style="font-weight:700">${s.signal_date}</td><td>${s.pattern_type}</td><td class="t-up">${s.prior_high_price}</td><td>${s.bottom_price}</td><td>${s.drawdown_pct}%</td><td>${s.buy_point}</td><td>${s.breakout_vol_ratio}</td><td>${s.handle_drawdown_pct!=null?s.handle_drawdown_pct+'%':'—'}</td></tr>`});
       div.innerHTML=h+'</tbody></table>';
     }
 
     async function loadCfg(){
       try{const r=await fetch('http://localhost:8788/api/config?signal_type='+ST,{cache:'no-store'});const c=await r.json();if(!c||!c.cup_handle)return;const b=c.cup_handle;
-      svs2('p-cdmin',Math.round((b.cup_depth_min||0.12)*100));svp('p-cdmin');
-      svs2('p-cdmax',Math.round((b.cup_depth_max||0.33)*100));svp('p-cdmax');
-      svs2('p-cwmin',b.cup_duration_min_weeks||7);svn('p-cwmin');
-      svs2('p-ur',Math.round((b.cup_u_shape_ratio||0.30)*100));svp('p-ur');
-      svs2('p-cv',Math.round((b.cup_bottom_vol_ratio||0.60)*100));svp('p-cv');
-      stog('p-he-on',b.handle_enabled!==false);stog('p-hr-on',b.handle_required!==false);
-      svs2('p-hdmin',Math.round((b.handle_depth_min||0.08)*100));svp('p-hdmin');
-      svs2('p-hdmax',Math.round((b.handle_depth_max||0.12)*100));svp('p-hdmax');
-      svs2('p-hdmin2',b.handle_duration_min_days||5);svn('p-hdmin2');
-      svs2('p-hp',Math.round((b.handle_position_min||0.50)*100));svp('p-hp');
-      svs2('p-hv',Math.round((b.handle_vol_ratio||0.50)*100));svp('p-hv');
-      svs2('p-bv',Math.round((b.breakout_vol_ratio||1.5)*10));svs('p-bv',0.1);
-      svs2('p-cp',Math.round((b.close_position_min||0.50)*100));svp('p-cp');
-      stog('p-gr-on',b.require_green!==false);
+      svs2('p-lb',b.lookback||120);svn('p-lb');
+      svs2('p-cma',b.cup_min_age||35);svn('p-cma');
+      svs2('p-cmx',b.cup_max_age||325);svn('p-cmx');
+      svs2('p-md',b.min_descent_days||10);svn('p-md');
+      svs2('p-ma',b.min_ascent_days||10);svn('p-ma');
       svs2('p-pa',Math.round((b.min_prior_advance||0.30)*100));svp('p-pa');
+      svs2('p-dmin',Math.round((b.cup_drawdown_min||0.12)*100));svp('p-dmin');
+      svs2('p-dmax',Math.round((b.cup_drawdown_max||0.33)*100));svp('p-dmax');
+      svs2('p-rec',Math.round((b.cup_recovery||0.90)*100));svp('p-rec');
+      stog('p-cbc-on',b.cup_bottom_check!==false);
+      svs2('p-cba',Math.round((b.cup_bottom_flatness||0.08)*100));svp('p-cba');
+      stog('p-adc-on',b.ascent_descent_check!==false);
+      svs2('p-adr',Math.round((b.ascent_descent_ratio||0.50)*100));svp('p-adr');
+      svs2('p-vb',Math.round((b.vol_bottom_max||0.60)*100));svp('p-vb');
+      svs2('p-vc',Math.round((b.vol_contraction||0.65)*100));svp('p-vc');
+      stog('p-hr-on',b.handle_required!==false);
+      svs2('p-hmin',b.handle_min_days||5);svn('p-hmin');
+      svs2('p-hmax',b.handle_max_days||30);svn('p-hmax');
+      svs2('p-hdd',Math.round((b.handle_max_drawdown||0.12)*100));svp('p-hdd');
+      svs2('p-hp',Math.round((b.handle_position_ratio||0.50)*100));svp('p-hp');
+      svs2('p-hv',Math.round((b.handle_vol_ratio||0.50)*100));svp('p-hv');
+      svs2('p-bv',Math.round((b.breakout_vol_ratio||1.4)*10));svs('p-bv',0.1);
+      stog('p-gr-on',b.require_green!==false);
+      svs2('p-cp',Math.round((b.close_position_min||0.50)*100));svp('p-cp');
+      stog('p-rsr-on',b.rs_required===true);
+      svs2('p-rst',b.rs_threshold||80);svn('p-rst');
       }catch(e){}
     }
     function svs2(id,v){const e=document.getElementById(id);if(e)e.value=v}
@@ -247,15 +290,24 @@
       const btn=document.getElementById('btn-save');btn.textContent='⏳';btn.disabled=true;
       const p=gp().cup_handle;
       const y=['# 杯柄形态参数','cup_handle:',
-        '  cup_depth_min: '+p.cup_depth_min,'  cup_depth_max: '+p.cup_depth_max,
-        '  cup_duration_min_weeks: '+p.cup_duration_min_weeks,
-        '  cup_u_shape_ratio: '+p.cup_u_shape_ratio,'  cup_bottom_vol_ratio: '+p.cup_bottom_vol_ratio,
-        '  handle_enabled: '+(p.handle_enabled?'true':'false'),'  handle_required: '+(p.handle_required?'true':'false'),
-        '  handle_depth_min: '+p.handle_depth_min,'  handle_depth_max: '+p.handle_depth_max,
-        '  handle_duration_min_days: '+p.handle_duration_min_days,
-        '  handle_position_min: '+p.handle_position_min,'  handle_vol_ratio: '+p.handle_vol_ratio,
-        '  breakout_vol_ratio: '+p.breakout_vol_ratio,'  close_position_min: '+p.close_position_min,
-        '  require_green: '+(p.require_green?'true':'false'),'  min_prior_advance: '+p.min_prior_advance,''
+        '  lookback: '+p.lookback,'  cup_min_age: '+p.cup_min_age,'  cup_max_age: '+p.cup_max_age,
+        '  min_descent_days: '+p.min_descent_days,'  min_ascent_days: '+p.min_ascent_days,
+        '  min_prior_advance: '+p.min_prior_advance,
+        '  cup_drawdown_min: '+p.cup_drawdown_min,'  cup_drawdown_max: '+p.cup_drawdown_max,
+        '  cup_recovery: '+p.cup_recovery,
+        '  cup_bottom_check: '+(p.cup_bottom_check?'true':'false'),
+        '  cup_bottom_flatness: '+p.cup_bottom_flatness,
+        '  ascent_descent_check: '+(p.ascent_descent_check?'true':'false'),
+        '  ascent_descent_ratio: '+p.ascent_descent_ratio,
+        '  vol_bottom_max: '+p.vol_bottom_max,'  vol_contraction: '+p.vol_contraction,
+        '  handle_required: '+(p.handle_required?'true':'false'),
+        '  handle_min_days: '+p.handle_min_days,'  handle_max_days: '+p.handle_max_days,
+        '  handle_max_drawdown: '+p.handle_max_drawdown,
+        '  handle_position_ratio: '+p.handle_position_ratio,'  handle_vol_ratio: '+p.handle_vol_ratio,
+        '  breakout_vol_ratio: '+p.breakout_vol_ratio,
+        '  require_green: '+(p.require_green?'true':'false'),
+        '  close_position_min: '+p.close_position_min,
+        '  rs_required: '+(p.rs_required?'true':'false'),'  rs_threshold: '+p.rs_threshold,''
       ].join('\n');
       try{const r=await fetch('http://localhost:8788/api/config?signal_type='+ST,{method:'POST',headers:{'Content-Type':'text/plain'},body:y});const d=await r.json();
       if(d.ok){btn.textContent='✅';btn.classList.add('saved');setTimeout(()=>{btn.textContent='💾';btn.classList.remove('saved');btn.disabled=false},2000)}}
