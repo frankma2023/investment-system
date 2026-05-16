@@ -97,8 +97,14 @@
           <div class="sr"><span class="sl">前置涨幅</span><input type="range" id="p-pa" min="15" max="60" value="30" oninput="svp('p-pa')"><span class="sv" id="p-pa-v">30%</span></div>
         </div></div>
 
+        <div class="param-card" id="c2"><div class="param-card-hd" onclick="tc('c2')"><span class="dot" style="background:#FF9800"></span>🟠 形态切割</div><div class="param-card-bd" id="c2-bd">
+          <div class="sr"><span class="sl">切割阈值</span><input type="range" id="p-cut" min="20" max="45" value="33" oninput="svp('p-cut')"><span class="sv" id="p-cut-v">33%</span></div>
+          <div class="sr"><span class="sl">切割A上限</span><input type="range" id="p-ca" min="1" max="10" value="5" oninput="svp('p-ca')"><span class="sv" id="p-ca-v">5%</span></div>
+          <div class="sr"><span class="sl">极值窗口</span><input type="range" id="p-lw" min="8" max="20" value="13" oninput="svn('p-lw')"><span class="sv" id="p-lw-v">13周</span></div>
+        </div></div>
+
         <!-- 杯身 -->
-        <div class="param-card" id="c2"><div class="param-card-hd" onclick="tc('c2')"><span class="dot" style="background:#FF9800"></span>🟠 杯身</div><div class="param-card-bd" id="c2-bd">
+        <div class="param-card" id="c3"><div class="param-card-hd" onclick="tc('c3')"><span class="dot" style="background:#4CAF50"></span>🟢 杯身</div><div class="param-card-bd" id="c3-bd">
           <div class="sr"><span class="sl">最小深度</span><input type="range" id="p-dmin" min="8" max="20" value="12" oninput="svp('p-dmin')"><span class="sv" id="p-dmin-v">12%</span></div>
           <div class="sr"><span class="sl">最大深度</span><input type="range" id="p-dmax" min="25" max="40" value="33" oninput="svp('p-dmax')"><span class="sv" id="p-dmax-v">33%</span></div>
           <div class="sr"><span class="sl">回升比例</span><input type="range" id="p-rec" min="80" max="95" value="90" oninput="svp('p-rec')"><span class="sv" id="p-rec-v">90%</span></div>
@@ -109,13 +115,13 @@
         </div></div>
 
         <!-- 成交量 -->
-        <div class="param-card" id="c3"><div class="param-card-hd" onclick="tc('c3')"><span class="dot" style="background:#4CAF50"></span>🟢 成交量</div><div class="param-card-bd" id="c3-bd">
+        <div class="param-card" id="c4"><div class="param-card-hd" onclick="tc('c4')"><span class="dot" style="background:#2196F3"></span>🔵 成交量</div><div class="param-card-bd" id="c4-bd">
           <div class="sr"><span class="sl">杯底量比</span><input type="range" id="p-vb" min="40" max="80" value="60" oninput="svp('p-vb')"><span class="sv" id="p-vb-v">60%</span></div>
           <div class="sr"><span class="sl">量缩比</span><input type="range" id="p-vc" min="50" max="85" value="65" oninput="svp('p-vc')"><span class="sv" id="p-vc-v">65%</span></div>
         </div></div>
 
         <!-- 柄部 -->
-        <div class="param-card" id="c4"><div class="param-card-hd" onclick="tc('c4')"><span class="dot" style="background:#2196F3"></span>🔵 柄部</div><div class="param-card-bd" id="c4-bd">
+        <div class="param-card" id="c5"><div class="param-card-hd" onclick="tc('c5')"><span class="dot" style="background:#9C27B0"></span>🟣 柄部</div><div class="param-card-bd" id="c5-bd">
           <div class="tog-row"><span class="sl">必须带柄</span><button class="tsw on" id="p-hr-on" onclick="tog('p-hr-on')"></button></div>
           <div class="sr"><span class="sl">柄最少天</span><input type="range" id="p-hmin" min="3" max="10" value="5" oninput="svn('p-hmin')"><span class="sv" id="p-hmin-v">5</span></div>
           <div class="sr"><span class="sl">柄最多天</span><input type="range" id="p-hmax" min="15" max="40" value="30" oninput="svn('p-hmax')"><span class="sv" id="p-hmax-v">30</span></div>
@@ -125,14 +131,14 @@
         </div></div>
 
         <!-- 突破 -->
-        <div class="param-card" id="c5"><div class="param-card-hd" onclick="tc('c5')"><span class="dot" style="background:#9C27B0"></span>🟣 突破</div><div class="param-card-bd" id="c5-bd">
+        <div class="param-card" id="c6"><div class="param-card-hd" onclick="tc('c6')"><span class="dot" style="background:#00BCD4"></span>🩵 突破</div><div class="param-card-bd" id="c6-bd">
           <div class="sr"><span class="sl">量比下限</span><input type="range" id="p-bv" min="10" max="18" value="14" oninput="svs('p-bv',0.1)"><span class="sv" id="p-bv-v">1.4</span></div>
           <div class="tog-row"><span class="sl">要求阳线</span><button class="tsw on" id="p-gr-on" onclick="tog('p-gr-on')"></button></div>
           <div class="sr"><span class="sl">收盘位置</span><input type="range" id="p-cp" min="40" max="70" value="50" oninput="svp('p-cp')"><span class="sv" id="p-cp-v">50%</span></div>
         </div></div>
 
         <!-- RS -->
-        <div class="param-card" id="c6"><div class="param-card-hd" onclick="tc('c6')"><span class="dot" style="background:#00BCD4"></span>🩵 RS+其他</div><div class="param-card-bd" id="c6-bd">
+        <div class="param-card" id="c7"><div class="param-card-hd" onclick="tc('c7')"><span class="dot" style="background:#795548"></span>🟤 RS+其他</div><div class="param-card-bd" id="c7-bd">
           <div class="tog-row"><span class="sl">RS必须</span><button class="tsw off" id="p-rsr-on" onclick="tog('p-rsr-on')"></button></div>
           <div class="sr"><span class="sl">RS阈值</span><input type="range" id="p-rst" min="70" max="95" value="80" oninput="svn('p-rst')"><span class="sv" id="p-rst-v">80</span></div>
         </div></div>
@@ -176,6 +182,9 @@
       min_descent_days:parseInt(document.getElementById('p-md').value),
       min_ascent_days:parseInt(document.getElementById('p-ma').value),
       min_prior_advance:parseInt(document.getElementById('p-pa').value)/100,
+      cut_pct:parseInt(document.getElementById('p-cut').value)/100,
+      cut_check_A_pct:parseInt(document.getElementById('p-ca').value)/100,
+      local_extreme_window:parseInt(document.getElementById('p-lw').value),
       cup_drawdown_min:parseInt(document.getElementById('p-dmin').value)/100,
       cup_drawdown_max:parseInt(document.getElementById('p-dmax').value)/100,
       cup_recovery:parseInt(document.getElementById('p-rec').value)/100,
@@ -261,6 +270,9 @@
       svs2('p-md',b.min_descent_days||10);svn('p-md');
       svs2('p-ma',b.min_ascent_days||10);svn('p-ma');
       svs2('p-pa',Math.round((b.min_prior_advance||0.30)*100));svp('p-pa');
+      svs2('p-cut',Math.round((b.cut_pct||0.33)*100));svp('p-cut');
+      svs2('p-ca',Math.round((b.cut_check_A_pct||0.05)*100));svp('p-ca');
+      svs2('p-lw',b.local_extreme_window||13);svn('p-lw');
       svs2('p-dmin',Math.round((b.cup_drawdown_min||0.12)*100));svp('p-dmin');
       svs2('p-dmax',Math.round((b.cup_drawdown_max||0.33)*100));svp('p-dmax');
       svs2('p-rec',Math.round((b.cup_recovery||0.90)*100));svp('p-rec');
@@ -293,6 +305,8 @@
         '  lookback: '+p.lookback,'  cup_min_age: '+p.cup_min_age,'  cup_max_age: '+p.cup_max_age,
         '  min_descent_days: '+p.min_descent_days,'  min_ascent_days: '+p.min_ascent_days,
         '  min_prior_advance: '+p.min_prior_advance,
+        '  cut_pct: '+p.cut_pct,'  cut_check_A_pct: '+p.cut_check_A_pct,
+        '  local_extreme_window: '+p.local_extreme_window,
         '  cup_drawdown_min: '+p.cup_drawdown_min,'  cup_drawdown_max: '+p.cup_drawdown_max,
         '  cup_recovery: '+p.cup_recovery,
         '  cup_bottom_check: '+(p.cup_bottom_check?'true':'false'),
