@@ -1,17 +1,22 @@
 # 杯柄形态参数
 # Cup with Handle — O'Neil 经典中轴买点
-# v1.0 对齐 product/杯柄形态突破检测引擎_产品需求书.md
+# 形态切割法定位前高（与碟形基部 v3.0 一致）
 
 cup_handle:
   # ── 前置条件 ──
   lookback: 120                      # 寻找前高的回溯天数
-  prior_high_mode: simple            # 前高定位模式: simple=取最高收盘, cutting=形态切割法
+  prior_high_mode: cutting           # 前高定位模式: cutting=形态切割法
   min_prior_advance: 0.30            # 前置最小涨幅
   cup_min_age: 35                    # 前高距检测日最少天数（≈7周）
   cup_max_age: 325                   # 前高距检测日最多天数（≈65周），O'Neil上限
   min_descent_days: 10               # 前高到杯底最少下行天数
   min_ascent_days: 10                # 杯底到检测日最少回升天数
   min_market_cap: 0                  # 市值过滤（亿），0=关闭
+
+  # ── 形态切割法 ──
+  cut_pct: 0.33                      # 切割B：前高前方大波动阈值（=杯体最大回调）
+  cut_check_A_pct: 0.05              # 切割A：前高上限 = 检测日×(1+N)
+  local_extreme_window: 13           # 局部极值检测窗口（周）
 
   # ── 杯身 ──
   cup_drawdown_min: 0.12             # 杯身最小回调深度
