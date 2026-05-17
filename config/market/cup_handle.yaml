@@ -14,8 +14,8 @@ cup_handle:
   min_market_cap: 0                  # 市值过滤（亿），0=关闭
 
   # ── 形态切割法 ──
-  cut_pct: 0.33                      # 切割B：前高前方大波动阈值（=杯体最大回调）
-  cut_check_A_pct: 0.05              # 切割A：前高上限 = 检测日×(1+N)
+  cut_pct: 0.20                      # 切割B：前高前方大波动阈值（默认20%）
+  cut_check_A_pct: 0.02              # 切割A：前高上限 = 检测日×(1+N)
   local_extreme_window: 13           # 局部极值检测窗口（周）
 
   # ── 杯身 ──

@@ -19,6 +19,14 @@ export default defineConfig({
         target: 'http://localhost:8788',
         changeOrigin: true,
       },
+      '/shared': {
+        target: 'http://localhost:8772',
+        changeOrigin: true,
+      },
+      '/favicon.svg': {
+        target: 'http://localhost:8772',
+        changeOrigin: true,
+      },
     },
   },
   build: {

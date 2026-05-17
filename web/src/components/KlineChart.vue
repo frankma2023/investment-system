@@ -1,69 +1,92 @@
 <template>
-  <div ref="chartRef" :style="{ height: height + 'px', width: '100%' }"></div>
+  <div class="kc-wrap">
+    <div class="kc-toolbar" v-if="showToolbar">
+      <!-- 周期选择 -->
+      <div class="kc-periods">
+        <button v-for="p in ['day','week','month']" :key="p"
+          :class="['kc-btn', { active: period === p }]"
+          @click="$emit('update:period', p)">{{ periodLabel(p) }}</button>
+      </div>
+
+      <!-- MA切换 -->
+      <div class="kc-mas">
+        <button v-for="ma in availableMAs" :key="ma"
+          :class="['kc-ma-pill', { on: activeMAs.includes(ma) }]"
+          @click="toggleMA(ma)">MA{{ ma }}</button>
+      </div>
+
+      <!-- 副图切换 -->
+      <div class="kc-subs" v-if="showSubControls">
+        <label :class="['kc-sub-toggle', { on: showVolume }]" @click="$emit('update:showVolume', !showVolume)">VOL</label>
+        <label :class="['kc-sub-toggle', { on: showMACD }]" @click="$emit('update:showMACD', !showMACD)">MACD</label>
+      </div>
+    </div>
+    <div ref="chartRef" :style="{ height: chartHeight + 'px', width: '100%' }"></div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'
-import * as echarts from '@/../shared/js/echarts.min.js'
+import * as echarts from 'echarts'
 
 const props = defineProps({
   klines: { type: Array, default: () => [] },
   signals: { type: Array, default: () => [] },
   height: { type: Number, default: 520 },
-  maLines: { type: Array, default: () => [5, 10, 20, 60, 120, 250] },
+  availableMAs: { type: Array, default: () => [5, 10, 20, 60, 120, 250] },
+  activeMAs: { type: Array, default: () => [5, 10, 20, 60, 120, 250] },
   showVolume: { type: Boolean, default: true },
   showMACD: { type: Boolean, default: false },
-  showRSI: { type: Boolean, default: false },
   signalMarkers: { type: Array, default: () => [] },
-  // 信号→marker 转换函数的注入点
-  markerBuilder: { type: Function, default: null },
+  period: { type: String, default: 'day' },
+  showToolbar: { type: Boolean, default: true },
+  showSubControls: { type: Boolean, default: true },
 })
 
-const emit = defineEmits(['ready'])
+const emit = defineEmits(['ready', 'update:period', 'update:showVolume', 'update:showMACD', 'update:activeMAs'])
 
 const chartRef = ref(null)
 let chart = null
 let resizeObserver = null
 
-// MAs
+const chartHeight = computed(() => props.showToolbar ? props.height - 30 : props.height)
+
 const maColors = ['#FF9800', '#2196F3', '#4CAF50', '#9C27B0', '#795548', '#607D8B']
 
+function periodLabel(p) { return { day: '日K', week: '周K', month: '月K' }[p] }
+
+function toggleMA(ma) {
+  const next = props.activeMAs.includes(ma)
+    ? props.activeMAs.filter(v => v !== ma)
+    : [...props.activeMAs, ma].sort((a, b) => a - b)
+  emit('update:activeMAs', next)
+}
+
 const series = computed(() => {
-  if (!props.klines.length) return []
+  if (!props.klines.length) return {}
   const kdata = props.klines.map(k => [k.open, k.close, k.low, k.high])
   const dates = props.klines.map(k => k.date)
-
   const cmas = {}
-  for (const p of props.maLines) {
-    cmas[p] = computeMA(props.klines, p)
-  }
-
-  // 成交量
+  for (const p of props.activeMAs) cmas[p] = computeMA(props.klines, p)
   const volumes = props.klines.map((k, i) => ({
     value: k.volume,
-    itemStyle: {
-      color: k.close >= k.open ? 'rgba(229,57,53,0.35)' : 'rgba(38,198,218,0.35)',
-    },
+    itemStyle: { color: k.close >= k.open ? 'rgba(229,57,53,0.35)' : 'rgba(38,198,218,0.35)' },
   }))
-  const volMA5 = computeMA(props.klines.map(k => ({ close: k.volume })), 5).map(v => v?.[0] ?? null)
-
-  // 信号标记
   const markers = buildMarkers(dates)
-
-  return { kdata, dates, cmas, volumes, volMA5, markers }
+  return { kdata, dates, cmas, volumes, markers }
 })
 
 function computeMA(data, period) {
   const result = []
-  let sum = 0
+  let sum = 0, count = 0
   for (let i = 0; i < data.length; i++) {
     const v = data[i].close
     if (v != null) {
-      sum += v
-      if (i >= period) sum -= data[i - period].close
-      result.push(i >= period - 1 ? [sum / period] : [null])
+      sum += v; count++
+      if (i >= period) { sum -= data[i - period].close }
+      result.push(i >= period - 1 ? sum / period : null)
     } else {
-      result.push([null])
+      result.push(null)
     }
   }
   return result
@@ -71,206 +94,146 @@ function computeMA(data, period) {
 
 function buildMarkers(dates) {
   const pts = []
-
-  // 信号标注
   for (const s of props.signals) {
     const idx = dates.indexOf(s.signal_date)
     if (idx < 0) continue
     const bp = s.buy_point || s.prior_high_price || s.close
-    pts.push({
-      value: [idx, bp],
-      symbol: 'diamond',
-      symbolSize: 18,
-      symbolRotate: 0,
-      itemStyle: { color: '#E91E63', borderColor: '#FFF', borderWidth: 1 },
-      label: { show: false },
-    })
+    pts.push({ value: [idx, bp], symbol: 'diamond', symbolSize: 18, itemStyle: { color: '#E91E63', borderColor: '#FFF', borderWidth: 1 } })
   }
-
-  // 额外的标记（前高/杯底等）
   for (const m of props.signalMarkers) {
     const idx = dates.indexOf(m.date)
     if (idx < 0) continue
-    pts.push({
-      value: [idx, m.price],
-      symbol: m.symbol || 'circle',
-      symbolSize: m.size || 12,
-      itemStyle: { color: m.color || '#FF9800', borderColor: '#FFF', borderWidth: 0.5 },
-    })
+    pts.push({ value: [idx, m.price], symbol: m.symbol || 'circle', symbolSize: m.size || 12, itemStyle: { color: m.color || '#FF9800' } })
   }
-
   return pts
 }
 
-function getTheme() {
-  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
-}
+function getTheme() { return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light' }
 
 function render() {
   if (!chart || !props.klines.length) return
-  const { kdata, dates, cmas, volumes, volMA5, markers } = series.value
+  const { kdata, dates, cmas, volumes, markers } = series.value
+  if (!kdata?.length) return
 
-  const themeColors = getTheme() === 'dark'
+  const dark = getTheme() === 'dark'
+  const tColors = dark
     ? { bg: '#1a1a2e', text: '#aaa', grid: 'rgba(255,255,255,0.06)', cross: '#666' }
     : { bg: '#fff', text: '#666', grid: 'rgba(0,0,0,0.06)', cross: '#999' }
 
+  const hasSub = props.showVolume || props.showMACD
+  const gridH1 = props.showMACD ? '47%' : hasSub ? '58%' : '80%'
+
   const option = {
-    backgroundColor: themeColors.bg,
+    backgroundColor: tColors.bg,
     tooltip: {
       trigger: 'axis',
-      axisPointer: { type: 'cross', crossStyle: { color: themeColors.cross } },
-      backgroundColor: getTheme() === 'dark' ? 'rgba(30,30,50,0.92)' : 'rgba(255,255,255,0.92)',
-      borderColor: themeColors.grid,
-      textStyle: { fontSize: 11, color: getTheme() === 'dark' ? '#ddd' : '#333' },
+      axisPointer: { type: 'cross', crossStyle: { color: tColors.cross } },
+      backgroundColor: dark ? 'rgba(30,30,50,0.92)' : 'rgba(255,255,255,0.92)',
+      borderColor: tColors.grid,
+      textStyle: { fontSize: 11, color: dark ? '#ddd' : '#333' },
       formatter: (params) => {
         if (!params?.length) return ''
         const di = params[0].dataIndex
-        const k = props.klines[di]
-        if (!k) return ''
-        const chg = k.close - k.open
-        const chgPct = k.open > 0 ? (chg / k.open * 100).toFixed(2) : '0'
-        const col = chg >= 0 ? '#E53935' : '#26C6DA'
-        const sign = chg >= 0 ? '+' : ''
-        const fmtVol = (v) => v >= 1e8 ? (v / 1e8).toFixed(2) + '亿' : v >= 1e4 ? (v / 1e4).toFixed(0) + '万' : v.toFixed(0)
+        const k = props.klines[di]; if (!k) return ''
+        const chg = k.close - k.open, cp = k.open > 0 ? (chg / k.open * 100).toFixed(2) : '0'
+        const col = chg >= 0 ? '#E53935' : '#26C6DA'; const s = chg >= 0 ? '+' : ''
+        const fv = v => v >= 1e8 ? (v/1e8).toFixed(2)+'亿' : v >= 1e4 ? (v/1e4).toFixed(0)+'万' : v.toFixed(0)
+
+        // 收集MA值
+        let maHtml = ''
+        for (const p of params) {
+          if (p.seriesName?.startsWith('MA') && p.value != null) {
+            maHtml += `<div>${p.seriesName} <b>${Number(p.value).toFixed(2)}</b></div>`
+          }
+        }
 
         return `<div style="font-size:12px;font-weight:700;margin-bottom:4px">📅 ${k.date}</div>
-          <div>开盘 <b>${k.open.toFixed(2)}</b></div>
-          <div>最高 <b>${k.high.toFixed(2)}</b></div>
-          <div>最低 <b>${k.low.toFixed(2)}</b></div>
-          <div>收盘 <b style="color:${col}">${k.close.toFixed(2)}</b></div>
-          <div>涨跌 <b style="color:${col}">${sign}${chg.toFixed(2)} (${sign}${chgPct}%)</b></div>
-          <div>成交量 <b>${fmtVol(k.volume)}</b></div>`
+          <div>开 <b>${k.open.toFixed(2)}</b> 高 <b>${k.high.toFixed(2)}</b></div>
+          <div>低 <b>${k.low.toFixed(2)}</b> 收 <b style="color:${col}">${k.close.toFixed(2)}</b></div>
+          <div>涨跌 <b style="color:${col}">${s}${chg.toFixed(2)} (${s}${cp}%)</b></div>
+          <div>量 <b>${fv(k.volume)}</b></div>
+          ${maHtml}`
       },
     },
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
-
     grid: [
-      { left: '9%', right: '2%', top: 10, height: props.showMACD || props.showRSI ? '47%' : props.showVolume ? '58%' : '80%' },
-      { left: '9%', right: '2%', top: props.showMACD || props.showRSI ? '62%' : props.showVolume ? '72%' : 'auto', height: '12%' },
+      { left: '9%', right: '2%', top: 15, height: gridH1 },
+      ...(props.showVolume ? [{ left: '9%', right: '2%', top: props.showMACD ? '62%' : '72%', height: '12%' }] : []),
       ...(props.showMACD ? [{ left: '9%', right: '2%', top: '78%', height: '8%' }] : []),
     ],
-
     xAxis: [
-      { type: 'category', data: dates, axisLabel: { fontSize: 9, color: themeColors.text }, axisLine: { lineStyle: { color: themeColors.grid } }, axisTick: { show: false } },
-      { type: 'category', data: dates, axisLabel: { show: false }, axisLine: { lineStyle: { color: themeColors.grid } }, axisTick: { show: false }, gridIndex: 1 },
-      ...(props.showMACD ? [{ type: 'category', data: dates, axisLabel: { fontSize: 8, color: themeColors.text }, axisLine: { lineStyle: { color: themeColors.grid } }, axisTick: { show: false }, gridIndex: 2 }] : []),
+      { type: 'category', data: dates, axisLabel: { fontSize: 9, color: tColors.text }, axisLine: { lineStyle: { color: tColors.grid } }, axisTick: { show: false } },
+      ...(props.showVolume ? [{ type: 'category', data: dates, axisLabel: { show: false }, axisLine: { lineStyle: { color: tColors.grid } }, axisTick: { show: false }, gridIndex: 1 }] : []),
+      ...(props.showMACD ? [{ type: 'category', data: dates, axisLabel: { fontSize: 8, color: tColors.text }, axisTick: { show: false }, gridIndex: props.showVolume ? 2 : 1 }] : []),
     ],
-
     yAxis: [
-      { type: 'value', scale: true, axisLabel: { fontSize: 9, color: themeColors.text, formatter: v => v.toFixed(1) }, splitLine: { lineStyle: { color: themeColors.grid } } },
-      { type: 'value', scale: true, axisLabel: { fontSize: 8, color: themeColors.text }, gridIndex: 1, splitLine: { show: false }, min: 0 },
-      ...(props.showMACD ? [{ type: 'value', scale: true, axisLabel: { fontSize: 8, color: themeColors.text }, gridIndex: 2, splitLine: { lineStyle: { color: themeColors.grid } } }] : []),
+      { type: 'value', scale: true, axisLabel: { fontSize: 9, color: tColors.text, formatter: v => v.toFixed(1) }, splitLine: { lineStyle: { color: tColors.grid } } },
+      ...(props.showVolume ? [{ type: 'value', scale: true, axisLabel: { fontSize: 8, color: tColors.text }, gridIndex: 1, splitLine: { show: false }, min: 0 }] : []),
+      ...(props.showMACD ? [{ type: 'value', scale: true, axisLabel: { fontSize: 8, color: tColors.text }, gridIndex: props.showVolume ? 2 : 1, splitLine: { lineStyle: { color: tColors.grid } } }] : []),
     ],
-
     dataZoom: [
-      { type: 'inside', xAxisIndex: [0, 1, ...(props.showMACD ? [2] : [])], start: 0, end: 100, zoomOnMouseWheel: true, moveOnMouseMove: true },
-      { type: 'slider', xAxisIndex: [0, 1, ...(props.showMACD ? [2] : [])], start: 0, end: 100, height: 18, bottom: 6,
-        borderColor: themeColors.grid, backgroundColor: themeColors.bg,
-        dataBackground: { lineStyle: { color: themeColors.text }, areaStyle: { color: 'rgba(128,128,128,0.08)' } },
-        handleStyle: { color: '#888' }, textStyle: { fontSize: 9, color: themeColors.text },
-      },
+      { type: 'inside', xAxisIndex: 'all', start: 0, end: 100, zoomOnMouseWheel: true, moveOnMouseMove: true },
+      { type: 'slider', xAxisIndex: 'all', start: 0, end: 100, height: 18, bottom: 6, borderColor: tColors.grid, backgroundColor: tColors.bg },
     ],
-
     series: [
-      {
-        name: 'K线',
-        type: 'candlestick',
-        data: kdata,
-        itemStyle: { color: '#E53935', color0: '#26C6DA', borderColor: '#E53935', borderColor0: '#26C6DA' },
-        markPoint: markers.length ? { data: [], symbol: 'diamond', symbolSize: 1 } : undefined,
-      },
-      // MA lines
-      ...props.maLines.map((p, i) => ({
-        name: `MA${p}`,
-        type: 'line',
-        data: cmas[p],
-        smooth: true,
-        symbol: 'none',
-        lineStyle: { width: i === 0 ? 1 : i <= 3 ? 1 : 1, color: maColors[i % maColors.length], type: i >= 4 ? 'dashed' : 'solid' },
+      { name: 'K线', type: 'candlestick', data: kdata, itemStyle: { color: '#E53935', color0: '#26C6DA', borderColor: '#E53935', borderColor0: '#26C6DA' } },
+      ...props.activeMAs.map((p, i) => ({
+        name: `MA${p}`, type: 'line', data: cmas[p], smooth: true, symbol: 'none',
+        lineStyle: { width: p >= 60 ? 1.2 : 1, color: maColors[i % maColors.length], type: p >= 120 ? 'dashed' : 'solid' },
       })),
-      // Signal scatter
-      ...(markers.length ? [{
-        name: '标记',
-        type: 'scatter',
-        data: markers,
-        z: 10,
-        xAxisIndex: 0, yAxisIndex: 0,
-      }] : []),
-      // Volume bar
-      ...(props.showVolume ? [{
-        name: '成交量',
-        type: 'bar',
-        data: volumes,
-        xAxisIndex: 1, yAxisIndex: 1,
-        barWidth: '60%',
-      }, {
-        name: 'VOL_MA5',
-        type: 'line',
-        data: volMA5,
-        smooth: true,
-        symbol: 'none',
-        lineStyle: { width: 1, color: '#FF9800', type: 'dashed' },
-        xAxisIndex: 1, yAxisIndex: 1,
-      }] : []),
-      // MACD
-      ...(props.showMACD ? buildMACDSeries() : []),
+      ...(markers.length ? [{ name: '标记', type: 'scatter', data: markers, z: 10 }] : []),
+      ...(props.showVolume ? [
+        { name: '成交量', type: 'bar', data: volumes, xAxisIndex: 1, yAxisIndex: 1, barWidth: '60%' },
+      ] : []),
+      ...(props.showMACD ? buildMACDSeries(props.showVolume ? 2 : 1) : []),
     ],
   }
 
   chart.setOption(option, true)
 }
 
-function buildMACDSeries() {
+function buildMACDSeries(gridIdx) {
   if (props.klines.length < 26) return []
   const closes = props.klines.map(k => k.close)
-  const ema12 = ema(closes, 12)
-  const ema26 = ema(closes, 26)
-  const dif = ema12.map((v, i) => v - ema26[i])
-  const dea = ema(dif, 9)
-  const macd = dif.map((v, i) => (v - dea[i]) * 2)
-
+  const [dif, dea, macd] = calcMACD(closes)
   return [
-    { name: 'DIF', type: 'line', data: dif, smooth: true, symbol: 'none', lineStyle: { width: 1, color: '#E91E63' }, xAxisIndex: 2, yAxisIndex: 2 },
-    { name: 'DEA', type: 'line', data: dea, smooth: true, symbol: 'none', lineStyle: { width: 1, color: '#2196F3' }, xAxisIndex: 2, yAxisIndex: 2 },
-    { name: 'MACD', type: 'bar', data: macd.map((v, i) => ({ value: v, itemStyle: { color: v >= 0 ? 'rgba(229,57,53,0.5)' : 'rgba(38,198,218,0.5)' } })),
-      xAxisIndex: 2, yAxisIndex: 2, barWidth: '50%' },
+    { name: 'DIF', type: 'line', data: dif, smooth: true, symbol: 'none', lineStyle: { width: 1, color: '#E91E63' }, xAxisIndex: gridIdx, yAxisIndex: gridIdx },
+    { name: 'DEA', type: 'line', data: dea, smooth: true, symbol: 'none', lineStyle: { width: 1, color: '#2196F3' }, xAxisIndex: gridIdx, yAxisIndex: gridIdx },
+    { name: 'MACD', type: 'bar', data: macd.map(v => ({ value: v, itemStyle: { color: v >= 0 ? 'rgba(229,57,53,0.5)' : 'rgba(38,198,218,0.5)' } })), xAxisIndex: gridIdx, yAxisIndex: gridIdx, barWidth: '50%' },
   ]
 }
 
-function ema(data, period) {
-  const result = new Array(data.length).fill(0)
-  if (data.length === 0) return result
-  const k = 2 / (period + 1)
-  result[0] = data[0]
+function calcMACD(data) {
+  const k12 = 2/13, k26 = 2/27, k9 = 2/10
+  const ema12 = [data[0]], ema26 = [data[0]]
   for (let i = 1; i < data.length; i++) {
-    result[i] = data[i] * k + result[i - 1] * (1 - k)
+    ema12.push(data[i] * k12 + ema12[i-1] * (1 - k12))
+    ema26.push(data[i] * k26 + ema26[i-1] * (1 - k26))
   }
-  return result
+  const dif = ema12.map((v, i) => v - ema26[i])
+  const dea = [dif[0]]
+  for (let i = 1; i < dif.length; i++) dea.push(dif[i] * k9 + dea[i-1] * (1 - k9))
+  const macd = dif.map((v, i) => (v - dea[i]) * 2)
+  return [dif, dea, macd]
 }
 
 function initChart() {
   if (!chartRef.value) return
   chart = echarts.init(chartRef.value, getTheme(), { renderer: 'canvas' })
   render()
-
-  resizeObserver = new ResizeObserver(() => {
-    chart?.resize()
-  })
+  resizeObserver = new ResizeObserver(() => chart?.resize())
   resizeObserver.observe(chartRef.value)
 }
 
-// 监听属性变化
-watch(() => [props.klines, props.signals, props.signalMarkers, props.showVolume, props.showMACD], () => {
+watch(() => [props.klines, props.signals, props.signalMarkers, props.showVolume, props.showMACD, props.activeMAs, props.period], () => {
   nextTick(() => render())
 }, { deep: true })
 
-// 主题监听
 const themeObserver = new MutationObserver(() => {
-  if (chart) {
-    chart.dispose()
-    chart = echarts.init(chartRef.value, getTheme(), { renderer: 'canvas' })
-    render()
-  }
+  if (!chart) return
+  chart.dispose()
+  chart = echarts.init(chartRef.value, getTheme(), { renderer: 'canvas' })
+  render()
 })
 
 onMounted(() => {
@@ -279,11 +242,35 @@ onMounted(() => {
   emit('ready', chart)
 })
 
-onUnmounted(() => {
-  resizeObserver?.disconnect()
-  themeObserver?.disconnect()
-  chart?.dispose()
-})
-
+onUnmounted(() => { resizeObserver?.disconnect(); themeObserver?.disconnect(); chart?.dispose() })
 defineExpose({ getChart: () => chart, refresh: render })
 </script>
+
+<style scoped>
+.kc-wrap { position: relative; }
+.kc-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 4px 10px; background: var(--card-bg, #fff); border-radius: 8px 8px 0 0;
+  border: 1px solid var(--divider, #e5e7eb); border-bottom: none;
+  font-size: 0.6rem; flex-wrap: wrap;
+}
+.kc-btn {
+  padding: 3px 10px; border: 1px solid var(--divider, #e5e7eb); border-radius: 4px;
+  background: transparent; color: var(--text-secondary, #555); cursor: pointer;
+  font-size: 0.58rem; font-weight: 600;
+}
+.kc-btn.active { background: #FE2C55; color: #fff; border-color: #FE2C55; }
+.kc-ma-pill {
+  padding: 2px 7px; border: 1px solid var(--divider, #e5e7eb); border-radius: 3px;
+  background: transparent; color: var(--text-tertiary, #888); cursor: pointer;
+  font-size: 0.55rem; font-weight: 600; font-family: 'JetBrains Mono', monospace;
+}
+.kc-ma-pill.on { background: var(--color-accent, #2563eb); color: #fff; border-color: var(--color-accent, #2563eb); }
+.kc-sub-toggle {
+  padding: 3px 8px; border: 1px solid var(--divider, #e5e7eb); border-radius: 4px;
+  cursor: pointer; font-size: 0.55rem; font-weight: 600; user-select: none;
+  color: var(--text-tertiary, #888);
+}
+.kc-sub-toggle.on { background: #4CAF50; color: #fff; border-color: #4CAF50; }
+.kc-periods, .kc-mas, .kc-subs { display: flex; gap: 4px; align-items: center; }
+</style>

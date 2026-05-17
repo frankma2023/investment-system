@@ -34,7 +34,7 @@ def load_params():
         'lookback': 120, 'prior_high_mode': 'cutting', 'min_prior_advance': 0.30,
         'cup_min_age': 35, 'cup_max_age': 325,
         'min_descent_days': 10, 'min_ascent_days': 10, 'min_market_cap': 0,
-        'cut_pct': 0.33, 'cut_check_A_pct': 0.05, 'local_extreme_window': 13,
+        'cut_pct': 0.20, 'cut_check_A_pct': 0.02, 'local_extreme_window': 13,
         'cup_drawdown_min': 0.12, 'cup_drawdown_max': 0.33,
         'cup_bottom_check': True, 'cup_bottom_flatness': 0.08,
         'cup_recovery': 0.90,
@@ -260,6 +260,55 @@ def _find_prior_high_and_bottom_cutting(
     }
 
 
+# ─── simple 模式：前高定位（备用）─────────────────────
+
+def _find_prior_high_and_bottom_simple(
+    weekly: List[Dict], daily: List[Dict], t_date: str, params: Dict
+) -> Optional[Dict]:
+    """直接取 lookback 内最高收盘价作为前高（快速模式）"""
+    cup_min_age = params['cup_min_age']
+    cup_max_age = params['cup_max_age']
+    dd_min = params['cup_drawdown_min']
+    dd_max = params['cup_drawdown_max']
+    
+    t_week_idx = len(weekly) - 1
+    for wi, w in enumerate(weekly):
+        if w['date'] >= t_date: t_week_idx = wi; break
+    
+    max_scan_w = min(t_week_idx, cup_max_age // 5)
+    min_scan_w = max(2, cup_min_age // 5)
+    search_start = max(0, t_week_idx - max_scan_w)
+    search_end = t_week_idx - min_scan_w
+    
+    # 取 lookback 内最高收盘
+    prior_high = 0; prior_week_idx = None
+    for i in range(search_start, search_end + 1):
+        if weekly[i]['close'] > prior_high:
+            prior_high = weekly[i]['close']; prior_week_idx = i
+    if prior_week_idx is None: return None
+    
+    # 在前高之后找最低
+    bottom_price = float('inf'); bottom_week_idx = None
+    for i in range(prior_week_idx + 1, t_week_idx + 1):
+        if weekly[i]['close'] < bottom_price:
+            bottom_price = weekly[i]['close']; bottom_week_idx = i
+    if bottom_week_idx is None: return None
+    
+    dd = (prior_high - bottom_price) / prior_high if prior_high > 0 else 0
+    if not (dd_min <= dd <= dd_max): return None
+    
+    return {
+        'prior_high': prior_high,
+        'prior_idx': next((i for i, k in enumerate(daily) if k['date'] >= weekly[prior_week_idx]['date']), 0),
+        'prior_high_date': weekly[prior_week_idx]['date'],
+        'bottom': bottom_price,
+        'bottom_idx': next((i for i, k in enumerate(daily) if k['date'] >= weekly[bottom_week_idx]['date']), len(daily)-1),
+        'bottom_date': weekly[bottom_week_idx]['date'],
+        'drawdown': dd,
+        'descent_days': (bottom_week_idx - prior_week_idx) * 5,
+        'cup_weeks': t_week_idx - prior_week_idx,
+    }
+
 # ─── 3.1 前置上涨验证 ────────────────────────────────
 
 def _check_prior_advance(
@@ -294,9 +343,9 @@ def _check_recovery(daily: List[Dict], cup: Dict, t_idx: int, params: Dict) -> b
         if r > 0.20: return False
     
     if params.get('ascent_descent_check', True):
-        d_w = cup['descent_days'] // 5
-        a_w = (t_idx - bottom_idx) // 5
-        if d_w > 0 and a_w < d_w * params['ascent_descent_ratio']:
+        d_days = cup['descent_days']
+        a_days = t_idx - bottom_idx
+        if d_days > 0 and a_days < d_days * params['ascent_descent_ratio']:
             return False
     
     return True
@@ -312,7 +361,7 @@ def _check_volume(daily: List[Dict], cup: Dict, t_idx: int, params: Dict):
     if sma50v <= 0: return None
     
     # 3.1 杯底量萎缩
-    b_vols = [daily[i]['volume'] for i in range(max(0, bottom_idx - 10), min(len(daily), bottom_idx + 16))]
+    b_vols = [daily[i]['volume'] for i in range(max(0, bottom_idx - 5), min(len(daily), bottom_idx + 6))]
     if b_vols:
         avg_b = sum(b_vols) / len(b_vols)
         if avg_b / sma50v > vb_max: return None
@@ -351,11 +400,11 @@ def _find_handle(daily: List[Dict], cup: Dict, t_idx: int, params: Dict) -> Opti
     
     ascent = daily[bottom_idx:t_idx + 1]
     cup_mouth_price = max(k['close'] for k in ascent)
-    if cup_mouth_price < prior_high * 0.85: return None
+    if cup_mouth_price < prior_high * params['cup_recovery']: return None
     
     cup_mouth_idx = None
     for i in range(len(ascent) - 1, -1, -1):
-        if ascent[i]['close'] >= cup_mouth_price * 0.99:
+        if ascent[i]['close'] >= cup_mouth_price:
             cup_mouth_idx = bottom_idx + i; break
     if cup_mouth_idx is None or t_idx - cup_mouth_idx < h_min: return None
     
@@ -431,9 +480,8 @@ def _check_false_breakout(daily: List[Dict], t_idx: int, handle: Optional[Dict],
         if r['close'] < r['open'] and r['volume'] > sma50v * 1.3: return True
     
     if handle:
-        hd = handle.get('handle_days', 10)
-        hs = daily[max(0, t_idx - hd):t_idx]
-        if len(hs) >= 3 and max(k['volume'] for k in hs) > min(k['volume'] for k in hs) * 2:
+        h_vol_ratio = handle.get('handle_vol_ratio', 0)
+        if h_vol_ratio > params['handle_vol_ratio']:
             return True
     return False
 
@@ -462,13 +510,29 @@ def detect(
         sma50c = _sma([k['close'] for k in daily[:t_idx+1]], 50)
         if t_row['close'] <= sma50c: continue
         
-        # ── 形态切割法找前高+杯底 ──
-        cup = _find_prior_high_and_bottom_cutting(weekly, daily[:t_idx+1], t_date, params)
+        # ── 找前高+杯底 ──
+        mode = params.get('prior_high_mode', 'cutting')
+        if mode == 'simple':
+            cup = _find_prior_high_and_bottom_simple(weekly, daily[:t_idx+1], t_date, params)
+        else:
+            cup = _find_prior_high_and_bottom_cutting(weekly, daily[:t_idx+1], t_date, params)
         if cup is None: continue
         
         # ── 0.1 前置上涨 ──
         pa = _check_prior_advance(daily, cup['prior_high_date'], cup['prior_high'], params)
         if pa < params['min_prior_advance']: continue
+        
+        # ── 1.4 杯底平坦性 ──
+        if params.get('cup_bottom_check', True):
+            b_idx = cup['bottom_idx']
+            b_start = max(0, b_idx - 5)
+            b_end = min(len(daily), b_idx + 6)
+            if b_start < b_end:
+                b_zone = daily[b_start:b_end]
+                z_hi = max(k['close'] for k in b_zone)
+                z_lo = min(k['close'] for k in b_zone)
+                if z_hi > 0 and (z_hi - z_lo) / z_hi > params['cup_bottom_flatness']:
+                    continue  # 杯底太尖，排除
         
         # ── 杯身回升 ──
         if not _check_recovery(daily, cup, t_idx, params): continue

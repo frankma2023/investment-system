@@ -777,7 +777,7 @@ def api_saucer_base_scan():
     return jsonify({'results': results, 'count': len(results), 'date': date_str, 'pool': pool})
 
 # ═══════════════════════════════════════════════
-# API: GET /api/cup-handle?stock=XXX&date=YYYY-MM-DD
+# API: GET /api/cup-handle?stock=XXX&date=YYYY-MM-DD&start=YYYY-MM-DD&mode=stock|index
 # ═══════════════════════════════════════════════
 
 @app.route('/api/cup-handle')
@@ -786,13 +786,21 @@ def api_cup_handle():
     code = request.args.get('stock', '600519')
     date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
     start = request.args.get('start', None)
+    mode = request.args.get('mode', 'stock')
+    
+    if not start:
+        start = (datetime.strptime(date_str, '%Y-%m-%d') - timedelta(days=600)).strftime('%Y-%m-%d')
     
     db = get_db()
-    klines = db.execute("""
-        SELECT date, open, high, low, close, volume FROM daily_kline
-        WHERE stock_code=? AND date<=? AND date>=date(?,'-600 days')
-        ORDER BY date
-    """, (code, date_str, date_str)).fetchall()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    kf = "AND kline_type='normal'" if mode == 'index' else ''
+    code_col = 'stock_code'
+    extra_days = 400  # 给形态切割 + 前置上涨回溯留足够空间
+    
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? {kf} AND date>=date(?, '-{extra_days} days') AND date<=?
+        ORDER BY date""",
+        (code, start, date_str)).fetchall()
     
     if not klines:
         return jsonify({'signals': [], 'klines': [], 'error': 'No data'})
@@ -803,16 +811,166 @@ def api_cup_handle():
     params = load_params()
     signals = detect(daily, params)
     
-    filtered = [s for s in signals if s['signal_date'] == date_str]
-    for s in filtered:
+    # 返回全部信号（前端会按日期范围过滤）
+    for s in signals:
         s['stock_code'] = code
     
-    klines_out = daily
-    if start:
-        klines_out = [k for k in daily if k['date'] >= start]
+    klines_out = [k for k in daily if k['date'] >= start]
     klines_out = klines_out[-600:]
     
-    return jsonify({'signals': filtered, 'klines': klines_out})
+    return jsonify({'signals': signals, 'klines': klines_out})
+
+# ═══════════════════════════════════════════════
+# API: GET /api/cup-handle/diag?stock=XXX&date=YYYY-MM-DD&mode=stock|index
+# 单日排查 — 逐条件返回通过/不通过详情
+# ═══════════════════════════════════════════════
+
+@app.route('/api/cup-handle/diag')
+def api_cup_handle_diag():
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    mode = request.args.get('mode', 'stock')
+    
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    kf = "AND kline_type='normal'" if mode == 'index' else ''
+    code_col = 'stock_code'
+    
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? {kf} AND date<=? AND date>=date(?, '-500 days')
+        ORDER BY date""", (code, date_str, date_str)).fetchall()
+    
+    if len(klines) < 170:
+        return jsonify({'error': f'K线不足 ({len(klines)}条, 需要≥170)'})
+    
+    daily = [dict(r) for r in klines]
+    target_idx = len(daily) - 1
+    target = daily[target_idx]
+    
+    from scanners.cup_handle import load_params, _aggregate_weekly, _find_prior_high_and_bottom_cutting, _find_prior_high_and_bottom_simple
+    from scanners.cup_handle import _check_prior_advance, _check_recovery, _check_volume, _find_handle, _check_breakout, _check_false_breakout
+    from scanners.cup_handle import _sma, _sma_before
+    
+    params = load_params()
+    results = []
+    
+    def ok(cond, val, thresh, note=''): return {'condition': cond, 'value': str(val), 'threshold': str(thresh), 'pass': True, 'note': note}
+    def fail(cond, val, thresh, note=''): return {'condition': cond, 'value': str(val), 'threshold': str(thresh), 'pass': False, 'note': note}
+    
+    n_daily = len(daily)
+    # 0.1 数据充分
+    data_ok = n_daily >= params['lookback'] + 50
+    results.append(ok('数据充分', f'{n_daily}条', f'≥{params["lookback"]+50}条') if data_ok
+                   else fail('数据充分', f'{n_daily}条', f'≥{params["lookback"]+50}条'))
+    
+    if not data_ok:
+        return jsonify({'date': date_str, 'stock': code, 'results': results, 'all_pass': False})
+    
+    # 0.2 SMA50
+    sma50c = _sma([k['close'] for k in daily], 50)
+    sma50_ok = target['close'] > sma50c
+    results.append(ok('SMA50趋势', f'C={target["close"]:.2f}', f'SMA50={sma50c:.2f}', 'C>SMA50') if sma50_ok
+                   else fail('SMA50趋势', f'C={target["close"]:.2f}', f'SMA50={sma50c:.2f}'))
+    
+    # 1. 形态切割法找前高+杯底
+    weekly = _aggregate_weekly(daily)
+    mode_ph = params.get('prior_high_mode', 'cutting')
+    if mode_ph == 'simple':
+        cup = _find_prior_high_and_bottom_simple(weekly, daily, date_str, params)
+    else:
+        cup = _find_prior_high_and_bottom_cutting(weekly, daily, date_str, params)
+    
+    if cup is None:
+        results.append(fail('① 前高+杯底', '未找到', f'回调∈[{params["cup_drawdown_min"]*100}%,{params["cup_drawdown_max"]*100}%]', '形态切割法无法定位'))
+        return jsonify({'date': date_str, 'stock': code, 'ohlc': {'open': target['open'], 'high': target['high'], 'low': target['low'], 'close': target['close']}, 'cup': None, 'handle': None, 'results': results, 'all_pass': False})
+    
+    cup_ok = True
+    dd_pct = cup['drawdown'] * 100
+    results.append(ok('① 前高+杯底', f'前高={cup["prior_high"]:.2f} 杯底={cup["bottom"]:.2f} 回调={dd_pct:.1f}%',
+                      f'回调∈[{params["cup_drawdown_min"]*100}%,{params["cup_drawdown_max"]*100}%]'))
+    
+    # 0.3 前置上涨
+    pa = _check_prior_advance(daily, cup['prior_high_date'], cup['prior_high'], params)
+    pa_ok = pa >= params['min_prior_advance']
+    results.append(ok(f'前置上涨', f'{pa*100:.1f}%', f'≥{params["min_prior_advance"]*100}%') if pa_ok
+                   else fail(f'前置上涨', f'{pa*100:.1f}%', f'≥{params["min_prior_advance"]*100}%'))
+    
+    # 1.4 杯底平坦性
+    if params.get('cup_bottom_check', True):
+        b_idx = cup['bottom_idx']
+        b_start = max(0, b_idx - 5)
+        b_end = min(len(daily), b_idx + 6)
+        b_zone = daily[b_start:b_end]
+        z_hi = max(k['close'] for k in b_zone)
+        z_lo = min(k['close'] for k in b_zone)
+        flat_amp = (z_hi - z_lo) / z_hi if z_hi > 0 else 0
+        flat_ok = flat_amp <= params['cup_bottom_flatness']
+        results.append(ok(f'① 杯底平坦性', f'振幅={flat_amp*100:.1f}%', f'≤{params["cup_bottom_flatness"]*100}%', '±5天') if flat_ok
+                       else fail(f'① 杯底平坦性', f'振幅={flat_amp*100:.1f}%', f'≤{params["cup_bottom_flatness"]*100}%'))
+        cup_ok = cup_ok and flat_ok
+    else:
+        results.append(ok('① 杯底平坦性', '已关闭', '—'))
+    
+    # 2. 杯身回升
+    rec_ok = _check_recovery(daily, cup, target_idx, params)
+    recovery_val = max(k['close'] for k in daily[cup['bottom_idx']:target_idx+1]) / cup['prior_high']
+    results.append(ok('② 杯身回升', f'回升到{recovery_val*100:.0f}%', f'≥{params["cup_recovery"]*100}%') if rec_ok
+                   else fail('② 杯身回升', f'回升到{recovery_val*100:.0f}%', f'≥{params["cup_recovery"]*100}%'))
+    
+    # 3. 成交量
+    vr = _check_volume(daily, cup, target_idx, params)
+    vol_ok = vr is not None
+    if vol_ok:
+        vb, vc = vr
+        results.append(ok('③ 成交量', f'杯底量/50均={vb:.2f} 缩量={vc:.2f}',
+                          f'杯底≤{params["vol_bottom_max"]} 缩量≤{params["vol_contraction"]}'))
+    else:
+        results.append(fail('③ 成交量', '不满足', f'杯底≤{params["vol_bottom_max"]} 缩量≤{params["vol_contraction"]}'))
+    
+    # 4. 柄部
+    handle = _find_handle(daily, cup, target_idx, params)
+    has_handle = handle is not None
+    handle_req = params.get('handle_required', True)
+    if has_handle:
+        h_dd = handle['handle_drawdown'] * 100
+        results.append(ok('④ 柄部', f'有柄 回撤={h_dd:.1f}% 量比={handle["handle_vol_ratio"]:.2f}',
+                          f'回撤≤{params["handle_max_drawdown"]*100}%'))
+    else:
+        if handle_req:
+            results.append(fail('④ 柄部', '无柄', '需要柄部'))
+        else:
+            results.append(ok('④ 柄部', '无柄（已放行）', '不要求柄部'))
+    
+    # 5. 突破
+    buy_pt = _check_breakout(daily, target_idx, cup, handle, params)
+    bo_ok = buy_pt is not None
+    sma50v = _sma_before([k['volume'] for k in daily], 50, target_idx)
+    vol_ratio_bo = target['volume'] / sma50v if sma50v > 0 else 0
+    results.append(ok('⑤ 突破', f'收盘={target["close"]:.2f} 量比={vol_ratio_bo:.2f}',
+                      f'买点={buy_pt if bo_ok else "—"} 量比≥{params["breakout_vol_ratio"]}') if bo_ok
+                   else fail('⑤ 突破', f'收盘={target["close"]:.2f} 量比={vol_ratio_bo:.2f}',
+                             f'买点>收盘 或 量比<{params["breakout_vol_ratio"]}'))
+    
+    # 6. 假突破
+    fb = _check_false_breakout(daily, target_idx, handle, params)
+    results.append(ok('⑥ 假突破排除', '通过', '无假突破信号') if not fb
+                   else fail('⑥ 假突破排除', '检测到假突破', '假突破信号'))
+    
+    all_pass = cup_ok and pa_ok and rec_ok and vol_ok and (has_handle or not handle_req) and bo_ok and not fb
+    
+    return jsonify({
+        'date': date_str,
+        'stock': code,
+        'ohlc': {'open': target['open'], 'high': target['high'], 'low': target['low'], 'close': target['close']},
+        'cup': {'prior_high': cup['prior_high'], 'prior_high_date': cup['prior_high_date'],
+                'bottom': cup['bottom'], 'bottom_date': cup['bottom_date'],
+                'drawdown_pct': round(cup['drawdown']*100, 1), 'descent_days': cup['descent_days']},
+        'handle': {'found': has_handle, 'high': handle['handle_high_price'] if has_handle else None,
+                   'low': handle['handle_low_price'] if has_handle else None,
+                   'drawdown_pct': round(handle['handle_drawdown']*100, 1) if has_handle else None} if has_handle else {'found': False},
+        'results': results,
+        'all_pass': all_pass,
+    })
 
 # ═══════════════════════════════════════════════
 # API: GET /api/market-panorama
