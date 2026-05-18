@@ -47,11 +47,11 @@
 
     <header class="panel-header">
       <h1>📋 欧奈尔投资系统 · 项目进展</h1>
-      <p>2026-05-16</p>
+      <p>2026-05-18</p>
     </header>
 
     <div class="pg-stats">
-      <div class="pg-stat"><div class="n" style="color:#4CAF50">33</div><div class="l">已完成</div></div>
+      <div class="pg-stat"><div class="n" style="color:#4CAF50">40</div><div class="l">已完成</div></div>
       <div class="pg-stat"><div class="n" style="color:#FF9800">0</div><div class="l">进行中</div></div>
       <div class="pg-stat"><div class="n">7</div><div class="l">待开发</div></div>
     </div>
@@ -87,13 +87,24 @@
       </div>
 
       <div class="pg-card">
-        <h3>📉 大盘信号 <span class="badge" style="background:#FFF3E0;color:#E65100">5项</span></h3>
+        <h3>📉 大盘信号 <span class="badge" style="background:#FFF3E0;color:#E65100">6项</span></h3>
         <table class="pg-table">
-          <tr><td><span class="pg-dot dot-done"></span>抛盘日+回测</td><td>/distribution-day/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>抛盘日 v3.0+回测</td><td>/distribution-day/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>追盘日+回测</td><td>/follow-through-day/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>吸筹日+回测</td><td>/accumulation-day/</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>大盘健康度看板</td><td>/market-scan/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>📐 标准突破</td><td>/base-detection/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>大盘健康度看板</td><td>/market-scan/</td></tr>
+        </table>
+      </div>
+
+      <div class="pg-card">
+        <h3>🚨 卖出信号 <span class="badge" style="background:#FCE4EC;color:#C62828">5项</span></h3>
+        <table class="pg-table">
+          <tr><td><span class="pg-dot dot-done"></span>🔴 高潮见顶+回测</td><td>/climax-top/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🚂 铁轨线+回测</td><td>/railroad-tracks/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>📉 抛盘日 v3.0</td><td>重抛盘日×2+确认日抵消</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>📈 基部突破 Layer 1</td><td>/base-breakout/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🏷️ VCP 形态标注器</td><td>base_tags.py</td></tr>
         </table>
       </div>
 
@@ -131,12 +142,11 @@
       </div>
 
       <div class="pg-card">
-        <h3>📐 未来引擎 <span class="badge" style="background:#FFF3E0;color:#E65100">8项</span></h3>
+        <h3>📐 未来引擎 <span class="badge" style="background:#FFF3E0;color:#E65100">5项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-todo"></span>杯柄形态</td><td>cup_handle</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>碟形基部</td><td>saucer_base</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>VCP波动率收缩</td><td>vcp</td></tr>
-          <tr><td><span class="pg-dot dot-todo"></span>高潮见顶</td><td>climax_top</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>量价背离与出货</td><td>diverge_distribution</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>突破失败形态</td><td>failed_breakout</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>基本面恶化</td><td>fundamental_deterioration</td></tr>
@@ -174,6 +184,11 @@
     <div class="lesson-card"><div class="ln">25. 评分维度子项必须设 fallback</div><div class="ld">inst_change/excess/buyback 等子项在数据缺失或负值时漏设 bd key，前端显示空白。所有子项必须有 else 分支显式设 0 或 fallback 值。</div></div>
     <div class="lesson-card"><div class="ln">26. overflow-x:auto 会暗中强制 overflow-y:auto</div><div class="ld">CSS 规范：一个轴的 overflow 设为非 visible 时，另一轴未显式设置则强制变为 auto。.nav-links 设了 overflow-x:auto 导致 overflow-y 也变 auto，将绝对定位的下拉菜单裁剪掉。导航栏父容器不要设 overflow。</div></div>
     <div class="lesson-card"><div class="ln">27. href="#" 点击跳顶 + 多个Python进程占端口</div><div class="ld">导航栏占位链接用 javascript:void(0) 而非 #。端口8788累积多个僵尸Flask进程导致旧代码一直运行，需 taskkill /F /IM python.exe 全杀。</div></div>
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">28. 日期选择触发 run() + 周期切换有竞态条件</div><div class="ld">4个页面同时出现：改起始日期→图表不更新、切周期无效。根因：runId 计数器 + await 后检查 myId，旧请求结果直接丢弃。</div></div>
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">29. setTimeout(run) 自动渲染会吃掉按钮文字</div><div class="ld">按钮初始"🔍 回测"在自动加载后被"🔄"覆盖。修复：给 run() 加 auto 参数，自动模式不改 btn.textContent。</div></div>
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">30. KlineChart.update() 在 chart 被 dispose 后静默失效</div><div class="ld">主题切换时 chart.dispose()，后续 update 不走 _render。修复：update 内部检测 isDisposed 时自动 re-init。同时 axisPointer.link 从 [{xAxisIndex:'all'}] 改为 {xAxisIndex:'all'}。</div></div>
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">31. 后端硬截断日线数据导致历史回测失效</div><div class="ld">result['daily'][-600:] 硬截到 600 条。选 2021 年起始只看到 2023 年。改为按起止日期动态过滤 + 2000 条安全帽（~10年才触发）。</div></div>
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">32. 回测看板标准化模板一劳永逸</div><div class="ld">制作 shared/template-backtest.html，固定 4CSS+6JS+通用函数。新页面复制→改8处🔧标记→完成。nav.js 统一管理导航，新增页面只需加一行到 BACKTEST_ITEMS。chart-legend 迁入 components.css。</div></div>
 
     <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>

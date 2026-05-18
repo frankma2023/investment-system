@@ -1,0 +1,25 @@
+# top_pattern
+peak_detection_window: 5
+peak_prominence: 0.03
+peak_window_days: 60
+uptrend:
+  min_gain: 0.2
+double_top:
+  min_retracement: 0.08
+  max_price_diff: 0.03
+  min_days_between: 15
+  neck_break_pct: 0.03
+  consecutive_days: 3
+triple_top:
+  min_retracement: 0.06
+  max_price_diff: 0.05
+  min_days_between: 15
+  min_trough_gap: 15
+head_shoulders:
+  enabled: true
+  daily:
+    min_retracement: 0.1
+    head_above_ratio: 0.03
+    max_shoulder_diff: 0.05
+    volume_shrink_ratio: 0.8
+    volume_window: 5

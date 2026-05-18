@@ -1300,6 +1300,58 @@ def api_railroad_tracks_diag():
                     'B': len(result['signals_daily_single'])},
                     'latest': [{'date': s['signal_date'], 'label': s['label']} for s in result['all_signals'][-5:]]})
 
+
+# ═══════════════════════════════════════════════
+# API: GET /api/top-pattern (头部形态)
+# ═══════════════════════════════════════════════
+
+@app.route('/api/top-pattern')
+def api_top_pattern():
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    start = request.args.get('start', None)
+    mode = request.args.get('mode', 'stock')
+    if not start:
+        start = (datetime.strptime(date_str, '%Y-%m-%d') - timedelta(days=730)).strftime('%Y-%m-%d')
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    code_col = 'stock_code'
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? AND date<=? AND date>=?
+        ORDER BY date""", (code, date_str, start)).fetchall()
+    if len(klines) < 60:
+        return jsonify({'error': f'K线不足 ({len(klines)}条, 需要 >= 60)'})
+    daily = [dict(r) for r in klines]
+    from scanners.top_pattern import detect_all, load_params
+    freq = request.args.get('freq', 'D')
+    params = load_params()
+    result = detect_all(daily, params, freq=freq, stock_code=code)
+    return jsonify(result)
+
+
+@app.route('/api/top-pattern/diag')
+def api_top_pattern_diag():
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    start = request.args.get('start', None)
+    mode = request.args.get('mode', 'stock')
+    if not start:
+        start = (datetime.strptime(date_str, '%Y-%m-%d') - timedelta(days=730)).strftime('%Y-%m-%d')
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    code_col = 'stock_code'
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? AND date<=? AND date>=?
+        ORDER BY date""", (code, date_str, start)).fetchall()
+    if len(klines) < 60:
+        return jsonify({'error': f'K线不足 ({len(klines)}条, 需要 >= 60)'})
+    daily = [dict(r) for r in klines]
+    from scanners.top_pattern import get_diag, load_params
+    freq = request.args.get('freq', 'D')
+    params = load_params()
+    diag = get_diag(daily, params, stock_code=code)
+    return jsonify(diag)
+
 # ═══════════════════════════════════════════════
 # API: GET /api/market-panorama
 # ═══════════════════════════════════════════════
@@ -2725,6 +2777,26 @@ def add_cors(response):
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     return response
+
+
+# ═══════════════════════════════════════════════
+# 静态文件服务（web/ 目录下的 HTML 页面）
+# ═══════════════════════════════════════════════
+
+WEB_DIR = os.path.join(PROJECT_DIR, 'web')
+from flask import send_from_directory
+
+@app.route('/<path:subpath>')
+def serve_web(subpath):
+    """服务 web/ 目录下任意文件（HTML/JS/CSS/图片等）"""
+    full = os.path.join(WEB_DIR, subpath)
+    if os.path.isfile(full):
+        return send_from_directory(WEB_DIR, subpath)
+    idx = os.path.join(full, 'index.html')
+    if os.path.isfile(idx):
+        return send_from_directory(WEB_DIR, os.path.join(subpath, 'index.html'))
+    return jsonify({'error': 'Not found', 'path': subpath}), 404
+
 
 if __name__ == '__main__':
     import sys, io

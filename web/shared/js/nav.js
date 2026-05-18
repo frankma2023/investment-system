@@ -16,7 +16,7 @@
  *   | 'pattern-scan' | 'canslim-scorecard' | 'saucer-base-backtest'
  *   | 'index-scan' | 'index-valuation' | 'stock-valuation' | 'market-scan'
  *   | 'daily-pattern-scan' | 'canslim-scores'
- *   | 'railroad-tracks' | 'climax-top' | 'double-bottom' | 'flat-base'
+ *   | 'railroad-tracks' | 'climax-top' | 'top-pattern' | 'double-bottom' | 'flat-base'
  */
 
 (function (global) {
@@ -44,6 +44,7 @@
     { href: '../pocket-pivot/',         icon: '🎯', label: '口袋支点',         page: 'pocket-pivot' },
     { href: '../railroad-tracks/',      icon: '🚂', label: '铁轨线',           page: 'railroad-tracks' },
     { href: '../climax-top/',           icon: '📉', label: '高潮见顶',         page: 'climax-top' },
+    { href: '../top-pattern/',          icon: '⛰️', label: '头部形态',         page: 'top-pattern' },
     { href: '../pattern-scan/',         icon: '🔎', label: '形态识别',         page: 'pattern-scan' },
     { href: '../canslim-scorecard/',    icon: '🎯', label: 'CAN SLIM 评分卡',  page: 'canslim-scorecard' },
   ];
