@@ -1134,15 +1134,17 @@ def api_climax_top():
     code = request.args.get('stock', '600519')
     date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
     mode = request.args.get('mode', 'stock')
+    start = request.args.get('start', None)
     
     db = get_db()
     table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
     kf = "AND kline_type='normal'" if mode == 'index' else ''
     code_col = 'stock_code'
     
+    lb_date = start if start else date_str
     klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
-        WHERE {code_col}=? {kf} AND date<=? AND date>=date(?, '-600 days')
-        ORDER BY date""", (code, date_str, date_str)).fetchall()
+        WHERE {code_col}=? {kf} AND date<=? AND date>=date(?,'-600 days')
+        ORDER BY date""", (code, date_str, lb_date)).fetchall()
     
     if len(klines) < 390:
         return jsonify({'weekly': [], 'signals': [], 'error': f'K线不足 ({len(klines)}条, 需要 >= 390)'})
@@ -1160,7 +1162,7 @@ def api_climax_top():
         weekly = [w for w in weekly if w['date'] >= start]
     weekly_out = weekly[-120:]  # 最近120周
     
-    return jsonify({'weekly': weekly_out, 'signals': signals, 'baseline': baseline})
+    return jsonify({'daily': daily, 'weekly': weekly_out, 'signals': signals, 'baseline': baseline})
 
 
 @app.route('/api/climax-top/diag')
@@ -1210,6 +1212,74 @@ def api_climax_top_diag():
     
     return jsonify({'date': date_str, 'baseline': baseline, 'signals_count': len(signals),
                     'results': results, 'all_pass': all_pass})
+
+@app.route('/api/distribution-day')
+def api_distribution_day():
+    code = request.args.get('index', '000985')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    start = request.args.get('start', None)
+    if not start:
+        start = (datetime.strptime(date_str, '%Y-%m-%d') - timedelta(days=730)).strftime('%Y-%m-%d')
+    db = get_db()
+    klines = db.execute("""SELECT date, open, high, low, close, volume FROM index_daily_kline
+        WHERE stock_code=? AND kline_type='normal' AND date>=? AND date<=?
+        ORDER BY date""", (code, start, date_str)).fetchall()
+    if len(klines) < 26:
+        return jsonify({'error': f'K线不足 ({len(klines)}条, 需要 >= 26)'})
+    daily = [dict(r) for r in klines]
+    from scanners.distribution_day import detect, load_params
+    params = load_params()
+    result = detect(daily, params)
+    return jsonify(result)
+
+
+@app.route('/api/distribution-day/joint')
+def api_distribution_day_joint():
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    start = request.args.get('start', None)
+    if not start:
+        start = (datetime.strptime(date_str, '%Y-%m-%d') - timedelta(days=730)).strftime('%Y-%m-%d')
+    db = get_db()
+    k985 = db.execute("""SELECT date, open, high, low, close, volume FROM index_daily_kline
+        WHERE stock_code='000985' AND kline_type='normal' AND date>=? AND date<=? ORDER BY date""",
+        (start, date_str)).fetchall()
+    k300 = db.execute("""SELECT date, open, high, low, close, volume FROM index_daily_kline
+        WHERE stock_code='000300' AND kline_type='normal' AND date>=? AND date<=? ORDER BY date""",
+        (start, date_str)).fetchall()
+    from scanners.distribution_day import detect_multi, load_params
+    result = detect_multi({'000985': [dict(r) for r in k985], '000300': [dict(r) for r in k300]})
+    return jsonify(result)
+
+
+@app.route('/api/railroad-tracks')
+def api_railroad_tracks():
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    start = request.args.get('start', None)
+    mode = request.args.get('mode', 'stock')
+    if not start:
+        start = (datetime.strptime(date_str, '%Y-%m-%d') - timedelta(days=730)).strftime('%Y-%m-%d')
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    kf = "AND kline_type='normal'" if mode == 'index' else ''
+    code_col = 'stock_code'
+    lb_date = start
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? {kf} AND date<=? AND date>=date(?,'-600 days')
+        ORDER BY date""", (code, date_str, lb_date)).fetchall()
+    if len(klines) < 250:
+        return jsonify({'error': f'K线不足 ({len(klines)}条, 需要 >= 250)'})
+    daily = [dict(r) for r in klines]
+    from scanners.railroad_tracks import detect_all, load_params
+    params = load_params()
+    result = detect_all(daily, params, stock_code=code)
+    # 过滤 daily/weekly 到起止区间
+    if start:
+        result['daily'] = [k for k in result['daily'] if k['date'] >= start]
+    if len(result['daily']) > 2000:
+        result['daily'] = result['daily'][-2000:]
+    result['weekly'] = [k for k in result['weekly'] if k['date'] >= start][:120] if start else result['weekly'][:120]
+    return jsonify(result)
 
 
 # ═══════════════════════════════════════════════

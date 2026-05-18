@@ -192,9 +192,10 @@
     this.signals = signals || [];
     this.signalMap = signalMap || {};
     this.extraMarkers = extraMarkers || this.opts.extraMarkers || [];
-    if (this.chart && !this.chart.isDisposed()) {
-      this._render();
+    if (!this.chart || this.chart.isDisposed()) {
+      this.chart = echarts.init(this.chartDom, isDark() ? 'dark' : null, { renderer: 'canvas' });
     }
+    this._render();
   };
 
   KlineChart.prototype._render = function () {

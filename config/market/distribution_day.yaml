@@ -1,30 +1,41 @@
-# Distribution Day V3 — 可配置参数
-# 卡片1: 标准抛盘 / 卡片2: 假阳线 / 卡片3: 盘中反转 / 卡片4: 重抛盘×2
+# 抛盘日检测引擎 v3.0（Distribution Day）配置
+# 文件: config/market/distribution_day.yaml
 
-default_index: "000985"
-default_date_range:
-  start: "2024-01-01"
-  end: "2024-12-31"
+distribution_day:
+  # ── 标准抛盘日 ──
+  standard_decline_min: -0.001         # 跌幅阈值（-0.001=-0.1%）
+  standard_vol_ratio: 1.0              # 量比阈值（≥1.0）
 
-cards:
-  card1:
-    enabled: true
-    decline: -0.1
-    vol: 1.1
-  card2:
-    enabled: true
-    chg_min: -0.3
-    chg_max: 0.2
-    surge: 0.5
-    vol: 1
-    shadow: 1.5
-  card3:
-    enabled: true
-    surge: 0.5
-    vol: 1
-    shadow: 1.5
-    midpt: 50
-  card4:
-    enabled: true
-    decline: -1.5
-    vol: 0.98
+  # ── 特殊抛盘日（假阳线滞涨）──
+  fake_yang_gain_min: -0.003           # 涨跌幅下限（-0.003=-0.3%）
+  fake_yang_gain_max: 0.002            # 涨跌幅上限（0.002=0.2%）
+  fake_yang_surge_min: 0.005           # 盘中最高涨幅下限（0.005=0.5%）
+  fake_yang_vol_ratio: 1.1             # 量比阈值
+  fake_yang_wick_body: 1.5             # 上影线/实体（满足其一即可）
+  fake_yang_wick_amp: 0.5              # 上影线/振幅（满足其一即可）
+
+  # ── 盘中反转抛盘日 ──
+  intraday_surge_min: 0.005            # 盘中最高涨幅下限（相对前收）
+  intraday_vol_ratio: 1.1              # 量比阈值
+  intraday_wick_body: 1.5              # 上影线/实体
+  intraday_midpt_rule: true            # 收盘≤(高+低)/2
+
+  # ── 平盘日过滤 ──
+  flat_day_threshold: 0.0005           # |涨跌幅|<0.05%为平盘
+
+  # ── 重抛盘日 ──
+  heavy_decline_min: -0.015            # 跌幅≥1.5%
+  heavy_vol_ratio: 1.0                 # 量≥前日
+
+  # ── 确认日抵消 ──
+  ftd_gain_min: 0.015                  # 涨幅≥1.5%
+  ftd_vol_ratio: 1.0                   # 量≥前日
+
+  # ── 信号计数 ──
+  window_days: 25
+  warning_count: 3
+  confirmed_count: 5
+
+  # ── 指数配置 ──
+  primary_index: '000985'
+  secondary_indices: ['000300', '000905']

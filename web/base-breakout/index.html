@@ -54,22 +54,7 @@
 </head>
 <body>
 <div class="app-container">
-  <nav class="top-nav">
-    <div class="nav-brand"><span class="nav-fox">📊</span><span>基部突破回测</span><span class="nav-greeting">Layer 1 · Base Breakout</span></div>
-    <div class="nav-links">
-      <a href="../" class="nav-item">🏠 看板</a>
-      <div class="nav-dropdown"><a href="#" class="nav-item">回测 ▾</a><div class="nav-dropdown-menu">
-        <a href="../distribution-day/">📉 抛盘日</a><a href="../follow-through-day/">📈 追盘日</a>
-        <a href="../index-rs-backtest/">🏆 指数RS强度</a><a href="../index-crowdedness/">📊 指数拥挤度</a>
-        <a href="../stock-rs-backtest/">💪 个股RS强度</a><a href="../index-ad-backtest/">🔍 机构吸筹/出货</a>
-        <a href="../divergence-backtest/">⚠️ 指数背离</a><a href="../pocket-pivot/">🎯 口袋支点</a>
-        <a href="../cup-handle-backtest/">☕ 杯柄形态</a><a href="../pattern-scan/">🔎 形态识别</a>
-      </div></div>
-      <a href="../index-scan/" class="nav-item">🔬 指数扫描</a><a href="../index-valuation/" class="nav-item">📈 指数估值</a>
-      <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a><a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
-      <button class="theme-toggle">🌙</button>
-    </div>
-  </nav>
+  <nav id="top-nav"></nav>
 
   <div class="top-bar">
     <div class="fld" style="flex:0.5;min-width:80px"><label>类型</label><select id="mode" onchange="onModeChange()"><option value="stock">个股</option><option value="index">指数</option></select></div>
@@ -319,5 +304,7 @@
     catch(e){btn.textContent='❌';btn.disabled=false}
   }
 </script>
+  <script src="../shared/js/nav.js"></script>
+  <script>Nav.init({brandIcon:"🏔️",brandText:"基部突破回测",currentPage:"base-breakout"})</script>
 </body>
 </html>

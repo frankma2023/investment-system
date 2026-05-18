@@ -52,28 +52,7 @@
 </head>
 <body>
   <div class="app-container">
-    <nav class="top-nav">
-      <div class="nav-brand"><span class="nav-fox">🦊</span><span>扁平基部</span><span class="nav-greeting">Flat Base</span></div>
-      <div class="nav-links">
-        <a href="../" class="nav-item">🏠 看板</a>
-        <div class="nav-dropdown"><a href="javascript:void(0)" class="nav-item active">回测 ▾</a><div class="nav-dropdown-menu">
-          <a href="../distribution-day/">📉 抛盘日</a><a href="../follow-through-day/">📈 追盘日</a><a href="../accumulation-day/">📦 吸筹日</a>
-          <a href="../index-rs-backtest/">🏆 指数RS强度</a><a href="../index-crowdedness/">📊 指数拥挤度</a><a href="../stock-rs-backtest/">💪 个股RS强度</a>
-            <a href="../pattern-scan/">🔎 形态识别</a>
-            <a href="../canslim-scorecard/">🎯 CAN SLIM 评分卡</a>
-          <a href="../saucer-base-backtest/">🥏 碟形基部</a>
-          <a href="../base-breakout/">🏔️ 基部突破</a>
-          <a href="../index-ad-backtest/">🔍 机构吸筹/出货</a><a href="../divergence-backtest/">⚠️ 指数背离</a>
-          <a href="../strongest-index/">⭐ 最强指数</a><a href="../cup-handle-backtest/">☕ 杯柄形态</a><a href="../pocket-pivot/">🎯 口袋支点</a><a href="../double-bottom/">🅱 双重底</a><a href="../flat-base/" class="active">📏 扁平基部</a>
-        </div></div>
-        <a href="../index-scan/" class="nav-item">🔬 指数扫描</a><a href="../index-valuation/" class="nav-item">📈 指数估值</a>
-        <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a><a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
-        <a href="../daily-pattern-scan/" class="nav-item">📋 形态扫描</a>
-        <a href="../canslim-scores/" class="nav-item">🎯 CAN SLIM</a>
-        <a href="../pattern-scan/" class="nav-item">🔎 形态识别</a>
-        <button class="theme-toggle">🌙</button>
-      </div>
-    </nav>
+    <nav id="top-nav"></nav>
     <div class="top-bar">
       <div class="fld" style="flex:0.5;min-width:80px"><label>周期</label><select id="period" style="width:100%" onchange="run()"><option value="day">日线</option><option value="week">周线</option><option value="month">月线</option></select></div>
       <div class="fld" style="flex:0.5"><label>代码</label><div style="display:flex;gap:4px"><input type="text" id="stock-code" value="600519" style="width:100px" onkeydown="if(event.key==='Enter')run()" onchange="run()"><span id="stock-name" style="font-size:0.65rem;color:var(--text-tertiary);padding:7px 6px"></span></div></div>
@@ -195,5 +174,7 @@
     "<tr><td>最高</td><td>"+high.toFixed(2)+"</td><td></td><td></td></tr><tr><td>最低</td><td>"+low.toFixed(2)+"</td><td></td><td></td></tr></table>";div.style.display="block";}
     async function saveCfg(){const btn=document.getElementById('btn-save');btn.textContent='⏳';btn.disabled=true;const p=gp().flat_base;const y=['# 扁平基部参数','flat_base:','  amp_max: '+p.amp_max,'  min_duration: '+p.min_duration,'  slope_enabled: '+(p.slope_enabled?'true':'false'),'  vol_contraction_ratio: '+p.vol_contraction_ratio,'  bb_enabled: '+(p.bb_enabled?'true':'false'),'  breakout_vol_ratio: '+p.breakout_vol_ratio,'  require_green: '+(p.require_green?'true':'false'),''].join('\n');try{const r=await fetch(API_BASE+'/api/config?signal_type='+ST,{method:'POST',headers:{'Content-Type':'text/plain'},body:y});const d=await r.json();if(d.ok){btn.textContent='✅';btn.classList.add('saved');setTimeout(()=>{btn.textContent='💾';btn.classList.remove('saved');btn.disabled=false},2000)}}catch(e){btn.textContent='❌';btn.disabled=false}}
   </script>
+  <script src="../shared/js/nav.js"></script>
+  <script>Nav.init({brandIcon:"📏",brandText:"扁平基部回测",currentPage:"flat-base"})</script>
 </body>
 </html>

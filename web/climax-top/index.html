@@ -9,54 +9,24 @@
 <link rel="stylesheet" href="../shared/css/xhs-cards.css">
 <link rel="stylesheet" href="../shared/css/components.css">
 <style>
-  .top-bar{display:flex;gap:12px;align-items:flex-end;padding:16px 20px;background:var(--card-bg);border-radius:18px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,0.04);flex-wrap:wrap}
-  .top-bar .fld{flex:1;min-width:100px}
-  .top-bar label{display:block;font-size:0.6rem;font-weight:600;color:var(--text-tertiary);margin-bottom:3px}
-  .top-bar input,.top-bar select{width:100%;padding:7px 10px;border:1px solid var(--divider);border-radius:10px;font-size:0.75rem;background:var(--card-bg);color:var(--text-primary);box-sizing:border-box}
-  .chart-legend{display:flex;gap:18px;align-items:center;padding:4px 16px;font-size:0.65rem;color:var(--text-secondary)}
-  .bottom-layout{display:flex;gap:14px;align-items:flex-start}
-  .bottom-left{width:340px;flex-shrink:0;display:flex;flex-direction:column;gap:10px}
-  .bottom-right{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
-  .btn-run{width:100%;padding:11px;background:#FE2C55;color:#FFF;border:none;border-radius:14px;font-size:0.95rem;font-weight:800;cursor:pointer}
-  .btn-run:hover{opacity:0.88}.btn-run:disabled{background:#CCC;cursor:not-allowed}
-  .param-card{background:var(--card-bg);border:1px solid var(--divider);border-radius:16px;overflow:hidden}
-  .param-card-hd{display:flex;align-items:center;padding:9px 14px;cursor:pointer;font-size:0.73rem;font-weight:800}
-  .param-card-hd .dot{width:8px;height:8px;border-radius:50%;margin-right:8px}
-  .param-card-bd{padding:0 14px 10px}.param-card-bd.collapsed{display:none}
-  .sr{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-  .sr .sl{width:90px;font-size:0.58rem;font-weight:600;color:var(--text-tertiary);flex-shrink:0}
-  .sr input[type=range]{flex:1;height:3px}
-  .sr .sv{width:44px;text-align:right;font-size:0.62rem;font-weight:700}
-  table{width:100%;border-collapse:collapse;font-size:0.7rem}
-  th,td{padding:4px 6px;text-align:center;border-bottom:1px solid var(--divider)}
-  th{font-weight:700;color:var(--text-secondary);font-size:0.62rem}
+  .chart-wrap{height:520px;margin-bottom:4px}
   .s-warn{color:#E65100;font-weight:700}.s-conf{color:#C62828;font-weight:700}
-  @media(max-width:900px){.bottom-layout{flex-direction:column}.bottom-left{width:100%}}
-  .loading-row{text-align:center;padding:24px;color:var(--text-tertiary)}
 </style>
 </head>
 <body>
 <div class="app-container">
-  <nav class="top-nav">
-    <div class="nav-brand"><span class="nav-fox">📉</span><span>高潮见顶回测</span><span class="nav-greeting">Climax Top</span></div>
-    <div class="nav-links">
-      <a href="../" class="nav-item">🏠 看板</a>
-      <a href="../base-breakout/" class="nav-item">📈 基部突破</a>
-      <a href="../cup-handle-backtest/" class="nav-item">☕ 杯柄</a>
-      <a href="../pocket-pivot/" class="nav-item">🎯 口袋支点</a>
-      <button class="theme-toggle">🌙</button>
-    </div>
-  </nav>
+  <nav id="top-nav"></nav>
 
   <div class="top-bar">
     <div class="fld" style="flex:0.5;min-width:80px"><label>类型</label><select id="mode" onchange="onModeChange()"><option value="stock">个股</option><option value="index">指数</option></select></div>
-    <div class="fld"><label>代码</label><input type="text" id="stock-code" value="600519" style="width:100px" onkeydown="if(event.key==='Enter')run()"></div>
-    <div class="fld"><label>起始日期</label><input type="date" id="date-start"></div>
-    <div class="fld"><label>截止日期</label><input type="date" id="date-end"></div>
+    <div class="code-wrap"><div class="fld"><label>代码</label><input type="text" id="stock-code" value="600519" style="width:100px" onkeydown="if(event.key==='Enter')run()"><span id="stock-name" style="margin-left:6px;font-weight:700;font-family:var(--font-display);font-size:0.85rem"></span></div></div>
+    <div class="fld" style="flex:0.5;min-width:90px"><label>周期</label><select id="period" onchange="renderChart()"><option value="day">日线</option><option value="week">周线</option><option value="month">月线</option></select></div>
+    <div class="fld"><label>开始</label><input type="date" id="date-start" onchange="run()"></div>
+    <div class="fld"><label>结束</label><input type="date" id="date-end" onchange="run()"></div>
   </div>
 
-  <div id="chart"></div>
-  <div class="chart-legend">🔴 高潮见顶确认 | ⚠️ 高潮进行中 | <span style="background:#FFCDD2;padding:1px 6px;border-radius:3px">高潮区间</span></div>
+  <div id="chart" class="chart-wrap"></div>
+  <div class="chart-legend">🔴 高潮见顶确认 | ⚠️ 高潮进行中</div>
 
   <div class="bottom-layout">
     <div class="bottom-left">
@@ -95,12 +65,12 @@
 <script src="../shared/js/kline-chart.js"></script>
 <script src="../shared/js/theme.js"></script>
 <script>
-  const API_URL='http://localhost:8788', ST='climax_top';
+  const API_URL='http://localhost:8788';
   function tc(id){document.getElementById(id+'-bd').classList.toggle('collapsed')}
   function svp(id){var e=document.getElementById(id),v=document.getElementById(id+'-v');if(e&&v)v.textContent=e.value+'%'}
   function svn(id){var e=document.getElementById(id),v=document.getElementById(id+'-v');if(e&&v)v.textContent=e.value}
-  function svs(id,mul){var e=document.getElementById(id),v=document.getElementById(id+'-v');if(e&&v){v.textContent=(parseInt(e.value)*mul).toFixed(1)}}
-  var wk=[],ws=[],kc,runId=0;
+  function svs(id,mul){var e=document.getElementById(id),v=document.getElementById(id+'-v');if(e&&v)v.textContent=(parseInt(e.value)*mul).toFixed(1)}
+  var rawKlines=[],wk=[],ws=[],kc,runId=0;
 
   document.addEventListener('DOMContentLoaded',async()=>{
     var now=new Date();var ago=new Date(now);ago.setFullYear(ago.getFullYear()-2);
@@ -111,29 +81,29 @@
   });
 
   function onModeChange(){var m=document.getElementById('mode').value;document.getElementById('stock-code').value=m==='stock'?'600519':'000300';run()}
-
   async function run(){
     runId++;var myId=runId;var btn=document.getElementById('btn-run');btn.disabled=true;btn.textContent='⏳';
     var code=document.getElementById('stock-code').value.trim();
     var mode=document.getElementById('mode').value;
     if(!code){btn.disabled=false;btn.textContent='📊';return}
+    try{var nr=await fetch(API_URL+'/api/stock-name?code='+code+'&mode='+mode);if(nr.ok){var nd=await nr.json();document.getElementById('stock-name').textContent=nd.name||''}}catch(e){}
     try{
       var end=document.getElementById('date-end').value,start=document.getElementById('date-start').value;
       var resp=await fetch(API_URL+'/api/climax-top?stock='+code+'&date='+end+'&start='+start+'&mode='+mode);
       var data=await resp.json();if(runId!==myId)return;
-      wk=data.weekly||[];ws=data.signals||[];
+      rawKlines=data.daily||[];wk=data.weekly||[];ws=data.signals||[];
       renderChart();renderTable();btn.textContent='🔄';
     }catch(e){console.error(e);btn.textContent='❌'}
     btn.disabled=false;
   }
 
   function renderChart(){
-    if(!wk.length)return;
-
-    // 高潮见顶信号的 signal_date 是高潮结束周，买点取当周最高价
+    var period=document.getElementById('period').value;
+    var kl=period==='day'?rawKlines:period==='month'?KlineChart.aggregate(rawKlines,'month'):wk;
+    if(!kl.length)return;
     var warningSigs=[],confirmedMarkers=[],sm={};
     ws.forEach(function(s){
-      var w=wk.find(function(k){return k.date===s.signal_date});
+      var w=kl.find(function(k){return k.date===s.signal_date});
       if(!w)return;
       if(s.signal_type==='climax_confirmed'){
         confirmedMarkers.push({date:s.signal_date,price:w.high,label:'🔴 高潮见顶确认',symbol:'pin',color:'#C62828',size:32});
@@ -142,29 +112,16 @@
         sm[s.signal_date]={buy_point:w.high,drawdown_pct:parseFloat(s.climax_gain_pct)||0};
       }
     });
-
     if(!kc){
-      kc=KlineChart.create({
-        container:document.getElementById('chart'),
-        klines:wk,
-        signals:warningSigs,
-        signalMap:sm,
-        signalColor:'#E65100',
-        signalTooltipPrefix:'⚠️ 高潮进行中',
-        extraMarkers:confirmedMarkers,
-        maLines:[5,10,20,60,120,250],
-        maColors:['#E91E63','#FF9800','#F4B400','#4CAF50','#2196F3','#9C27B0'],
-        maWidths:{5:1,10:1,20:1,60:1.2,120:1.2,250:1.5},
-        height:520,
-      });
+      kc=KlineChart.create({container:document.getElementById('chart'),klines:kl,signals:warningSigs,signalMap:sm,signalColor:'#E65100',signalTooltipPrefix:'⚠️ 高潮进行中',extraMarkers:confirmedMarkers});
     } else {
-      kc.update(wk,warningSigs,sm,confirmedMarkers);
+      kc.update(kl,warningSigs,sm,confirmedMarkers);
     }
   }
 
   function renderTable(){
     var div=document.getElementById('table');
-    if(!ws.length){div.innerHTML='<div class="loading-row">未检测到高潮见顶信号。可尝试降低前期涨幅阈值或评分阈值</div>';return}
+    if(!ws.length){div.innerHTML='<div class="loading-row">未检测到高潮见顶信号</div>';return}
     var h='<table><thead><tr><th>#</th><th>信号日期</th><th>类型</th><th>高潮区间</th><th>周数</th><th>涨幅</th><th>前期涨幅</th><th>得分</th></tr></thead><tbody>';
     [].concat(ws).reverse().forEach(function(s,i){
       var tc=s.signal_type==='climax_confirmed'?'s-conf':'s-warn';
@@ -173,5 +130,7 @@
     div.innerHTML=h+'</tbody></table>';
   }
 </script>
+  <script src="../shared/js/nav.js"></script>
+  <script>Nav.init({brandIcon:"📉",brandText:"高潮见顶回测",currentPage:"climax-top"})</script>
 </body>
 </html>

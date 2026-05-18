@@ -52,28 +52,7 @@
 </head>
 <body>
   <div class="app-container">
-    <nav class="top-nav">
-      <div class="nav-brand"><span class="nav-fox">🦊</span><span>双重底</span><span class="nav-greeting">Double Bottom</span></div>
-      <div class="nav-links">
-        <a href="../" class="nav-item">🏠 看板</a>
-        <div class="nav-dropdown"><a href="javascript:void(0)" class="nav-item active">回测 ▾</a><div class="nav-dropdown-menu">
-          <a href="../distribution-day/">📉 抛盘日</a><a href="../follow-through-day/">📈 追盘日</a><a href="../accumulation-day/">📦 吸筹日</a>
-          <a href="../index-rs-backtest/">🏆 指数RS强度</a><a href="../index-crowdedness/">📊 指数拥挤度</a><a href="../stock-rs-backtest/">💪 个股RS强度</a>
-            <a href="../pattern-scan/">🔎 形态识别</a>
-            <a href="../canslim-scorecard/">🎯 CAN SLIM 评分卡</a>
-          <a href="../saucer-base-backtest/">🥏 碟形基部</a>
-          <a href="../base-breakout/">🏔️ 基部突破</a>
-          <a href="../index-ad-backtest/">🔍 机构吸筹/出货</a><a href="../divergence-backtest/">⚠️ 指数背离</a>
-          <a href="../strongest-index/">⭐ 最强指数</a><a href="../cup-handle-backtest/">☕ 杯柄形态</a><a href="../pocket-pivot/">🎯 口袋支点</a><a href="../double-bottom/" class="active">🅱 双重底</a>
-        </div></div>
-        <a href="../index-scan/" class="nav-item">🔬 指数扫描</a><a href="../index-valuation/" class="nav-item">📈 指数估值</a>
-        <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a><a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
-        <a href="../daily-pattern-scan/" class="nav-item">📋 形态扫描</a>
-        <a href="../canslim-scores/" class="nav-item">🎯 CAN SLIM</a>
-        <a href="../pattern-scan/" class="nav-item">🔎 形态识别</a>
-        <button class="theme-toggle">🌙</button>
-      </div>
-    </nav>
+    <nav id="top-nav"></nav>
 
     <div class="top-bar">
       <div class="fld" style="flex:0.5;min-width:80px"><label>周期</label><select id="period" style="width:100%" onchange="run()"><option value="day">日线</option><option value="week">周线</option><option value="month">月线</option></select></div>
@@ -181,5 +160,7 @@
     function stog(id,on){const b=document.getElementById(id);if(!b)return;b.className='tsw '+(on?'on':'off');}
     async function saveCfg(){const btn=document.getElementById('btn-save');btn.textContent='⏳';btn.disabled=true;const p=gp().double_bottom;const y=['# 双重底参数','double_bottom:','  min_prior_advance: '+p.min_prior_advance,'  left_bottom_decline_min: '+p.left_bottom_decline_min,'  left_bottom_decline_max: '+p.left_bottom_decline_max,'  middle_peak_min_rebound: '+p.middle_peak_min_rebound,'  middle_peak_tolerance: '+p.middle_peak_tolerance,'  right_bottom_max_undercut: '+p.right_bottom_max_undercut,'  right_vol_contraction: '+p.right_vol_contraction,'  breakout_vol_ratio: '+p.breakout_vol_ratio,'  require_green: '+(p.require_green?'true':'false'),''].join('\n');try{const r=await fetch(API_BASE+'/api/config?signal_type='+ST,{method:'POST',headers:{'Content-Type':'text/plain'},body:y});const d=await r.json();if(d.ok){btn.textContent='✅';btn.classList.add('saved');setTimeout(()=>{btn.textContent='💾';btn.classList.remove('saved');btn.disabled=false;},2000);}}catch(e){btn.textContent='❌';btn.disabled=false;}}
   </script>
+  <script src="../shared/js/nav.js"></script>
+  <script>Nav.init({brandIcon:"📐",brandText:"双重底回测",currentPage:"double-bottom"})</script>
 </body>
 </html>

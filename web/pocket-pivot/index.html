@@ -54,28 +54,7 @@
 </head>
 <body>
   <div class="app-container">
-    <nav class="top-nav">
-      <div class="nav-brand"><span class="nav-fox">🦊</span><span>口袋支点</span><span class="nav-greeting">Pocket Pivot</span></div>
-      <div class="nav-links">
-        <a href="../" class="nav-item">🏠 看板</a>
-        <div class="nav-dropdown"><a href="javascript:void(0)" class="nav-item active">回测 ▾</a><div class="nav-dropdown-menu">
-          <a href="../distribution-day/">📉 抛盘日</a><a href="../follow-through-day/">📈 追盘日</a><a href="../accumulation-day/">📦 吸筹日</a>
-          <a href="../index-rs-backtest/">🏆 指数RS强度</a><a href="../index-crowdedness/">📊 指数拥挤度</a><a href="../stock-rs-backtest/">💪 个股RS强度</a>
-            <a href="../pattern-scan/">🔎 形态识别</a>
-            <a href="../canslim-scorecard/">🎯 CAN SLIM 评分卡</a>
-          <a href="../saucer-base-backtest/">🥏 碟形基部</a>
-          <a href="../base-breakout/">🏔️ 基部突破</a>
-          <a href="../index-ad-backtest/">🔍 机构吸筹/出货</a><a href="../divergence-backtest/">⚠️ 指数背离</a>
-          <a href="../strongest-index/">⭐ 最强指数</a><a href="../cup-handle-backtest/">☕ 杯柄形态</a><a href="../pocket-pivot/" class="active">🎯 口袋支点</a>
-        </div></div>
-        <a href="../index-scan/" class="nav-item">🔬 指数扫描</a><a href="../index-valuation/" class="nav-item">📈 指数估值</a>
-        <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a><a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
-        <a href="../daily-pattern-scan/" class="nav-item">📋 形态扫描</a>
-        <a href="../canslim-scores/" class="nav-item">🎯 CAN SLIM</a>
-        <a href="../pattern-scan/" class="nav-item">🔎 形态识别</a>
-        <button class="theme-toggle">🌙</button>
-      </div>
-    </nav>
+    <nav id="top-nav"></nav>
 
     <!-- 扫描设置横条 -->
     <div class="top-bar">
@@ -214,5 +193,7 @@
 
     async function saveCfg(){const btn=document.getElementById('btn-save');btn.textContent='⏳';btn.disabled=true;const p=gp().pocket_pivot;const y=['# 口袋支点参数','pocket_pivot:','  sma10_check: '+(p.sma10_check?'true':'false'),'  sma50_check: '+(p.sma50_check?'true':'false'),'  sma50_slope_10d: '+p.sma50_slope_10d,'  sma50_slope_enabled: '+(p.sma50_slope_enabled?'true':'false'),'  close_position_min: '+p.close_position_min,'  require_green: '+(p.require_green?'true':'false'),'  vol_down_lookback: '+p.vol_down_lookback,'  vol_fallback_enabled: '+(p.vol_fallback_enabled?'true':'false'),'  extension_lookback: '+p.extension_lookback,'  extension_max_pct: '+p.extension_max_pct,'  rs_threshold: '+p.rs_threshold,'  rs_dual_require: '+(p.rs_dual_require?'true':'false'),'  ma10_bounce_proximity: '+p.ma10_bounce_proximity,'  below_65d_high: '+(p.below_65d_high?'true':'false'),''].join('\n');try{const r=await fetch(API_BASE+'/api/config?signal_type='+ST,{method:'POST',headers:{'Content-Type':'text/plain'},body:y});const d=await r.json();if(d.ok){btn.textContent='✅';btn.classList.add('saved');setTimeout(()=>{btn.textContent='💾';btn.classList.remove('saved');btn.disabled=false;},2000);}}catch(e){btn.textContent='❌';btn.disabled=false;}}
   </script>
+  <script src="../shared/js/nav.js"></script>
+  <script>Nav.init({brandIcon:"🎯",brandText:"口袋支点回测",currentPage:"pocket-pivot"})</script>
 </body>
 </html>

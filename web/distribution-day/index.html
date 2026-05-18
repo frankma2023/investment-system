@@ -1,332 +1,133 @@
 <!DOCTYPE html>
 <html lang="zh-CN" data-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>抛盘日回测 · 投资手账本</title>
-  <link rel="stylesheet" href="../shared/css/theme.css">
-  <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="../shared/css/xhs-cards.css">
-  <link rel="stylesheet" href="../shared/css/components.css">
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
-  <style>
-    .bt-layout { display:flex; gap:16px; align-items:flex-start; }
-    .bt-left { width:320px; flex-shrink:0; display:flex; flex-direction:column; gap:12px; }
-    .bt-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
-    .bt-chart-container { width:100%; height:480px; }
-    .date-row { display:flex; gap:8px; margin-top:12px; }
-    .date-row .date-field { flex:1; }
-    .date-field label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--text-tertiary); margin-bottom:4px; }
-    .date-field input { width:100%; padding:8px 10px; border:1px solid var(--divider); border-radius:12px; font-family:var(--font-display); font-size:0.8rem; background:var(--card-bg); color:var(--text-primary); box-sizing:border-box; }
-    .index-select-wrap { margin-bottom:12px; }
-    .index-select-wrap label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--text-tertiary); margin-bottom:4px; }
-    .index-select-wrap select { width:100%; padding:8px 10px; border:1px solid var(--divider); border-radius:12px; font-family:var(--font-display); font-size:0.82rem; background:var(--card-bg); color:var(--text-primary); }
-    .btn-run { display:block; width:100%; padding:12px; background:#FE2C55; color:#FFF; border:none; border-radius:14px; font-family:var(--font-display); font-size:1rem; font-weight:800; cursor:pointer; box-shadow:0 2px 8px rgba(254,44,85,0.18); transition:opacity 0.2s; }
-    .btn-run:hover { opacity:0.88; }
-    .btn-run:disabled { background:#CCC; box-shadow:none; cursor:not-allowed; }
-    .btn-save { display:block; width:100%; padding:10px; background:var(--card-bg); color:#FE2C55; border:1px solid rgba(254,44,85,0.2); border-radius:14px; font-family:var(--font-display); font-size:0.85rem; font-weight:700; cursor:pointer; }
-    .btn-compare { padding:8px 16px; background:var(--card-bg); color:var(--text-secondary); border:1px solid var(--divider); border-radius:12px; font-size:0.8rem; font-weight:600; cursor:pointer; }
-
-    /* ── 参数卡片 ── */
-    .param-card { background:var(--card-bg); border:1px solid var(--divider); border-radius:18px; overflow:hidden; }
-    .param-card-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; }
-    .param-card-header .dot { width:10px; height:10px; border-radius:50%; margin-right:8px; flex-shrink:0; }
-    .param-card-header .title { font-family:var(--font-display); font-size:0.82rem; font-weight:800; flex:1; }
-    .param-card-header .toggle { position:relative; width:40px; height:22px; border-radius:11px; border:none; cursor:pointer; transition:background 0.2s; }
-    .param-card-header .toggle.on { background:#FE2C55; }
-    .param-card-header .toggle.off { background:#CCC; }
-    .param-card-header .toggle::after { content:''; position:absolute; top:3px; width:16px; height:16px; border-radius:50%; background:#FFF; transition:left 0.2s; }
-    .param-card-header .toggle.on::after { left:21px; }
-    .param-card-header .toggle.off::after { left:3px; }
-    .param-card-body { padding:0 16px 14px; display:block; }
-    .param-card-body.collapsed { display:none; }
-
-    /* slider 行 */
-    .slider-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-    .slider-row .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--text-tertiary); flex-shrink:0; }
-    .slider-row input[type=range] { flex:1; height:4px; }
-    .slider-row .s-val { width:44px; text-align:right; font-size:0.7rem; font-weight:700; color:var(--text-primary); flex-shrink:0; }
-
-    .stat-cards { display:flex; gap:8px; flex-wrap:wrap; }
-    .stat-card { flex:1; min-width:70px; background:var(--card-bg); border:1px solid var(--divider); border-radius:12px; padding:10px 12px; text-align:center; }
-    .stat-value { font-family:var(--font-display); font-size:1.4rem; font-weight:900; color:var(--text-primary); }
-    .stat-label { font-size:0.65rem; font-weight:600; color:var(--text-tertiary); letter-spacing:0.04em; }
-    .stat-value.red { color:#FE2C55; }
-
-    #compare-panel { display:none; margin-top:16px; padding:16px; background:var(--card-bg); border:1px solid var(--divider); border-radius:18px; }
-    #compare-panel select { width:100%; padding:6px 10px; border-radius:10px; border:1px solid var(--divider); font-size:0.8rem; margin-bottom:4px; }
-
-    @media (max-width:900px) { .bt-layout { flex-direction:column; } .bt-left { width:100%; } }
-
-    /* ── 导航下拉菜单 ── */
-    .nav-dropdown { position:relative; display:inline-flex; }
-    .nav-dropdown-menu {
-      display:none; position:absolute; top:100%; left:0;
-      background:var(--card-bg); border:1px solid var(--divider);
-      border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08);
-      min-width:150px; padding:6px 0; z-index:200; white-space:nowrap;
-    }
-    .nav-dropdown:hover .nav-dropdown-menu { display:block; }
-    .nav-dropdown-menu a {
-      display:block; padding:7px 16px; font-size:0.72rem; color:var(--text-secondary);
-      text-decoration:none; transition:background 0.15s;
-      font-family:var(--font-display);
-    }
-    .nav-dropdown-menu a:hover { background:var(--color-accent-subtle); color:var(--color-accent); }
-    .nav-dropdown-menu a.active { color:var(--color-accent); font-weight:700; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>抛盘日回测 · 投资手账本</title>
+<link rel="stylesheet" href="../shared/css/theme.css">
+<link rel="stylesheet" href="../shared/css/base.css">
+<link rel="stylesheet" href="../shared/css/xhs-cards.css">
+<link rel="stylesheet" href="../shared/css/components.css">
+<style>
+  .chart-wrap{height:520px;margin-bottom:4px}
+  .s-conf{color:#C62828;font-weight:700}.s-warn{color:#E65100;font-weight:700}.s-clr{color:#2E7D32;font-weight:700}
+</style>
 </head>
 <body>
-  <div class="journal-dots"></div>
-  <div class="washi-tape washi-1"></div>
-  <div class="washi-tape washi-2"></div>
+<div class="app-container">
+  <nav id="top-nav"></nav>
 
-  <div class="app-container">
-    <nav class="top-nav">
-      <div class="nav-brand"><span class="nav-fox">🦊</span><span>抛盘日回测</span><span class="nav-greeting">O'Neil Distribution Day Backtest</span></div>
-      <div class="nav-links">
-        <a href="../" class="nav-item">🏠 看板</a>
-        <div class="nav-dropdown">
-          <a href="javascript:void(0)" class="nav-item active">回测 ▾</a>
-          <div class="nav-dropdown-menu">
-            <a href="../distribution-day/" class="active">📉 抛盘日</a>
-            <a href="../follow-through-day/">📈 追盘日</a>
-            <a href="../accumulation-day/">📦 吸筹日</a>
-            <a href="../index-rs-backtest/">🏆 指数RS强度</a>
-            <a href="../index-crowdedness/">📊 指数拥挤度</a>
-            <a href="../stock-rs-backtest/">💪 个股RS强度</a>
-            <a href="../index-ad-backtest/">🔍 机构吸筹/出货</a>
-            <a href="../divergence-backtest/">⚠️ 指数背离</a>
-            <a href="../strongest-index/">⭐ 最强指数</a>
-            <a href="../cup-handle-backtest/">📐 基部识别</a>
-            <a href="../pattern-scan/">🔎 形态识别</a>
-            <a href="../canslim-scorecard/">🎯 CAN SLIM 评分卡</a>
-          <a href="../saucer-base-backtest/">🥏 碟形基部</a>
-          <a href="../base-breakout/">🏔️ 基部突破</a>
-            <a href="../pocket-pivot/">🎯 口袋支点</a>
-            <a href="../double-bottom/">🅱 双重底</a>
-            <a href="../flat-base/">📏 扁平基部</a>
-          </div>
-        </div>
-        <a href="../index-scan/" class="nav-item">🔬 指数扫描</a>
-        <a href="../index-valuation/" class="nav-item">📈 指数估值</a>
-        <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a>
-        <a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
-        <a href="../daily-pattern-scan/" class="nav-item">📋 形态扫描</a>
-        <a href="../canslim-scores/" class="nav-item">🎯 CAN SLIM</a>
-        <a href="../pattern-scan/" class="nav-item">🔎 形态识别</a>
-        <a href="javascript:void(0)" class="nav-item">💰 仓位管理</a>
-        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-      </div>
-    </nav>
-
-    <div class="bt-layout">
-
-      <!-- ═══ LEFT PANEL ═══ -->
-      <div class="bt-left">
-
-        <!-- 回测设置 -->
-        <div class="xhs-card">
-          <div class="xhs-card-header"><span class="xhs-card-label">📊 回测设置</span></div>
-          <div class="index-select-wrap">
-            <label>指数</label>
-            <select id="index-select"></select>
-          </div>
-          <div class="date-row">
-            <div class="date-field"><label>开始日期</label><input type="date" id="date-start"></div>
-            <div class="date-field"><label>结束日期</label><input type="date" id="date-end"></div>
-          </div>
-          <div style="font-size:0.6rem;color:var(--text-tertiary);margin-top:4px">默认回测2年，确保成交分布覆盖充足历史数据</div>
-        </div>
-
-        <!-- ═══ 卡片1: 标准抛盘 ═══ -->
-        <div class="param-card" id="card1">
-          <div class="param-card-header" onclick="toggleCard('card1')">
-            <span class="dot" style="background:#FE2C55"></span>
-            <span class="title">🔴 标准抛盘</span>
-            <button class="toggle on" id="card1-toggle" onclick="event.stopPropagation();toggleCardEnabled('card1')"></button>
-          </div>
-          <div class="param-card-body" id="card1-body">
-            <div class="slider-row">
-              <span class="s-label">跌幅 ≤</span>
-              <input type="range" id="c1-decline" min="-5.0" max="0" step="0.05" value="-0.10" oninput="syncSlider('c1-decline')">
-              <span class="s-val" id="c1-decline-v">−0.10%</span>
-            </div>
-            <div class="slider-row">
-              <span class="s-label">量比 ≥</span>
-              <input type="range" id="c1-vol" min="0.80" max="2.00" step="0.01" value="1.00" oninput="syncSlider('c1-vol')">
-              <span class="s-val" id="c1-vol-v">1.00</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ═══ 卡片2: 假阳线 ═══ -->
-        <div class="param-card" id="card2">
-          <div class="param-card-header" onclick="toggleCard('card2')">
-            <span class="dot" style="background:#F5A623"></span>
-            <span class="title">🟡 假阳线（伪装）</span>
-            <button class="toggle on" id="card2-toggle" onclick="event.stopPropagation();toggleCardEnabled('card2')"></button>
-          </div>
-          <div class="param-card-body" id="card2-body">
-            <div class="slider-row">
-              <span class="s-label">涨幅 ≥</span>
-              <input type="range" id="c2-chg-min" min="-1.0" max="1.0" step="0.05" value="-0.30" oninput="syncSlider('c2-chg-min')">
-              <span class="s-val" id="c2-chg-min-v">−0.30%</span>
-            </div>
-            <div class="slider-row">
-              <span class="s-label">涨幅 ≤</span>
-              <input type="range" id="c2-chg-max" min="-1.0" max="1.0" step="0.05" value="0.20" oninput="syncSlider('c2-chg-max')">
-              <span class="s-val" id="c2-chg-max-v">0.20%</span>
-            </div>
-            <div class="slider-row">
-              <span class="s-label">冲高 ≥</span>
-              <input type="range" id="c2-surge" min="0" max="5.0" step="0.1" value="0.50" oninput="syncSlider('c2-surge')">
-              <span class="s-val" id="c2-surge-v">0.50%</span>
-            </div>
-            <div class="slider-row">
-              <span class="s-label">量比 ≥</span>
-              <input type="range" id="c2-vol" min="0.90" max="2.00" step="0.05" value="1.10" oninput="syncSlider('c2-vol')">
-              <span class="s-val" id="c2-vol-v">1.10</span>
-            </div>
-            <div class="slider-row">
-              <span class="s-label">上影 ≥</span>
-              <input type="range" id="c2-shadow" min="1.0" max="3.0" step="0.1" value="1.5" oninput="syncSlider('c2-shadow')">
-              <span class="s-val" id="c2-shadow-v">1.5×</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ═══ 卡片3: 盘中反转 ═══ -->
-        <div class="param-card" id="card3">
-          <div class="param-card-header" onclick="toggleCard('card3')">
-            <span class="dot" style="background:#7B1FA2"></span>
-            <span class="title">🟣 盘中反转</span>
-            <button class="toggle on" id="card3-toggle" onclick="event.stopPropagation();toggleCardEnabled('card3')"></button>
-          </div>
-          <div class="param-card-body" id="card3-body">
-            <div class="slider-row">
-              <span class="s-label">冲高 ≥</span>
-              <input type="range" id="c3-surge" min="0" max="5.0" step="0.1" value="0.50" oninput="syncSlider('c3-surge')">
-              <span class="s-val" id="c3-surge-v">0.50%</span>
-            </div>
-            <div class="slider-row">
-              <span class="s-label">量比 ≥</span>
-              <input type="range" id="c3-vol" min="0.90" max="2.00" step="0.05" value="1.10" oninput="syncSlider('c3-vol')">
-              <span class="s-val" id="c3-vol-v">1.10</span>
-            </div>
-            <div class="slider-row">
-              <span class="s-label">上影 ≥</span>
-              <input type="range" id="c3-shadow" min="1.0" max="3.0" step="0.1" value="1.5" oninput="syncSlider('c3-shadow')">
-              <span class="s-val" id="c3-shadow-v">1.5×</span>
-            </div>
-            <div class="slider-row">
-              <span class="s-label">收盘 ≤ 中价</span>
-              <input type="range" id="c3-midpt" min="30" max="70" step="1" value="50" oninput="syncSliderInt('c3-midpt')">
-              <span class="s-val" id="c3-midpt-v">50%</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ═══ 卡片4: 重抛盘 ═══ -->
-        <div class="param-card" id="card4">
-          <div class="param-card-header" onclick="toggleCard('card4')">
-            <span class="dot" style="background:#333"></span>
-            <span class="title">⚫ 重抛盘 ×2</span>
-            <button class="toggle on" id="card4-toggle" onclick="event.stopPropagation();toggleCardEnabled('card4')"></button>
-          </div>
-          <div class="param-card-body" id="card4-body">
-            <div class="slider-row">
-              <span class="s-label">跌幅 ≥</span>
-              <input type="range" id="c4-decline" min="-10.0" max="0" step="0.1" value="-1.50" oninput="syncSlider('c4-decline')">
-              <span class="s-val" id="c4-decline-v">−1.50%</span>
-            </div>
-            <div class="slider-row">
-              <span class="s-label">量比 ≥</span>
-              <input type="range" id="c4-vol" min="0.80" max="2.00" step="0.01" value="0.98" oninput="syncSlider('c4-vol')">
-              <span class="s-val" id="c4-vol-v">0.98</span>
-            </div>
-          </div>
-        </div>
-
-        <button class="btn-run" id="btn-run">🔍 运行回测</button>
-        <button class="btn-save" id="btn-save">💾 保存配置</button>
-        <button class="btn-compare" id="btn-compare">📊 对比历史</button>
-
-        <div id="compare-panel">
-          <div style="font-weight:700;margin-bottom:8px;">📊 对比两次回测</div>
-          <select id="compare-select-1"></select>
-          <select id="compare-select-2"></select>
-          <button class="btn-run" style="font-size:0.8rem;margin-top:8px" onclick="runComparison()">对比</button>
-        </div>
-      </div>
-
-      <!-- ═══ RIGHT PANEL ═══ -->
-      <div class="bt-right">
-        <div class="stat-cards">
-          <div class="stat-card"><div class="stat-value" id="stat-total">—</div><div class="stat-label">交易日</div></div>
-          <div class="stat-card"><div class="stat-value red" id="stat-signals">—</div><div class="stat-label">信号</div></div>
-          <div class="stat-card"><div class="stat-value" id="stat-standard">—</div><div class="stat-label">标准</div></div>
-          <div class="stat-card"><div class="stat-value" id="stat-special">—</div><div class="stat-label">假阳线</div></div>
-          <div class="stat-card"><div class="stat-value" id="stat-reverse">—</div><div class="stat-label">反转</div></div>
-          <div class="stat-card"><div class="stat-value red" id="stat-heavy">—</div><div class="stat-label">重×2</div></div>
-        </div>
-
-        <div class="xhs-card">
-          <div class="xhs-card-header"><span class="xhs-card-label">📈 K线图 · 抛盘日标记</span></div>
-          <div class="bt-chart-container" id="chart-kline"></div>
-        </div>
-
-        <div class="xhs-card">
-          <div class="xhs-card-header"><span class="xhs-card-label">📋 抛盘日明细</span><span style="font-size:0.7rem;color:var(--text-tertiary)">点击表头排序</span></div>
-          <div class="table-wrapper" id="table-signals"></div>
-          <div style="margin-top:14px;padding:12px 16px;background:var(--bg);border-radius:12px;border:1px solid var(--divider)">
-            <div style="display:flex;gap:8px;align-items:center;">
-              <span style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);flex-shrink:0">🔎 单日排查</span>
-              <input type="date" id="diag-date" style="padding:6px 10px;border:1px solid var(--divider);border-radius:10px;font-family:var(--font-display);font-size:0.72rem;background:var(--card-bg);color:var(--text-primary);flex:1">
-              <button onclick="runDiagnostic()" style="padding:7px 16px;background:var(--color-accent);color:#FFF;border:none;border-radius:10px;font-family:var(--font-display);font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button>
-            </div>
-            <div id="diag-result" style="margin-top:10px;display:none"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <footer class="page-footer">❤️ 投资手账本 · 抛盘日回测 · 量化你的直觉</footer>
+  <div class="top-bar">
+    <div class="fld" style="flex:0.5;min-width:80px"><label>指数</label><select id="index-code" onchange="run()"><option value="000985">中证全指</option><option value="000300">沪深300</option></select></div>
+    <div class="fld"><label>开始</label><input type="date" id="date-start" onchange="run()"></div>
+    <div class="fld"><label>结束</label><input type="date" id="date-end" onchange="run()"></div>
   </div>
 
-  <script>
-    /* ── Card toggle ── */
-    function toggleCard(id) {
-      const body = document.getElementById(id+'-body');
-      if (body) body.classList.toggle('collapsed');
-    }
-    function toggleCardEnabled(id) {
-      const btn = document.getElementById(id+'-toggle');
-      btn.classList.toggle('on'); btn.classList.toggle('off');
-    }
+  <div id="chart" class="chart-wrap"></div>
+  <div class="chart-legend">📉 抛盘日(红量柱) | 🔴 见顶确认 | ⚠️ 抛压增加 | ✅ 抛压解除</div>
 
-    /* ── Slider sync ── */
-    function syncSlider(id) {
-      const el = document.getElementById(id);
-      const v = document.getElementById(id+'-v');
-      if (!el || !v) return;
-      const val = parseFloat(el.value);
-      if (id.includes('decline') || id.includes('chg-min') || id.includes('chg-max')) {
-        v.textContent = (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
-      } else if (id.includes('shadow')) {
-        v.textContent = val.toFixed(1) + '×';
-      } else if (id.includes('vol')) {
-        v.textContent = val.toFixed(2);
-      } else if (id.includes('surge')) {
-        v.textContent = val.toFixed(2) + '%';
-      }
-    }
-  </script>
-  <script src="../shared/js/theme.js"></script>
-  <script src="../shared/js/api-client.js"></script>
-  <script src="../shared/js/kline-chart.js?v=20260505b"></script>
-  <script src="js/table.js?v=20260505b"></script>
-  <script src="js/main.js?v=20260429e"></script>
+  <div class="bottom-layout">
+    <div class="bottom-left">
+      <div class="param-card" id="c1"><div class="param-card-hd" onclick="tc('c1')"><span class="dot" style="background:#C62828"></span>🔴 标准抛盘日</div><div class="param-card-bd" id="c1-bd">
+        <div class="sr"><span class="sl">跌幅阈值</span><input type="range" id="p-dc" min="1" max="10" value="2" oninput="svs3('p-dc')"><span class="sv" id="p-dc-v">-0.2%</span></div>
+        <div class="sr"><span class="sl">量比阈值</span><input type="range" id="p-dv" min="85" max="110" value="95" oninput="svs2('p-dv')"><span class="sv" id="p-dv-v">0.95</span></div>
+      </div></div>
+      <div class="param-card" id="c2"><div class="param-card-hd" onclick="tc('c2')"><span class="dot" style="background:#E65100"></span>🟠 信号计数</div><div class="param-card-bd" id="c2-bd">
+        <div class="sr"><span class="sl">窗口交易日</span><input type="range" id="p-wd" min="15" max="30" value="25" oninput="svn('p-wd')"><span class="sv" id="p-wd-v">25</span></div>
+        <div class="sr"><span class="sl">Warning</span><input type="range" id="p-wc" min="2" max="4" value="3" oninput="svn('p-wc')"><span class="sv" id="p-wc-v">3</span></div>
+        <div class="sr"><span class="sl">Confirmed</span><input type="range" id="p-cc" min="4" max="7" value="5" oninput="svn('p-cc')"><span class="sv" id="p-cc-v">5</span></div>
+      </div></div>
+      <button class="btn-run" id="btn-run">🔍 运行检测</button>
+    </div>
+    <div class="bottom-right">
+      <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 抛盘日信号</span></div><div class="table-wrapper" id="table"></div></div>
+    </div>
+  </div>
+  <footer class="page-footer">❤️ 投资手账本 · 抛盘日 Distribution Day</footer>
+</div>
+
+<script src="../shared/js/echarts.min.js"></script>
+<script src="../shared/js/theme.js"></script>
+<script>
+  const API_URL='http://localhost:8788';
+  function tc(id){document.getElementById(id+'-bd').classList.toggle('collapsed')}
+  function svn(id){var e=document.getElementById(id),v=document.getElementById(id+'-v');if(e&&v)v.textContent=e.value}
+  function svs2(id){var e=document.getElementById(id),v=document.getElementById(id+'-v');if(e&&v)v.textContent=(parseInt(e.value)/100).toFixed(2)}
+  function svs3(id){var e=document.getElementById(id),v=document.getElementById(id+'-v');if(e&&v)v.textContent='-'+((parseInt(e.value)/1000)).toFixed(3)}
+  var kl=[],ds=[],cn=[],chart,runId=0;
+
+  document.addEventListener('DOMContentLoaded',async()=>{
+    var now=new Date();var ago=new Date(now);ago.setFullYear(ago.getFullYear()-2);
+    document.getElementById('date-start').value=ago.toISOString().split('T')[0];
+    document.getElementById('date-end').value=now.toISOString().split('T')[0];
+    chart=echarts.init(document.getElementById('chart'));
+    document.getElementById('btn-run').addEventListener('click',run);
+    setTimeout(run,500);
+  });
+
+  async function run(){
+    runId++;var myId=runId;var btn=document.getElementById('btn-run');btn.disabled=true;btn.textContent='⏳';
+    var idx=document.getElementById('index-code').value;
+    var end=document.getElementById('date-end').value,start=document.getElementById('date-start').value;
+    try{
+      var resp=await fetch(API_URL+'/api/distribution-day?index='+idx+'&date='+end+'&start='+start);
+      var data=await resp.json();if(runId!==myId)return;
+      kl=data.daily||[];cn=data.counts||[];ds=data.signals||[];
+      renderChart();renderTable();btn.textContent='🔄';
+    }catch(e){console.error(e);btn.textContent='❌'}
+    btn.disabled=false;
+  }
+
+  function renderChart(){
+    if(!chart||!kl.length)return;
+    var dates=kl.map(function(k){return k.date});
+    var isDark=document.documentElement.dataset.theme==='dark';
+    var bg=isDark?'#2A2627':'#fff',tx=isDark?'#ccc':'#333';
+    var volColors=kl.map(function(k){return k.dist_type?isDark?'rgba(198,40,40,0.6)':'rgba(198,40,40,0.45)':isDark?'rgba(229,57,53,0.25)':'rgba(229,57,53,0.2)'});
+    var cntData=cn.map(function(c){return c.count});
+
+    chart.setOption({
+      backgroundColor:bg,
+      tooltip:{trigger:'axis',axisPointer:{type:'cross',link:{xAxisIndex:'all'}},
+        backgroundColor:isDark?'rgba(0,0,0,0.85)':'rgba(255,255,255,0.85)',borderColor:'transparent',borderWidth:0,textStyle:{color:isDark?'#eee':'#333',fontSize:11},
+        formatter:function(params){
+          if(!params||!params.length)return'';
+          var di=params[0].dataIndex,d=kl[di];if(!d)return'';
+          var cc=d.close!=null?d.close:0,chg=d.change_pct!=null?d.change_pct:0,vol=d.volume||0,vs=vol>=1e8?(vol/1e8).toFixed(2)+'亿':vol>=1e4?(vol/1e4).toFixed(0)+'万':String(vol);
+          var ln='<div style="line-height:1.8;font-size:11px"><div style="font-weight:700;font-size:13px;margin-bottom:4px">'+d.date+'</div>';
+          ln+='<div>收盘 <b>'+cc.toFixed(2)+'</b> 涨跌 <span style="color:'+(chg>=0?'#E53935':'#26C6DA')+'">'+(chg>=0?'+':'')+chg+'%</span></div>';
+          ln+='<div>成交量 '+vs+' 量比 '+(d.vol_ratio!=null?d.vol_ratio.toFixed(2):'—')+' 位置 '+(d.close_position!=null?d.close_position.toFixed(2):'—')+'</div>';
+          if(d.dist_type)ln+='<div style="color:#C62828;font-weight:700">'+d.dist_label+'</div>';
+          if(cn[di])ln+='<div style="color:'+(cn[di].level==='confirmed'?'#C62828':cn[di].level==='warning'?'#E65100':'#888')+'">25日计数: '+cn[di].count+'个</div>';
+          ln+='</div>';return ln;
+        }
+      },
+      grid:[{left:'8%',right:'1%',top:8,height:'55%'},{left:'8%',right:'1%',top:'68%',height:'12%'},{left:'8%',right:'1%',top:'83%',height:'10%'}],
+      xAxis:[{type:'category',data:dates,axisLabel:{fontSize:9,color:tx},axisLine:{lineStyle:{color:'#ccc'}}},{type:'category',data:dates,axisLabel:{show:false},gridIndex:1},{type:'category',data:dates,axisLabel:{show:false},gridIndex:2}],
+      yAxis:[{type:'value',scale:true,axisLabel:{fontSize:9,color:tx},splitLine:{lineStyle:{color:isDark?'#3a3a3a':'#eee'}}},{type:'value',scale:true,axisLabel:{fontSize:8},gridIndex:1,splitLine:{show:false}},{type:'value',min:0,axisLabel:{fontSize:8},gridIndex:2,splitLine:{show:false},minInterval:1}],
+      dataZoom:[{type:'inside',xAxisIndex:[0,1,2]},{type:'slider',xAxisIndex:[0,1,2],height:16,bottom:4}],
+      series:[
+        {name:'K线',type:'candlestick',data:kl.map(function(k){return[k.open,k.close,k.low,k.high]}),itemStyle:{color:'#E53935',color0:'#26C6DA',borderColor:'#E53935',borderColor0:'#26C6DA'}},
+        {name:'成交量',type:'bar',data:kl.map(function(k,i){return{value:k.volume,itemStyle:{color:volColors[i]}}}),xAxisIndex:1,yAxisIndex:1},
+        {name:'25日计数',type:'line',data:cntData,xAxisIndex:2,yAxisIndex:2,symbol:'none',smooth:true,lineStyle:{width:2,color:'#C62828'},markLine:{silent:true,symbol:'none',lineStyle:{type:'dashed',width:1},data:[{yAxis:5,label:{formatter:'confirmed 5',fontSize:9,color:'#C62828'}},{yAxis:3,label:{formatter:'warning 3',fontSize:9,color:'#E65100'}}]}}
+      ]
+    });
+  }
+
+  function renderTable(){
+    var div=document.getElementById('table');
+    var totalDist=kl.filter(function(k){return k.dist_type}).length;
+    var h='<div style="padding:8px 14px;font-size:0.68rem;color:var(--text-secondary)">抛盘日总数: <b style="color:#C62828">'+totalDist+'</b> 个 | 最新计数: <b>'+(cn.length?cn[cn.length-1].count:'—')+'</b> 个</div>';
+    if(!ds.length){h+='<div class="loading-row">无信号事件</div>';div.innerHTML=h;return}
+    h+='<table><thead><tr><th>#</th><th>日期</th><th>信号</th><th>计数</th></tr></thead><tbody>';
+    [].concat(ds).reverse().forEach(function(s,i){
+      var tc=s.level.includes('cleared')?'s-clr':s.level.includes('confirmed')?'s-conf':'s-warn';
+      h+='<tr><td>'+(ds.length-i)+'</td><td style="font-weight:700">'+s.signal_date+'</td><td class="'+tc+'">'+s.label+'</td><td>'+s.count+'</td></tr>';
+    });
+    div.innerHTML=h+'</tbody></table>';
+  }
+</script>
+  <script src="../shared/js/nav.js"></script>
+  <script>Nav.init({brandIcon:"📉",brandText:"抛盘日回测",currentPage:"distribution-day"})</script>
 </body>
 </html>

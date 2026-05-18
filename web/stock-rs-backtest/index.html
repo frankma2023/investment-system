@@ -73,38 +73,7 @@
 </head>
 <body class="xhs-body">
 
-<nav class="top-nav">
-  <div class="nav-brand"><span class="nav-fox">🦊</span><span>个股RS强度</span><span class="nav-greeting">Stock Relative Strength Backtest</span></div>
-  <div class="nav-links">
-    <a href="../" class="nav-item">🏠 看板</a>
-    <div class="nav-dropdown">
-      <a href="javascript:void(0)" class="nav-item active">回测 ▾</a>
-      <div class="nav-dropdown-menu">
-        <a href="../distribution-day/">📉 抛盘日</a>
-        <a href="../follow-through-day/">📈 追盘日</a>
-        <a href="../accumulation-day/">📦 吸筹日</a>
-            <a href="../index-rs-backtest/">🏆 指数RS强度</a>
-            <a href="../pattern-scan/">🔎 形态识别</a>
-            <a href="../canslim-scorecard/">🎯 CAN SLIM 评分卡</a>
-          <a href="../saucer-base-backtest/">🥏 碟形基部</a>
-          <a href="../base-breakout/">🏔️ 基部突破</a>
-        <a href="../index-crowdedness/">📊 指数拥挤度</a>
-        <a href="../stock-rs-backtest/" class="active">💪 个股RS强度</a>
-        <a href="../index-ad-backtest/">🔍 A/D评级</a>
-        <a href="../divergence-backtest/">⚠️ 指数背离</a>
-            <a href="../strongest-index/">⭐ 最强指数</a>
-            <a href="../cup-handle-backtest/">📐 基部识别</a>
-      </div>
-    </div>
-    <a href="../index-scan/" class="nav-item">🔬 指数扫描</a>
-        <a href="../index-valuation/" class="nav-item">📈 指数估值</a>
-        <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a>
-    <a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
-        <a href="../daily-pattern-scan/" class="nav-item">📋 形态扫描</a>
-        <a href="../canslim-scores/" class="nav-item">🎯 CAN SLIM</a>
-        <a href="../pattern-scan/" class="nav-item">🔎 形态识别</a>
-    <a href="javascript:void(0)" class="nav-item">💰 仓位管理</a>
-</nav>
+<nav id="top-nav"></nav>
 
 <div class="app-container" style="padding:20px 24px">
 
@@ -473,5 +442,7 @@ async function saveConfig(){
   }catch(e){console.error(e)}
 }
 </script>
+  <script src="../shared/js/nav.js"></script>
+  <script>Nav.init({brandIcon:"💪",brandText:"个股RS强度回测",currentPage:"stock-rs-backtest"})</script>
 </body>
 </html>

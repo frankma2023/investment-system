@@ -1,0 +1,31 @@
+# 铁轨线检测引擎 v1.0（Railroad Tracks）配置
+# 文件: config/market/railroad_tracks.yaml
+
+railroad_tracks:
+  # ── 周线——欧奈尔原著（S级）──
+  w_prior_gain_min: 0.50              # 前期最小涨幅（50%）
+  w_prior_lookback: 52                # 52周低点作为基准
+  w_week1_amp_min: 0.15               # 第一周最小振幅（15%）
+  w_week2_entity_ratio_max: 0.30      # 第二周实体/振幅上限（30%）
+  w_week2_gain_min: -0.02             # 第二周涨幅下限（-2%）
+  w_week2_gain_max: 0.02              # 第二周涨幅上限（2%）
+  w_week2_high_strict: true           # True=严格≤前周高点, False=≤101%
+  w_vol_lookback: 20                  # 量均线周数
+  w_week1_vol_ratio: 1.5              # 第一周量/20周均量
+  w_week2_vol_ratio: 1.2              # 第二周量/20周均量
+  w_vol_required_week1: false         # 回测开关：要求Week1放量
+  w_vol_required_week2: false         # 回测开关：要求Week2放量
+  w_signal_ttl_weeks: 8               # 信号有效期（周）
+
+  # ── 日线——经典双根（A级）──
+  d_double_body_max: 0.20             # 实体≤振幅×20%
+  d_double_shadow_min: 0.35           # 上影≥振幅×35% 且 下影≥振幅×35%
+  d_double_vol_lookback: 5            # 量均线天数
+  d_double_require_opposite: false    # 是否要求一阴一阳
+  d_double_near_high: 0.10            # 距52周高点<10%
+
+  # ── 日线——单根强化（B级）──
+  d_single_body_max: 0.15             # 实体≤振幅×15%
+  d_single_shadow_min: 0.40           # 上影≥振幅×40% 且 下影≥振幅×40%
+  d_single_vol_ratio: 1.2             # 量>前5日均量×1.2
+  d_single_near_high: 0.10            # 距52周高点<10%
