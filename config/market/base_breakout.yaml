@@ -10,4 +10,4 @@ base_breakout:
   breakout_vol_ratio: 1.3
   require_green: true
   sma50_check: true
-  close_position_min: 0.5
+  close_position_min: 0.45
