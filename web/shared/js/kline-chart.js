@@ -1,253 +1,364 @@
 /**
- * kline-chart.js — Generic ECharts K-line with Signal Markers
- * 小红书 v1 风格 · 可配置信号标记 · DataZoom 缩放 · 深色/浅色自适应
+ * KlineChart.js — 欧奈尔投资系统通用K线图组件
+ * 
+ * 提取自 base-breakout 页面的精调样式，支持所有回测看板复用。
+ * 一行引入，一行渲染。
  *
- * Usage:
- *   const chart = initKlineChart('chart-container');
- *   renderKlineChart(chart, klines, signals, { signalConfig });
- *
- * signalConfig = {
- *   name: '抛盘日',
- *   colors: { heavy: '#4A148C', standard: '#7B1FA2', special: '#FFB347', reversal: '#FF7043', ... },
- *   labels: { heavy: '⚡重抛盘日(×2)', standard: '🔴标准抛盘日', ... },
- *   sizeBoost: { heavy: 24, default: 18 },
- *   getTooltipExtra: (kline, signal) => null,  // optional extra tooltip rows
- * }
+ * 用法:
+ *   <script src="../shared/js/kline-chart.js"></script>
+ *   <script>
+ *     var chart = KlineChart.create({
+ *       container: document.getElementById('chart'),
+ *       klines: data,
+ *       signals: signals,
+ *       signalMap: signalMap,
+ *     });
+ *     // 更新数据:
+ *     chart.update(klines, signals, signalMap);
+ *     // 销毁:
+ *     chart.dispose();
+ *   </script>
  */
 
-const MA_COLORS = ['#FFB347','#4FC3F7','#C084FC','#FF8FA3','#60E0C8','#F5C6D0'];
+(function (global) {
+  'use strict';
 
-function initKlineChart(containerId) {
-  const dom = document.getElementById(containerId);
-  if (!dom) return null;
-  return echarts.init(dom);
-}
+  // ─── 默认配置 ──────────────────
+  var DEFAULTS = {
+    // 容器（必填）
+    container: null,
 
-function renderKlineChart(chart, klines, signals, opts = {}) {
-  const { showMA = [5,10,20,50], showVolume = true, signalConfig = {},
-          rallyAttempts = [], failedSignals = [], failedRallyAttempts = [] } = opts;
-  const sigColors = signalConfig.colors || {};
-  const sigLabels = signalConfig.labels || {};
-  const sigSizes  = signalConfig.sizeBoost || {};
-  const sigSymbol = signalConfig.symbol || 'pin';
-  const defaultColor = sigColors.standard || sigColors.normal || '#7B1FA2';
+    // 高度
+    height: 520,
 
-  // ── Data arrays ──
-  const dates   = klines.map(k => k.date);
-  const ohlc    = klines.map(k => [k.open, k.close, k.low, k.high]);
-  const volumes = klines.map(k => k.volume);
+    // 均线周期
+    maLines: [5, 10, 20, 60, 120, 250],
+    // 各均线颜色（与周期一一对应）
+    maColors: ['#E91E63', '#FF9800', '#F4B400', '#4CAF50', '#2196F3', '#9C27B0'],
+    // 均线宽度覆盖: {5:1, 10:1, 60:1.2, 250:1.5}
+    maWidths: { 5: 1, 10: 1, 20: 1, 60: 1.2, 120: 1.2, 250: 1.5 },
 
-  // Volume colors: match candle (close>=open → coral, close<open → mint)
-  const volColors = klines.map(k =>
-    (k.close >= k.open) ? 'rgba(255,107,107,0.5)' : 'rgba(38,198,218,0.5)'
-  );
-  const volBorders = klines.map(k =>
-    (k.close >= k.open) ? '#FF6B6B' : '#26C6DA'
-  );
+    // 信号标注样式
+    signalSymbol: 'pin',       // ECharts scatter symbol: pin/diamond/triangle/circle
+    signalColor: '#A349A4',    // 信号点颜色
+    signalSize: 28,            // 信号点大小
+    signalLabel: false,        // 是否显示文字标签
+    signalTooltipPrefix: '🎯 突破日',  // tooltip 中信号的标题
 
-  // ── MA series ──
-  const maSeries = showMA.map((period, idx) => ({
-    name: `MA${period}`,
-    type: 'line', data: klines.map(k => k[`ma${period}`]),
-    smooth: true, symbol: 'none',
-    lineStyle: { width: 1.5, color: MA_COLORS[idx], cap: 'round' },
-  }));
+    // 额外的标记（前高/杯底等）
+    extraMarkers: [],          // [{date, price, symbol, color, size}]
 
-  // ── Signal lookup ──
-  const signalDates = new Set(signals.map(s => s.date));
-  const signalInfo  = {};
-  signals.forEach(s => { signalInfo[s.date] = s; });
+    // 均线tooltip文字色
+    maTooltipColors: null,     // null=使用maColors，自定义: ['red','#FF9800',...]
 
-  // ── Rally Attempt (反弹尝试日) markers — dark green triangles ──
-  const rallyDates = new Set(rallyAttempts.filter(r => r.status !== 'failed_d13').map(r => r.date));
-  const rallyMarks = {
-    name: '反弹尝试日', type: 'scatter',
-    symbol: 'triangle', symbolRotate: 180, symbolSize: 12,
-    data: klines.map((k, i) => {
-      if (!rallyDates.has(k.date)) return null;
-      return { value: [i, k.high * 1.03], itemStyle: { color: '#2E7D32', borderColor: '#FFF', borderWidth: 0.8 } };
-    }).filter(d => d !== null),
-    z: 2,
+    // 成交量副图
+    showVolume: true,
+
+    // K线颜色
+    upColor: '#E53935',        // 阳线
+    downColor: '#26C6DA',      // 阴线
+
+    // 背景
+    darkBg: '#2A2627',
+    lightBg: '#fff',
+
+    // 网格
+    gridMainHeight: '60%',     // 主图高度
+    gridVolTop: '75%',         // 成交量顶部位置
+    gridVolHeight: '15%',      // 成交量高度
   };
 
-  // ── Failed Rally Attempt markers — gray triangles ──
-  const failedRallyDates = new Set(failedRallyAttempts.map(r => r.date));
-  const failedRallyMarks = {
-    name: '反弹尝试失败', type: 'scatter',
-    symbol: 'triangle', symbolRotate: 180, symbolSize: 10,
-    data: klines.map((k, i) => {
-      if (!failedRallyDates.has(k.date)) return null;
-      return { value: [i, k.high * 1.03], itemStyle: { color: 'rgba(180,180,180,0.5)', borderColor: '#999', borderWidth: 0.6, borderType: 'dashed' } };
-    }).filter(d => d !== null),
-    z: 1,
-  };
-
-  // ── Failed FTD lookup ──
-  const failedDates = new Set(failedSignals.map(s => s.date));
-  const failedInfo  = {};
-  failedSignals.forEach(s => { failedInfo[s.date] = s; });
-
-  // ── Signal pin markers ──
-  const sigMarks = {
-    name: signalConfig.name || '信号',
-    type: 'scatter',
-    data: klines
-      .map((k, i) => {
-        const isSignal = signalDates.has(k.date);
-        const isFailed = failedDates.has(k.date);
-        if (!isSignal && !isFailed) return null;
-        const s = isSignal ? signalInfo[k.date] : failedInfo[k.date];
-        const st = s.signal_type || s.ftd_type || 'standard';
-        const color = sigColors[st] || defaultColor;
-        const size  = sigSizes[st] || sigSizes.default || 18;
-        return {
-          value: [i, k.low * 0.97],
-          signalType: st,
-          itemStyle: {
-            color: isFailed ? 'rgba(200,200,200,0.5)' : color,
-            borderColor: isFailed ? '#999' : '#FFF',
-            borderWidth: isFailed ? 0.8 : 1.5,
-            borderType: isFailed ? 'dashed' : 'solid',
-          },
-          symbolSize: isFailed ? 14 : size,
-        };
-      })
-      .filter(d => d !== null),
-    symbol: sigSymbol,
-    symbolRotate: 180,
-    z: 10,
-  };
-
-  // ── Tooltip formatter (NO turnover rate) ──
-  const tooltipFormatter = (params) => {
-    const idx = params[0]?.dataIndex;
-    if (idx == null) return '';
-    const k = klines[idx];
-    const s = signalInfo[k.date];
-    const upDown = k.change_pct >= 0 ? '📈' : '📉';
-    const color  = k.change_pct >= 0 ? '#FF6B6B' : '#26C6DA';
-    const _isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const _bg   = _isDark ? 'rgba(30,30,46,0.6)' : 'rgba(255,255,255,0.6)';
-    const _text = _isDark ? '#E0E0E0' : '#1A1A1A';
-
-    let html = `<div style="font-family:Nunito,PingFang SC,sans-serif;font-size:8px;min-width:200px;background:${_bg};color:${_text};border-radius:8px;padding:4px">
-      <div style="font-weight:800;font-size:10px;margin-bottom:4px">${upDown} ${k.date}</div>
-      <table style="width:100%;border-collapse:collapse;line-height:1.3">`;
-
-    const rows = [
-      ['开盘', k.open?.toFixed(2)], ['最高', k.high?.toFixed(2)],
-      ['最低', k.low?.toFixed(2)],   ['收盘', k.close?.toFixed(2)],
-      ['涨跌幅', `<span style="color:${color};font-weight:700">${(k.change_pct??0).toFixed(2)}%</span>`],
-      ['成交量', fmtVol(k.volume)], ['成交额', fmtAmt(k.amount)],
-    ];
-    if (k.vol_5d  != null) rows.push(['5日波动率', `${k.vol_5d.toFixed(2)}%`]);
-    if (k.vol_10d != null) rows.push(['10日波动率', `${k.vol_10d.toFixed(2)}%`]);
-    if (k.vol_20d != null) rows.push(['20日波动率', `${k.vol_20d.toFixed(2)}%`]);
-    [5,10,20,50,120,250].forEach(p => {
-      const key = `ma${p}`;
-      if (k[key] != null) rows.push([`MA${p}`, k[key].toFixed(2)]);
-    });
-
-    // Optional extra rows from signalConfig
-    if (signalConfig.getTooltipExtra) {
-      const extra = signalConfig.getTooltipExtra(k, s);
-      if (extra) extra.forEach(r => rows.push(r));
-    }
-
-    rows.forEach(r => {
-      html += `<tr><td style="color:var(--text-tertiary);padding:0 6px 0 0;line-height:1.3;font-size:8px">${r[0]}</td><td style="text-align:right;font-weight:600;line-height:1.3;font-size:8px">${r[1]}</td></tr>`;
-    });
-
-    if (s) {
-      const st = s.signal_type || s.ftd_type || 'standard';
-      const label = sigLabels[st] || signalConfig.name || '';
-      let extraInfo = '';
-      if (s.rally_date) {
-        extraInfo = ` · Day1: ${s.rally_date} · D+${s.days_from_d1}`;
-        if (s.failed) extraInfo += ` · ${s.failure_reason || '已失效'}`;
+  // ─── 工具函数 ──────────────────
+  function computeMA(data, period, field) {
+    field = field || 'close';
+    var result = [], sum = 0;
+    for (var i = 0; i < data.length; i++) {
+      var v = data[i][field];
+      if (v != null) {
+        sum += v;
+        if (i >= period) sum -= data[i - period][field];
+        result.push(i >= period - 1 ? sum / period : null);
+      } else {
+        result.push(null);
       }
-      html += `<tr><td colspan="2" style="padding-top:3px;color:${defaultColor};font-weight:800;font-size:8px;line-height:1.3">${label}${extraInfo}</td></tr>`;
+    }
+    return result;
+  }
+
+  function isDark() {
+    return document.documentElement.dataset.theme === 'dark';
+  }
+
+  function fmtVolume(v) {
+    if (v >= 1e8) return (v / 1e8).toFixed(2) + '亿';
+    if (v >= 1e4) return (v / 1e4).toFixed(0) + '万';
+    return v.toFixed(0);
+  }
+
+  // ─── 构造函数 ──────────────────
+  function KlineChart(options) {
+    this.opts = Object.assign({}, DEFAULTS, options || {});
+    if (!this.opts.container) throw new Error('KlineChart: container is required');
+
+    // 创建图表容器
+    this.container = this.opts.container;
+    if (this.container.querySelector('.kc-chart-div')) {
+      // 已存在则复用
+      this.chartDom = this.container.querySelector('.kc-chart-div');
+    } else {
+      this.chartDom = document.createElement('div');
+      this.chartDom.className = 'kc-chart-div';
+      this.chartDom.style.cssText = 'width:100%;height:' + this.opts.height + 'px';
+      this.container.appendChild(this.chartDom);
     }
 
-    html += '</table></div>';
-    return html;
+    this.chart = echarts.init(this.chartDom, isDark() ? 'dark' : null, { renderer: 'canvas' });
+    this.klines = [];
+    this.signals = [];
+    this.signalMap = {};
+    this.extraMarkers = this.opts.extraMarkers || [];
+
+    // 主题切换
+    var self = this;
+    this._themeObserver = new MutationObserver(function () {
+      if (!self.chart || self.chart.isDisposed()) return;
+      var oldOpt = self.chart.getOption();
+      self.chart.dispose();
+      self.chart = echarts.init(self.chartDom, isDark() ? 'dark' : null, { renderer: 'canvas' });
+      if (self.klines.length) self._render();
+    });
+    this._themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
+    // resize
+    this._resizeTimer = null;
+    window.addEventListener('resize', function () {
+      if (self._resizeTimer) clearTimeout(self._resizeTimer);
+      self._resizeTimer = setTimeout(function () {
+        self.chart && !self.chart.isDisposed() && self.chart.resize();
+      }, 200);
+    });
+  }
+
+  KlineChart.prototype.update = function (klines, signals, signalMap, extraMarkers) {
+    this.klines = klines || [];
+    this.signals = signals || [];
+    this.signalMap = signalMap || {};
+    this.extraMarkers = extraMarkers || this.opts.extraMarkers || [];
+    if (this.chart && !this.chart.isDisposed()) {
+      this._render();
+    }
   };
 
-  // ── Theme-aware grid colors ──
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const gridColor     = isDark ? '#2a2a3a' : '#F5F5F5';
-  const axisLineColor = isDark ? '#333' : '#E0E0E0';
-  const tooltipBg     = isDark ? 'rgba(30,30,46,0.6)' : 'rgba(255,255,255,0.6)';
-  const tooltipText   = isDark ? '#E0E0E0' : '#1A1A1A';
+  KlineChart.prototype._render = function () {
+    var self = this;
+    var ck = this.klines;
+    var cs = this.signals;
+    var sm = this.signalMap;
+    var o = this.opts;
+    if (!ck.length) { this.chart.clear(); return; }
 
-  const option = {
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger: 'axis', axisPointer: { type: 'cross' },
-      formatter: tooltipFormatter,
-      backgroundColor: tooltipBg,
-      borderColor: defaultColor, borderWidth: 1, borderRadius: 14,
-      padding: [8, 12], textStyle: { color: tooltipText },
-      extraCssText: 'box-shadow: 0 4px 20px rgba(0,0,0,0.07);'
-    },
-    axisPointer: { link: [{ xAxisIndex: 'all' }] },
-    grid: [
-      { left: 60, right: 20, top: 20, height: showVolume ? '58%' : '100%' },
-      { left: 60, right: 20, top: '70%', height: '22%' }
-    ],
-    dataZoom: [
-      { type: 'inside', xAxisIndex: [0,1], zoomOnMouseWheel: true, moveOnMouseMove: true },
-      { type: 'slider', xAxisIndex: [0,1], bottom: 5, height: 22, borderRadius: 6,
-        handleStyle: { color: defaultColor },
-        dataBackground: { lineStyle: { color: defaultColor }, areaStyle: { color: 'rgba(123,31,162,0.08)' } },
-        selectedDataBackground: { lineStyle: { color: '#4A148C' }, areaStyle: { color: 'rgba(74,20,140,0.15)' } },
+    var dates = ck.map(function (k) { return k.date; });
+
+    // ── 均线计算 ──
+    var mas = {};
+    o.maLines.forEach(function (p) { mas[p] = computeMA(ck, p); });
+
+    // ── 信号点 ──
+    var pts = [];
+    cs.forEach(function (s) {
+      var si = dates.indexOf(s.signal_date);
+      if (si < 0) return;
+      pts.push({
+        name: o.signalTooltipPrefix,
+        coord: [si, s.buy_point],
+        value: o.signalTooltipPrefix + ' ¥' + s.buy_point,
+        symbol: o.signalSymbol,
+        symbolSize: o.signalSize,
+        itemStyle: { color: o.signalColor, borderColor: '#FFF', borderWidth: 1 },
+        label: { show: !!o.signalLabel },
+      });
+    });
+
+    // 额外标记
+    var xtraMarks = [];
+    (this.extraMarkers || []).forEach(function (m) {
+      var si = dates.indexOf(m.date);
+      if (si < 0) return;
+      xtraMarks.push({
+        name: m.label || '',
+        coord: [si, m.price],
+        value: m.label || '',
+        symbol: m.symbol || 'circle',
+        symbolSize: m.size || 12,
+        itemStyle: { color: m.color || '#FF9800', borderColor: '#FFF', borderWidth: 0.5 },
+        label: { show: false },
+      });
+    });
+
+    var dark = isDark();
+    var bg = dark ? o.darkBg : o.lightBg;
+    var tx = dark ? '#ccc' : '#333';
+
+    // ── MA tooltip 色 ──
+    var maTipColors = o.maTooltipColors || o.maColors;
+
+    var option = {
+      backgroundColor: bg,
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'cross' },
+        backgroundColor: dark ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.85)',
+        borderColor: 'transparent',
+        borderWidth: 0,
+        textStyle: { color: dark ? '#eee' : '#333', fontSize: 11 },
+        formatter: function (params) {
+          if (!params || !params.length) return '';
+          var di = params[0].dataIndex, d = ck[di];
+          if (!d) return '';
+          var oo = d.open, cc = d.close, h = d.high, l = d.low, v = d.volume;
+          var chg = oo > 0 ? ((cc - oo) / oo * 100).toFixed(2) : '—';
+          var amp = h > l ? ((h - l) / l * 100).toFixed(2) : '—';
+          var vs = fmtVolume(v);
+          var ln = '<div style="line-height:1.9;font-size:11px">';
+          ln += '<div style="font-weight:700;font-size:13px;margin-bottom:4px">' + d.date + '</div>';
+          ln += '<div>开盘 <b>' + oo.toFixed(2) + '</b></div>';
+          ln += '<div>收盘 <b>' + cc.toFixed(2) + '</b></div>';
+          ln += '<div>最高 <span style="color:' + self.opts.upColor + '">' + h.toFixed(2) + '</span></div>';
+          ln += '<div>最低 <span style="color:' + self.opts.downColor + '">' + l.toFixed(2) + '</span></div>';
+          ln += '<div>涨幅 <span style="color:' + (cc >= oo ? self.opts.upColor : self.opts.downColor) + '">' + (cc >= oo ? '+' : '') + chg + '%</span></div>';
+          ln += '<div>振幅 ' + amp + '%</div>';
+          ln += '<div>成交量 ' + vs + '</div>';
+
+          // MA 值
+          for (var mi = 0; mi < o.maLines.length; mi++) {
+            var p = o.maLines[mi];
+            var mav = mas[p][di];
+            if (mav != null) {
+              ln += '<div>MA' + p + ' <span style="color:' + maTipColors[mi % maTipColors.length] + '">' + mav.toFixed(2) + '</span></div>';
+            }
+          }
+
+          // 信号信息
+          if (sm[d.date]) {
+            var s = sm[d.date];
+            ln += '<div style="color:' + o.signalColor + ';font-weight:700;padding-top:2px">' + o.signalTooltipPrefix + ' 买点=' + (s.buy_point != null ? s.buy_point : '—') + ' 回调=' + (s.drawdown_pct != null ? s.drawdown_pct + '%' : '—') + '</div>';
+          }
+
+          ln += '</div>';
+          return ln;
+        },
       },
-    ],
-    xAxis: [
-      { type: 'category', data: dates, axisLine: { lineStyle: { color: axisLineColor } },
-        axisLabel: { color: '#999', fontSize: 10, fontFamily: 'Nunito' } },
-      { type: 'category', gridIndex: 1, data: dates, axisLine: { lineStyle: { color: axisLineColor } },
-        axisLabel: { show: false } },
-    ],
-    yAxis: [
-      { type: 'value', scale: true, splitLine: { lineStyle: { color: gridColor, width: 0.5 } },
-        axisLabel: { color: '#999', fontSize: 10 } },
-      { type: 'value', gridIndex: 1, axisLabel: { color: '#999', fontSize: 10, formatter: v => fmtVol(v) },
-        splitLine: { show: false } },
-    ],
-    series: [
-      { name: 'K线', type: 'candlestick', data: ohlc,
-        itemStyle: { color: '#FF6B6B', color0: '#26C6DA', borderColor: '#FF6B6B', borderColor0: '#26C6DA', borderRadius: [6,6,0,0] },
-      },
-      ...maSeries,
-      ...(sigMarks.data.length > 0 ? [sigMarks] : []),
-      ...(rallyMarks.data.length > 0 ? [rallyMarks] : []),
-      ...(failedRallyMarks.data.length > 0 ? [failedRallyMarks] : []),
-      { name: '成交量', type: 'bar', xAxisIndex: 1, yAxisIndex: 1,
-        data: volumes.map((v, i) => ({ value: v, itemStyle: { color: volColors[i], borderColor: volBorders[i], borderRadius: [0,8,8,0] } })),
-      },
-    ],
+      axisPointer: { link: [{ xAxisIndex: 'all' }] },
+      grid: [
+        { left: '8%', right: '1%', top: 8, height: o.gridMainHeight },
+        ...(o.showVolume ? [{ left: '8%', right: '1%', top: o.gridVolTop, height: o.gridVolHeight }] : []),
+      ],
+      xAxis: [
+        { type: 'category', data: dates, axisLabel: { fontSize: 9, color: tx }, axisLine: { lineStyle: { color: '#ccc' } } },
+        ...(o.showVolume ? [{ type: 'category', data: dates, axisLabel: { show: false }, gridIndex: 1 }] : []),
+      ],
+      yAxis: [
+        { type: 'value', scale: true, axisLabel: { fontSize: 9, color: tx }, splitLine: { lineStyle: { color: dark ? '#3a3a3a' : '#eee' } } },
+        ...(o.showVolume ? [{ type: 'value', scale: true, axisLabel: { fontSize: 8 }, gridIndex: 1, splitLine: { show: false } }] : []),
+      ],
+      dataZoom: [
+        { type: 'inside', xAxisIndex: o.showVolume ? [0, 1] : [0] },
+        { type: 'slider', xAxisIndex: o.showVolume ? [0, 1] : [0], height: 16, bottom: 4 },
+      ],
+      series: [
+        {
+          name: 'K线',
+          type: 'candlestick',
+          data: ck.map(function (k) { return [k.open, k.close, k.low, k.high]; }),
+          itemStyle: { color: o.upColor, color0: o.downColor, borderColor: o.upColor, borderColor0: o.downColor },
+          markPoint: {
+            data: pts.concat(xtraMarks),
+            symbol: o.signalSymbol,
+            symbolSize: o.signalSize,
+            itemStyle: { color: o.signalColor },
+            label: { show: !!o.signalLabel },
+          },
+        },
+        ...(o.showVolume ? [{
+          name: '成交量',
+          type: 'bar',
+          data: ck.map(function (k, i) {
+            return {
+              value: k.volume,
+              itemStyle: { color: ck[i].close >= ck[i].open ? 'rgba(229,57,53,0.35)' : 'rgba(38,198,218,0.35)' },
+            };
+          }),
+          xAxisIndex: 1,
+          yAxisIndex: 1,
+        }] : []),
+      ],
+    };
+
+    // 添加均线 Series
+    for (var mi2 = 0; mi2 < o.maLines.length; mi2++) {
+      var p2 = o.maLines[mi2];
+      var w = (o.maWidths && o.maWidths[p2]) || 1;
+      option.series.push({
+        name: 'MA' + p2,
+        type: 'line',
+        data: mas[p2],
+        smooth: true,
+        symbol: 'none',
+        lineStyle: { width: w, color: o.maColors[mi2 % o.maColors.length] },
+      });
+    }
+
+    this.chart.setOption(option, true);
   };
 
-  chart.setOption(option, true);
+  KlineChart.prototype.dispose = function () {
+    if (this._themeObserver) { this._themeObserver.disconnect(); this._themeObserver = null; }
+    if (this.chart && !this.chart.isDisposed()) { this.chart.dispose(); this.chart = null; }
+    if (this.chartDom && this.chartDom.parentNode) { this.chartDom.parentNode.removeChild(this.chartDom); }
+  };
 
-  // ── Theme change → update grid live ──
-  new MutationObserver(() => {
-    const d = document.documentElement.getAttribute('data-theme') === 'dark';
-    chart.setOption({ yAxis: [{ splitLine: { lineStyle: { color: d ? '#2a2a3a' : '#F5F5F5' } } }] });
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  // ─── 工厂函数 ──────────────────
+  KlineChart.create = function (options) {
+    return new KlineChart(options);
+  };
 
-  return chart;
-}
+  // ─── 工具：聚合日线→周线/月线 ──
+  KlineChart.aggregate = function (klines, period) {
+    if (!klines || !klines.length) return [];
+    if (period === 'day') return klines;
+    var result = [], current = null;
+    klines.forEach(function (k) {
+      var d = new Date(k.date);
+      var key;
+      if (period === 'week') {
+        var start = new Date(d);
+        start.setDate(d.getDate() - d.getDay());
+        key = start.toISOString().slice(0, 10);
+      } else {
+        key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      }
+      if (!current || current.key !== key) {
+        if (current) result.push(current.row);
+        current = {
+          key: key,
+          row: { date: k.date, open: k.open, high: k.high, low: k.low, close: k.close, volume: k.volume },
+        };
+      } else {
+        current.row.high = Math.max(current.row.high, k.high);
+        current.row.low = Math.min(current.row.low, k.low);
+        current.row.close = k.close;
+        current.row.volume += k.volume;
+        current.row.date = k.date;
+      }
+    });
+    if (current) result.push(current.row);
+    return result;
+  };
 
-function fmtVol(v) {
-  if (v == null) return '—';
-  if (v >= 1e8) return (v/1e8).toFixed(2) + '亿';
-  if (v >= 1e4) return (v/1e4).toFixed(0) + '万';
-  return v.toString();
-}
-function fmtAmt(v) {
-  if (v == null) return '—';
-  if (v >= 1e8) return (v/1e8).toFixed(2) + '亿';
-  return v.toString();
-}
+  // 导出
+  global.KlineChart = KlineChart;
+
+})(typeof window !== 'undefined' ? window : this);
