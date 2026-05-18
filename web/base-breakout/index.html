@@ -23,7 +23,6 @@
   .bottom-right{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
   .btn-run{width:100%;padding:11px;background:#FE2C55;color:#FFF;border:none;border-radius:14px;font-size:0.95rem;font-weight:800;cursor:pointer}
   .btn-run:hover{opacity:0.88}.btn-run:disabled{background:#CCC;cursor:not-allowed}
-  .btn-save{width:100%;padding:9px;background:var(--card-bg);border:1.5px solid var(--divider);border-radius:14px;font-size:0.85rem;font-weight:700;cursor:pointer}
   .btn-save.saved{background:#E8F5E9;border-color:#4CAF50;color:#2E7D32}
   .param-card{background:var(--card-bg);border:1px solid var(--divider);border-radius:16px;overflow:hidden}
   .param-card-hd{display:flex;align-items:center;padding:9px 14px;cursor:pointer;font-size:0.73rem;font-weight:800}
@@ -39,10 +38,6 @@
   .tsw.on{background:#FE2C55}.tsw.off{background:#CCC}
   .tsw::after{content:'';position:absolute;top:2px;width:12px;height:12px;border-radius:50%;background:#FFF;transition:left 0.2s}
   .tsw.on::after{left:18px}.tsw.off::after{left:2px}
-  table{width:100%;border-collapse:collapse;font-size:0.7rem}
-  th,td{padding:4px 6px;text-align:center;border-bottom:1px solid var(--divider)}
-  th{font-weight:700;color:var(--text-secondary);font-size:0.62rem;white-space:nowrap}
-  .t-up{color:#E53935;font-weight:700}
   .nav-dropdown{position:relative;display:inline-flex}
   .nav-dropdown-menu{display:none;position:absolute;top:100%;left:0;background:var(--card-bg);border:1px solid var(--divider);border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.08);min-width:150px;padding:6px 0;z-index:200;white-space:nowrap}
   .nav-dropdown:hover .nav-dropdown-menu{display:block}
@@ -130,7 +125,7 @@
     document.getElementById('btn-run').addEventListener('click',run);
     document.getElementById('btn-save').addEventListener('click',saveCfg);
     document.addEventListener('themeChanged',function(){if(ck.length){chart.dispose();chart=echarts.init(document.getElementById('chart'));renderChart();}});
-    await loadCfg();setTimeout(run,500);
+    await loadCfg();setTimeout(function(){run(true)},500);
   });
 
   function onModeChange(){var m=document.getElementById('mode').value;document.getElementById('stock-code').value=m==='stock'?'600519':'000300';run()}
@@ -165,11 +160,11 @@
     close_position_min:parseInt(document.getElementById('p-cp').value)/100,
   }}}
 
-  async function run(){
-    runId++;var myId=runId;var btn=document.getElementById('btn-run');btn.disabled=true;btn.textContent='⏳';
+  async function run(auto){
+    runId++;var myId=runId;var btn=document.getElementById('btn-run');if(!auto){btn.disabled=true;btn.textContent='⏳';}
     var code=document.getElementById('stock-code').value.trim();
     var mode=document.getElementById('mode').value;
-    if(!code){btn.disabled=false;btn.textContent='📊';return}
+    if(!code){if(!auto)btn.disabled=false;if(!auto)btn.textContent='📊';return}
     try{var nr=await fetch(API_URL+'/api/stock-name?code='+code+'&mode='+mode);if(nr.ok){var nd=await nr.json();document.getElementById('stock-name').textContent=nd.name||''}}catch(e){}
     try{
       var end=document.getElementById('date-end').value,start=document.getElementById('date-start').value;
@@ -179,9 +174,9 @@
       if(!rawKlines.length){ck=[];if(chart)chart.clear();document.getElementById('table').innerHTML='<div class="loading-row">该时段无K线数据</div>';btn.textContent='📭';btn.disabled=false;return};ck=aggregate(rawKlines,period);
       cs=(data.signals||[]).filter(function(s){return s.signal_date>=start&&s.signal_date<=end});
       signalMap={};cs.forEach(function(s){signalMap[s.signal_date]=s});
-      renderChart();renderTable();btn.textContent='🔄';
+      renderChart();renderTable();if(!auto)btn.textContent='🔍 运行识别';
     }catch(e){console.error(e);btn.textContent='❌'}
-    btn.disabled=false;
+    if(!auto)btn.disabled=false;
   }
 
   function renderChart(){

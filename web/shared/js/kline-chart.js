@@ -290,7 +290,7 @@
           // 信号信息
           if (sm[d.date]) {
             var s = sm[d.date];
-            ln += '<div style="color:' + o.signalColor + ';font-weight:700;padding-top:2px">' + o.signalTooltipPrefix + ' 买点=' + (s.buy_point != null ? s.buy_point : '—') + ' 回调=' + (s.drawdown_pct != null ? s.drawdown_pct + '%' : '—') + '</div>';
+            ln += '<div style="color:' + (s.color || o.signalColor) + ';font-weight:700;padding-top:2px">' + (s.label || o.signalTooltipPrefix + ' 买点=' + (s.buy_point != null ? s.buy_point : '—') + ' 回调=' + (s.drawdown_pct != null ? s.drawdown_pct + '%' : '—')) + '</div>';
           }
 
           ln += '</div>';

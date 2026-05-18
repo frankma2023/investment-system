@@ -1231,8 +1231,7 @@ def api_distribution_day():
     params = load_params()
     result = detect(daily, params)
     return jsonify(result)
-
-
+@app.route('/api/distribution-day/diag')
 @app.route('/api/distribution-day/joint')
 def api_distribution_day_joint():
     date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
@@ -1281,6 +1280,25 @@ def api_railroad_tracks():
     result['weekly'] = [k for k in result['weekly'] if k['date'] >= start][:120] if start else result['weekly'][:120]
     return jsonify(result)
 
+
+@app.route('/api/railroad-tracks/diag')
+def api_railroad_tracks_diag():
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    mode = request.args.get('mode', 'stock')
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    kf = "AND kline_type='normal'" if mode == 'index' else ''
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE stock_code=? {kf} AND date<=? AND date>=date(?,'-600 days') ORDER BY date""",
+        (code, date_str, date_str)).fetchall()
+    daily = [dict(r) for r in klines]
+    from scanners.railroad_tracks import detect_all, load_params
+    result = detect_all(daily, stock_code=code)
+    return jsonify({'date': date_str, 'stock': code, 'total_signals': len(result['all_signals']),
+                    'by_type': {'S': len(result['signals_weekly']), 'A': len(result['signals_daily_double']),
+                    'B': len(result['signals_daily_single'])},
+                    'latest': [{'date': s['signal_date'], 'label': s['label']} for s in result['all_signals'][-5:]]})
 
 # ═══════════════════════════════════════════════
 # API: GET /api/market-panorama

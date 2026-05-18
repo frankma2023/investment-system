@@ -38,9 +38,14 @@
         <div class="sr"><span class="sl">Confirmed</span><input type="range" id="p-cc" min="4" max="7" value="5" oninput="svn('p-cc')"><span class="sv" id="p-cc-v">5</span></div>
       </div></div>
       <button class="btn-run" id="btn-run">🔍 运行检测</button>
+      <button class="btn-save" id="btn-save">💾 保存配置</button>
     </div>
     <div class="bottom-right">
       <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 抛盘日信号</span></div><div class="table-wrapper" id="table"></div></div>
+      <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">🔎 单日排查</span></div>
+        <div style="padding:12px 16px;display:flex;gap:8px;align-items:center"><input type="date" id="diag-date" style="padding:6px 10px;border:1px solid var(--divider);border-radius:10px;font-size:0.72rem;background:var(--card-bg);color:var(--text-primary);flex:1"><button onclick="runDiag()" style="padding:7px 16px;background:var(--color-accent);color:#FFF;border:none;border-radius:10px;font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button></div>
+        <div id="diag-result" style="padding:0 16px 14px;display:none"></div>
+      </div>
     </div>
   </div>
   <footer class="page-footer">❤️ 投资手账本 · 抛盘日 Distribution Day</footer>
@@ -59,24 +64,40 @@
   document.addEventListener('DOMContentLoaded',async()=>{
     var now=new Date();var ago=new Date(now);ago.setFullYear(ago.getFullYear()-2);
     document.getElementById('date-start').value=ago.toISOString().split('T')[0];
-    document.getElementById('date-end').value=now.toISOString().split('T')[0];
+    document.getElementById('date-end').value=now.toISOString().split('T')[0];document.getElementById('diag-date').value=now.toISOString().split('T')[0];
     chart=echarts.init(document.getElementById('chart'));
     document.getElementById('btn-run').addEventListener('click',run);
-    setTimeout(run,500);
+    document.getElementById('btn-save').addEventListener('click',saveCfg);
+    await loadCfg();
+    setTimeout(function(){run(true)},500);
   });
 
-  async function run(){
-    runId++;var myId=runId;var btn=document.getElementById('btn-run');btn.disabled=true;btn.textContent='⏳';
+  async function run(auto){
+    runId++;var myId=runId;var btn=document.getElementById('btn-run');if(!auto){btn.disabled=true;btn.textContent='⏳';}
     var idx=document.getElementById('index-code').value;
     var end=document.getElementById('date-end').value,start=document.getElementById('date-start').value;
     try{
       var resp=await fetch(API_URL+'/api/distribution-day?index='+idx+'&date='+end+'&start='+start);
       var data=await resp.json();if(runId!==myId)return;
       kl=data.daily||[];cn=data.counts||[];ds=data.signals||[];
-      renderChart();renderTable();btn.textContent='🔄';
+      renderChart();renderTable();if(!auto)btn.textContent='🔍 运行检测';
     }catch(e){console.error(e);btn.textContent='❌'}
-    btn.disabled=false;
+    if(!auto)btn.disabled=false;
   }
+
+  function gp(){return {distribution_day:{
+    standard_decline_min:-parseInt(document.getElementById('p-dc').value)/1000,
+    standard_vol_ratio:parseInt(document.getElementById('p-dv').value)/100,
+    window_days:parseInt(document.getElementById('p-wd').value),
+    warning_count:parseInt(document.getElementById('p-wc').value),
+    confirmed_count:parseInt(document.getElementById('p-cc').value),
+  }}}
+  async function saveCfg(){var btn=document.getElementById('btn-save');btn.textContent='⏳';var p=gp().distribution_day;
+    var y='# distribution_day\ndistribution_day:\n';for(var k in p){y+='  '+k+': '+p[k]+'\n'}
+    try{var r=await fetch(API_URL+'/api/config?signal_type=distribution_day',{method:'POST',headers:{'Content-Type':'text/plain'},body:y});var d=await r.json();if(d.ok){btn.textContent='✅';btn.classList.add('saved');setTimeout(function(){btn.textContent='💾 保存配置';btn.classList.remove('saved')},2000)}}catch(e){btn.textContent='❌'}}
+  async function loadCfg(){try{var r=await fetch(API_URL+'/api/config?signal_type=distribution_day',{cache:'no-store'});var c=await r.json();if(!c||!c.distribution_day)return;var b=c.distribution_day;
+    setV('p-dc',Math.round(Math.abs(b.standard_decline_min||0.001)*1000));svs3('p-dc');setV('p-dv',Math.round((b.standard_vol_ratio||1.0)*100));svs2('p-dv');setV('p-wd',b.window_days||25);svn('p-wd');setV('p-wc',b.warning_count||3);svn('p-wc');setV('p-cc',b.confirmed_count||5);svn('p-cc')}catch(e){}}
+  function setV(id,v){var e=document.getElementById(id);if(e)e.value=v}
 
   function renderChart(){
     if(!chart||!kl.length)return;
@@ -113,6 +134,15 @@
       ]
     });
   }
+
+  async function runDiag(){
+    var date=document.getElementById('diag-date').value,div=document.getElementById('diag-result');
+    if(!date){div.style.display='none';return}var idx=document.getElementById('index-code').value;
+    div.innerHTML='<div style="font-size:0.68rem;color:var(--text-tertiary);padding:6px 0">⏳ 检测中...</div>';div.style.display='block';
+    try{var resp=await fetch(API_URL+'/api/distribution-day/diag?index='+idx+'&date='+date);var d=await resp.json();
+    var h='<div style="font-size:0.65rem">'+date+' | 25日计数: <b style="color:'+(d.level==='confirmed'?'#C62828':'#E65100')+'">'+d.count_25d+'</b> ('+d.level+')</div>';
+    if(d.recent_dist_days&&d.recent_dist_days.length){h+='<table style="margin:4px 0 0;font-size:0.6rem"><thead><tr><th>日期</th><th>类型</th></tr></thead><tbody>';d.recent_dist_days.forEach(function(r){h+='<tr><td>'+r.date+'</td><td>'+r.dist_label+'</td></tr>'});h+='</tbody></table>';}else{h+='<div style="font-size:0.62rem;color:var(--text-tertiary)">最近无抛盘日</div>'}
+    div.innerHTML=h;}catch(e){div.innerHTML='<div style="font-size:0.68rem;color:#FF6B6B">请求失败</div>'}}
 
   function renderTable(){
     var div=document.getElementById('table');

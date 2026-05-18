@@ -26,7 +26,7 @@
   </div>
 
   <div id="chart" class="chart-wrap"></div>
-  <div class="chart-legend">🔴 周线铁轨(S) | 🟠 日线双根(A+) | 🟡 日线双根(A) | ⚪ 单根十字(B)</div>
+  <div class="chart-legend">🔴 周线铁轨(S) | 🟠 日线双根(A+) | 🟡 日线双根(A) | 🟣 单根十字(B)</div>
 
   <div class="bottom-layout">
     <div class="bottom-left">
@@ -46,10 +46,15 @@
         <div class="sr"><span class="sl">实体上限</span><input type="range" id="p-sbe" min="5" max="25" value="15" oninput="svp('p-sbe')"><span class="sv" id="p-sbe-v">15%</span></div>
         <div class="sr"><span class="sl">影线下限</span><input type="range" id="p-ssh" min="30" max="50" value="40" oninput="svp('p-ssh')"><span class="sv" id="p-ssh-v">40%</span></div>
       </div></div>
-      <button class="btn-run" id="btn-run">🔍 运行检测</button>
+      <button class="btn-run" id="btn-run">🔍 回测</button>
+      <button class="btn-save" id="btn-save">💾 保存配置</button>
     </div>
     <div class="bottom-right">
       <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 铁轨线信号</span></div><div class="table-wrapper" id="table"></div></div>
+      <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">🔎 单日排查</span></div>
+        <div style="padding:12px 16px;display:flex;gap:8px;align-items:center"><input type="date" id="diag-date" style="padding:6px 10px;border:1px solid var(--divider);border-radius:10px;font-size:0.72rem;background:var(--card-bg);color:var(--text-primary);flex:1"><button onclick="runDiag()" style="padding:7px 16px;background:var(--color-accent);color:#FFF;border:none;border-radius:10px;font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button></div>
+        <div id="diag-result" style="padding:0 16px 14px;display:none"></div>
+      </div>
     </div>
   </div>
   <footer class="page-footer">❤️ 投资手账本 · 铁轨线 Railroad Tracks</footer>
@@ -69,15 +74,17 @@
   document.addEventListener('DOMContentLoaded',async()=>{
     var now=new Date();var ago=new Date(now);ago.setFullYear(ago.getFullYear()-2);
     document.getElementById('date-start').value=ago.toISOString().split('T')[0];
-    document.getElementById('date-end').value=now.toISOString().split('T')[0];
+    document.getElementById('date-end').value=now.toISOString().split('T')[0];document.getElementById('diag-date').value=now.toISOString().split('T')[0];
     document.getElementById('btn-run').addEventListener('click',run);
-    setTimeout(run,800);
+    document.getElementById('btn-save').addEventListener('click',saveCfg);
+    await loadCfg();
+    setTimeout(function(){run(true)},800);
   });
 
   function onModeChange(){var m=document.getElementById('mode').value;document.getElementById('stock-code').value=m==='stock'?'600519':'000300';run()}
 
-  async function run(){
-    runId++;var myId=runId;var btn=document.getElementById('btn-run');btn.disabled=true;btn.textContent='⏳';
+  async function run(auto){
+    runId++;var myId=runId;var btn=document.getElementById('btn-run');if(!auto){btn.disabled=true;btn.textContent='⏳';}
     var code=document.getElementById('stock-code').value.trim();
     var mode=document.getElementById('mode').value;
     if(!code){btn.disabled=false;btn.textContent='📊';return}
@@ -88,28 +95,58 @@
       var data=await resp.json();if(runId!==myId)return;
       dl=data.daily||[];wk=data.weekly||[];
       as=data.all_signals||[];
-      renderChart();renderTable();btn.textContent='🔄';
+      renderChart();renderTable();if(!auto)btn.textContent='🔍 回测';
     }catch(e){console.error(e);btn.textContent='❌'}
-    btn.disabled=false;
+    if(!auto)btn.disabled=false;
   }
+
+  function gp(){var p={w_prior_gain_min:parseInt(document.getElementById('p-wpg').value)/100,
+    w_week1_amp_min:parseInt(document.getElementById('p-wa1').value)/100,
+    w_week2_gain_max:parseInt(document.getElementById('p-wg2').value)/100,
+    w_week2_gain_min:-parseInt(document.getElementById('p-wg2').value)/100,
+    w_vol_required_week1:document.getElementById('p-wv1').classList.contains('on'),
+    w_vol_required_week2:document.getElementById('p-wv2').classList.contains('on'),
+    d_double_body_max:parseInt(document.getElementById('p-dbe').value)/100,
+    d_double_shadow_min:parseInt(document.getElementById('p-dsh').value)/100,
+    d_double_require_opposite:document.getElementById('p-dop').classList.contains('on'),
+    d_single_body_max:parseInt(document.getElementById('p-sbe').value)/100,
+    d_single_shadow_min:parseInt(document.getElementById('p-ssh').value)/100,
+  };return {railroad_tracks:p}}
+  async function saveCfg(){var btn=document.getElementById('btn-save');btn.textContent='⏳';var p=gp().railroad_tracks;
+    var y='# railroad_tracks\nrailroad_tracks:\n';for(var k in p){y+='  '+k+': '+p[k]+'\n'}
+    try{var r=await fetch(API_URL+'/api/config?signal_type=railroad_tracks',{method:'POST',headers:{'Content-Type':'text/plain'},body:y});var d=await r.json();if(d.ok){btn.textContent='✅';btn.classList.add('saved');setTimeout(function(){btn.textContent='💾';btn.classList.remove('saved')},2000)}}catch(e){btn.textContent='❌'}}
+  async function loadCfg(){try{var r=await fetch(API_URL+'/api/config?signal_type=railroad_tracks',{cache:'no-store'});var c=await r.json();if(!c||!c.railroad_tracks)return;var b=c.railroad_tracks;
+    svs2('p-wpg',Math.round((b.w_prior_gain_min||0.5)*100));svp('p-wpg');svs2('p-wa1',Math.round((b.w_week1_amp_min||0.15)*100));svp('p-wa1');svs2('p-wg2',Math.round(Math.abs(b.w_week2_gain_max||0.02)*100));svp('p-wg2');
+    stog('p-wv1',b.w_vol_required_week1);stog('p-wv2',b.w_vol_required_week2);svs2('p-dbe',Math.round((b.d_double_body_max||0.20)*100));svp('p-dbe');svs2('p-dsh',Math.round((b.d_double_shadow_min||0.35)*100));svp('p-dsh');
+    stog('p-dop',b.d_double_require_opposite);svs2('p-sbe',Math.round((b.d_single_body_max||0.15)*100));svp('p-sbe');svs2('p-ssh',Math.round((b.d_single_shadow_min||0.40)*100));svp('p-ssh')}catch(e){}}
+  function svs2(id,v){var e=document.getElementById(id);if(e)e.value=v}
+  function stog(id,on){var b=document.getElementById(id);if(b)b.className='tsw '+(on?'on':'off')}
 
   function renderChart(){
     var period=document.getElementById('period').value;
     var kl=period==='day'&&dl.length?dl:wk;
     if(!kl.length)return;
-    var sm={},sigs=[],xmarks=[];
+    var sm={},sigs=[],xmarks=[],colors={strong_sell:'#C62828',A_plus:'#E65100',A:'#FF9800',B:'#9C27B0'};
     as.forEach(function(s){
       var d=kl.find(function(k){return k.date===s.signal_date});
       if(!d)return;
-      var color=s.signal_level==='strong_sell'?'#C62828':s.signal_level==='A_plus'?'#E65100':s.signal_level==='A'?'#FF9800':'#6D4C41';
-      sigs.push({signal_date:s.signal_date,buy_point:d.high,drawdown_pct:0});
-      sm[s.signal_date]={buy_point:d.high,drawdown_pct:0};
-      xmarks.push({date:s.signal_date,price:d.high,label:s.label,symbol:'pin',color:color,size:28});
+      xmarks.push({date:s.signal_date,price:d.high,label:s.label,symbol:'pin',color:colors[s.signal_level]||'#9C27B0',size:28});
+      sigs.push({signal_date:s.signal_date,buy_point:d.high,drawdown_pct:0,label:s.label});
+      sm[s.signal_date]={buy_point:d.high,drawdown_pct:0,label:s.label,color:colors[s.signal_level]||'#9C27B0'};
     });
     if(!kc){
       kc=KlineChart.create({container:document.getElementById('chart'),klines:kl,signals:sigs,signalMap:sm,signalColor:'#C62828',signalTooltipPrefix:'🚂 铁轨线',extraMarkers:xmarks});
     }else{kc.update(kl,sigs,sm,xmarks)}
   }
+
+  async function runDiag(){
+    var date=document.getElementById('diag-date').value,div=document.getElementById('diag-result');
+    if(!date){div.style.display='none';return}var code=document.getElementById('stock-code').value.trim(),mode=document.getElementById('mode').value;
+    div.innerHTML='<div style="font-size:0.68rem;color:var(--text-tertiary);padding:6px 0">⏳ 检测中...</div>';div.style.display='block';
+    try{var resp=await fetch(API_URL+'/api/railroad-tracks/diag?stock='+code+'&date='+date+'&mode='+mode);var d=await resp.json();
+    var h='<div style="font-size:0.65rem">'+date+' | '+code+' | 总信号: <b>'+d.total_signals+'</b> (S:'+d.by_type.S+' A:'+d.by_type.A+' B:'+d.by_type.B+')</div>';
+    if(d.latest&&d.latest.length){h+='<table style="margin:4px 0 0;font-size:0.6rem"><thead><tr><th>日期</th><th>信号</th></tr></thead><tbody>';d.latest.forEach(function(s){h+='<tr><td>'+s.date+'</td><td>'+s.label+'</td></tr>'});h+='</tbody></table>';}
+    div.innerHTML=h;}catch(e){div.innerHTML='<div style="font-size:0.68rem;color:#FF6B6B">请求失败</div>'}}
 
   function renderTable(){
     var div=document.getElementById('table');
