@@ -4,20 +4,65 @@
  * 提取自 base-breakout 页面的精调样式，支持所有回测看板复用。
  * 一行引入，一行渲染。
  *
- * 用法:
- *   <script src="../shared/js/kline-chart.js"></script>
- *   <script>
- *     var chart = KlineChart.create({
- *       container: document.getElementById('chart'),
- *       klines: data,
- *       signals: signals,
- *       signalMap: signalMap,
- *     });
- *     // 更新数据:
- *     chart.update(klines, signals, signalMap);
- *     // 销毁:
- *     chart.dispose();
- *   </script>
+ * ═══ 完整页面模板（复制粘贴即可） ═══
+ *
+ * <link rel="stylesheet" href="../shared/css/theme.css">
+ * <link rel="stylesheet" href="../shared/css/base.css">
+ * <link rel="stylesheet" href="../shared/css/xhs-cards.css">
+ * <link rel="stylesheet" href="../shared/css/components.css">
+ * <script src="../shared/js/echarts.min.js"></script>
+ * <script src="../shared/js/kline-chart.js"></script>
+ *
+ * <!-- 控制栏 -->
+ * <div class="top-bar">
+ *   <div class="fld" style="flex:0.5;min-width:80px">
+ *     <label>类型</label><select id="mode"><option value="stock">个股</option><option value="index">指数</option></select>
+ *   </div>
+ *   <div class="code-wrap"><div class="fld">
+ *     <label>代码</label><input type="text" id="stock-code" value="600519" onkeydown="if(event.key==='Enter')run()">
+ *     <span id="stock-name" style="margin-left:6px;font-weight:700;font-size:0.85rem"></span>
+ *   </div></div>
+ *   <div class="fld" style="flex:0.5;min-width:90px">
+ *     <label>周期</label><select id="period" onchange="run()"><option value="day">日线</option><option value="week">周线</option><option value="month">月线</option></select>
+ *   </div>
+ *   <div class="fld"><label>开始</label><input type="date" id="date-start"></div>
+ *   <div class="fld"><label>结束</label><input type="date" id="date-end"></div>
+ * </div>
+ *
+ * <!-- K线图容器（无需设置宽高，CSS已处理） -->
+ * <div id="chart" class="chart-wrap"></div>
+ *
+ * <!-- 左右分栏 -->
+ * <div class="bottom-layout">
+ *   <div class="bottom-left">
+ *     <!-- 参数卡片 -->
+ *     <div class="param-card">
+ *       <div class="param-card-hd" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+ *         <span class="dot" style="background:#FE2C55"></span>🔴 参数
+ *       </div>
+ *       <div class="param-card-bd">
+ *         <div class="sr"><span class="sl">参数名</span><input type="range" min="0" max="100" value="50"><span class="sv">50%</span></div>
+ *         <div class="tog-row"><span class="sl">开关</span><button class="tsw on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div>
+ *       </div>
+ *     </div>
+ *     <button class="btn-run" onclick="run()">🔍 运行识别</button>
+ *     <button class="btn-save" onclick="saveCfg()">💾 保存配置</button>
+ *   </div>
+ *   <div class="bottom-right">
+ *     <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 信号明细</span></div><div id="table"></div></div>
+ *   </div>
+ * </div>
+ *
+ * ═══ JS 用法 ═══
+ *
+ * var chart = KlineChart.create({
+ *   container: document.getElementById('chart'),
+ *   klines: data,
+ *   signals: signals,
+ *   signalMap: signalMap,
+ * });
+ * chart.update(newData, newSignals, newMap);
+ * chart.dispose();
  */
 
 (function (global) {

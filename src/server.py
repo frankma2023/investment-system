@@ -1129,6 +1129,89 @@ def api_base_breakout_diag():
     })
 
 
+@app.route('/api/climax-top')
+def api_climax_top():
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    mode = request.args.get('mode', 'stock')
+    
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    kf = "AND kline_type='normal'" if mode == 'index' else ''
+    code_col = 'stock_code'
+    
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? {kf} AND date<=? AND date>=date(?, '-600 days')
+        ORDER BY date""", (code, date_str, date_str)).fetchall()
+    
+    if len(klines) < 390:
+        return jsonify({'weekly': [], 'signals': [], 'error': f'K线不足 ({len(klines)}条, 需要 >= 390)'})
+    
+    daily = [dict(r) for r in klines]
+    
+    from scanners.climax_top import detect, load_params, _aggr_weekly, _find_baseline
+    params = load_params()
+    
+    weekly = _aggr_weekly(daily)
+    baseline = _find_baseline(weekly, daily, date_str, DB_PATH)
+    
+    signals = detect(daily, params, baseline_price=baseline, stock_code=code)
+    if start:
+        weekly = [w for w in weekly if w['date'] >= start]
+    weekly_out = weekly[-120:]  # 最近120周
+    
+    return jsonify({'weekly': weekly_out, 'signals': signals, 'baseline': baseline})
+
+
+@app.route('/api/climax-top/diag')
+def api_climax_top_diag():
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    mode = request.args.get('mode', 'stock')
+    
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    kf = "AND kline_type='normal'" if mode == 'index' else ''
+    code_col = 'stock_code'
+    
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? {kf} AND date<=? AND date>=date(?, '-600 days')
+        ORDER BY date""", (code, date_str, date_str)).fetchall()
+    
+    if len(klines) < 390:
+        return jsonify({'error': f'K线不足 ({len(klines)}条, 需要 >= 390)'})
+    
+    daily = [dict(r) for r in klines]
+    
+    from scanners.climax_top import detect, load_params, _aggr_weekly, _find_baseline
+    from scanners.climax_top import _check_daily_accel, _check_daily_reversal
+    params = load_params()
+    
+    weekly = _aggr_weekly(daily)
+    baseline = _find_baseline(weekly, daily, date_str, DB_PATH)
+    
+    signals = detect(daily, params, baseline_price=baseline, stock_code=code)
+    
+    results = []
+    def ok(cond, val, thresh, note=''): return {'condition':cond,'value':str(val),'threshold':str(thresh),'pass':True,'note':note}
+    def fail(cond, val, thresh, note=''): return {'condition':cond,'value':str(val),'threshold':str(thresh),'pass':False,'note':note}
+    
+    if baseline:
+        results.append(ok('① 基准点', f'{baseline:.2f}', '—'))
+    else:
+        results.append(fail('① 基准点', '未找到', '需要突破信号或52周低点'))
+    
+    for s in signals[:5]:
+        results.append(ok(f'信号 {s["signal_date"]}',
+            f'{s["climax_start"]}~{s["climax_end"]} +{s["climax_gain_pct"]}% 得分={s["score"]}',
+            f'≥{params["score_warning"]}分'))
+    
+    all_pass = len(signals) > 0
+    
+    return jsonify({'date': date_str, 'baseline': baseline, 'signals_count': len(signals),
+                    'results': results, 'all_pass': all_pass})
+
+
 # ═══════════════════════════════════════════════
 # API: GET /api/market-panorama
 # ═══════════════════════════════════════════════

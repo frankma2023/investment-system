@@ -1,0 +1,33 @@
+# 高潮见顶检测引擎（Climax Top）配置
+# 文件: config/market/climax_top.yaml
+
+climax_top:
+  # ── 前期涨幅 ──
+  min_prior_gain: 1.0                # 前期最小涨幅（100%=1.0）
+
+  # ── 高潮周 ──
+  climax_weeks_min: 2                # 最少高潮周数
+  climax_weeks_max: 3                # 最多高潮周数
+  climax_weekly_gain_min: 0.15       # 单周最小涨幅（15%）
+  climax_total_gain_min: 0.25        # 高潮期总涨幅下限（25%）
+
+  # ── 成交量 ──
+  vol_ratio_spike: 2.0               # 单周量/20周均量（尖峰）
+  vol_ratio_cumulative: 5.0          # 3周累计量/20周均量（累计）
+  lookback_weeks: 78                 # 回溯周数（≈1.5年）
+  vol_lookback_weeks: 20             # 量均线计算周数
+
+  # ── 日线加速验证 ──
+  daily_accel_chg: 0.03              # 单日涨幅 > 3%
+  daily_accel_vol: 1.5               # 日量 / 50均量
+  daily_accel_days: 2                # 连续天数
+
+  # ── 日线提前确认 ──
+  daily_reversal_wick: 2.0           # 上影线 / 实体
+  daily_reversal_vol: 3.0            # 放量倍率
+
+  # ── 评分 ──
+  score_warning: 65                  # 触发 climax_warning 最低分
+  score_confirmed: 80                # 触发 climax_confirmed 最低分
+  rs20_threshold: 99                 # RS(20日) 阈值
+  rs250_threshold: 95                # RS(250日) 阈值
