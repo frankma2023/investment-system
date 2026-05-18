@@ -973,6 +973,163 @@ def api_cup_handle_diag():
     })
 
 # ═══════════════════════════════════════════════
+# API: GET /api/base-breakout
+# ═══════════════════════════════════════════════
+
+@app.route('/api/base-breakout')
+def api_base_breakout():
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    start = request.args.get('start', None)
+    mode = request.args.get('mode', 'stock')
+    
+    if not start:
+        start = (datetime.strptime(date_str, '%Y-%m-%d') - timedelta(days=730)).strftime('%Y-%m-%d')
+    
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    kf = "AND kline_type='normal'" if mode == 'index' else ''
+    code_col = 'stock_code'
+    
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? {kf} AND date>=date(?, '-500 days') AND date<=?
+        ORDER BY date""", (code, start, date_str)).fetchall()
+    
+    if not klines:
+        return jsonify({'signals': [], 'klines': [], 'error': 'No data'})
+    
+    daily = [dict(r) for r in klines]
+    
+    from scanners.base_breakout import detect, load_params
+    params = load_params()
+    signals = detect(daily, params)
+    
+    for s in signals:
+        s['stock_code'] = code
+    
+    # Layer 2 标注
+    from scanners.base_tags import tag_signal
+    vcp_params = {}
+    for k in ['vcp_min_toc','vcp_max_toc','vcp_contraction_ratio','vcp_vol_contraction',
+              'vcp_terminal_amp','vcp_dryup_ratio']:
+        if request.args.get(k):
+            vcp_params[k] = float(request.args.get(k))
+    
+    for s in signals:
+        s['tags'] = tag_signal(daily, s, vcp_params)
+    
+    klines_out = [k for k in daily if k['date'] >= start]
+    klines_out = klines_out[-600:]
+    
+    return jsonify({'signals': signals, 'klines': klines_out})
+
+
+# ═══════════════════════════════════════════════
+# API: GET /api/base-breakout/diag
+# ═══════════════════════════════════════════════
+
+@app.route('/api/base-breakout/diag')
+def api_base_breakout_diag():
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    mode = request.args.get('mode', 'stock')
+    
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    kf = "AND kline_type='normal'" if mode == 'index' else ''
+    code_col = 'stock_code'
+    
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? {kf} AND date<=? AND date>=date(?, '-500 days')
+        ORDER BY date""", (code, date_str, date_str)).fetchall()
+    
+    if len(klines) < 170:
+        return jsonify({'error': f'K线不足 ({len(klines)}条, 需要 >= 170)'})
+    
+    daily = [dict(r) for r in klines]
+    target_idx = len(daily) - 1
+    target = daily[target_idx]
+    
+    from scanners.base_breakout import load_params, _find_trough_and_prior_high, _check_prior_advance
+    from scanners.base_breakout import _sma, _sma_before, _linear_slope
+    
+    params = load_params()
+    results = []
+    
+    def ok(cond, val, thresh, note=''): return {'condition': cond, 'value': str(val), 'threshold': str(thresh), 'pass': True, 'note': note}
+    def fail(cond, val, thresh, note=''): return {'condition': cond, 'value': str(val), 'threshold': str(thresh), 'pass': False, 'note': note}
+    
+    n_daily = len(daily)
+    data_ok = n_daily >= params['lookback'] + 50
+    results.append(ok('数据充分', f'{n_daily}条', f'≥{params["lookback"]+50}条') if data_ok
+                   else fail('数据充分', f'{n_daily}条', f'≥{params["lookback"]+50}条'))
+    if not data_ok:
+        return jsonify({'date': date_str, 'results': results, 'all_pass': False, 'prior_high': None, 'trough': None})
+    
+    closes = [k['close'] for k in daily]
+    sma50c = _sma(closes, 50)
+    sma50_ok = target['close'] > sma50c if params.get('sma50_check', True) else True
+    results.append(ok('SMA50趋势', f'C={target["close"]:.2f}', f'SMA50={sma50c:.2f}') if sma50_ok
+                   else fail('SMA50趋势', f'C={target["close"]:.2f}', f'SMA50={sma50c:.2f}'))
+    
+    base = _find_trough_and_prior_high(daily, target_idx, params)
+    if base is None:
+        results.append(fail('① 谷+前高', '未找到', f'回调≥{params["drawdown_min"]*100}%'))
+        return jsonify({'date': date_str, 'ohlc': {'open': target['open'], 'high': target['high'], 'low': target['low'], 'close': target['close']},
+                        'results': results, 'all_pass': False, 'prior_high': None, 'trough': None})
+    
+    dd = base['drawdown']; dd_pct = dd * 100
+    results.append(ok('① 谷+前高', f'前高={base["prior_high"]:.2f} 谷={base["trough"]:.2f} 回调={dd_pct:.1f}%',
+                      f'回调∈[{params["drawdown_min"]*100}%,{params["drawdown_max"]*100}%]'))
+    
+    dd_ok = params['drawdown_min'] <= dd <= params['drawdown_max']
+    if dd_ok:
+        results.append(ok('② 回调深度', f'{dd_pct:.1f}%', f'[{params["drawdown_min"]*100}%,{params["drawdown_max"]*100}%]'))
+    else:
+        results.append(fail('② 回调深度', f'{dd_pct:.1f}%', f'[{params["drawdown_min"]*100}%,{params["drawdown_max"]*100}%]'))
+    
+    max_rec = max(k['close'] for k in daily[base['trough_idx']:target_idx+1])
+    rec_pct = max_rec / base['prior_high']
+    rec_ok = rec_pct >= params['min_recovery']
+    asc_ok = _linear_slope([k['close'] for k in daily[base['trough_idx']:target_idx+1]]) > 0
+    rec_all = rec_ok and asc_ok
+    results.append(ok('③ 回升', f'回升到{rec_pct*100:.0f}%', f'≥{params["min_recovery"]*100}%') if rec_all
+                   else fail('③ 回升', f'回升到{rec_pct*100:.0f}%', f'≥{params["min_recovery"]*100}%'))
+    
+    pa = _check_prior_advance(daily, base['prior_high_idx'], base['prior_high'], params['lookback'], params['min_prior_advance'])
+    pa_ok = pa >= params['min_prior_advance']
+    results.append(ok('④ 前置上涨', f'{pa*100:.1f}%', f'≥{params["min_prior_advance"]*100}%') if pa_ok
+                   else fail('④ 前置上涨', f'{pa*100:.1f}%', f'≥{params["min_prior_advance"]*100}%'))
+    
+    buy_pt = base['prior_high'] + 0.01
+    bo_close = target['close'] >= buy_pt
+    volumes = [k['volume'] for k in daily]
+    sma50v = _sma_before(volumes, 50, target_idx)
+    bo_vol = sma50v > 0 and target['volume'] >= sma50v * params['breakout_vol_ratio']
+    bo_green = not params.get('require_green', True) or target['close'] > target['open']
+    pos_v = 1
+    if target['high'] > target['low']:
+        pos_v = (target['close'] - target['low']) / (target['high'] - target['low'])
+    bo_pos = pos_v >= params.get('close_position_min', 0.5)
+    bo_all = bo_close and bo_vol and bo_green and bo_pos
+    results.append(ok('⑤ 突破', f'收盘={target["close"]:.2f} 量比={target["volume"]/sma50v:.2f}' if sma50v>0 else f'收盘={target["close"]:.2f}',
+                      f'买点={buy_pt:.2f} 量比≥{params["breakout_vol_ratio"]}') if bo_all
+                   else fail('⑤ 突破', f'收盘={target["close"]:.2f}',
+                             f'买点={buy_pt:.2f} ({"✅" if bo_close else "❌"}突破 {"✅" if bo_vol else "❌"}量 {"✅" if bo_green else "❌"}阳线 {"✅" if bo_pos else "❌"}位置)'))
+    
+    all_pass = data_ok and sma50_ok and dd_ok and rec_all and pa_ok and bo_all
+    
+    return jsonify({
+        'date': date_str,
+        'ohlc': {'open': target['open'], 'high': target['high'], 'low': target['low'], 'close': target['close']},
+        'prior_high': base['prior_high'], 'prior_high_date': base['prior_high_date'],
+        'trough': base['trough'], 'trough_date': base['trough_date'],
+        'drawdown_pct': round(dd_pct, 1),
+        'results': results, 'all_pass': all_pass,
+    })
+
+
+# ═══════════════════════════════════════════════
 # API: GET /api/market-panorama
 # ═══════════════════════════════════════════════
 
