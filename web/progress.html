@@ -47,7 +47,7 @@
 
     <header class="panel-header">
       <h1>📋 欧奈尔投资系统 · 项目进展</h1>
-      <p>2026-05-18</p>
+      <p>2026-05-19</p>
     </header>
 
     <div class="pg-stats">
@@ -189,6 +189,9 @@
     <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">30. KlineChart.update() 在 chart 被 dispose 后静默失效</div><div class="ld">主题切换时 chart.dispose()，后续 update 不走 _render。修复：update 内部检测 isDisposed 时自动 re-init。同时 axisPointer.link 从 [{xAxisIndex:'all'}] 改为 {xAxisIndex:'all'}。</div></div>
     <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">31. 后端硬截断日线数据导致历史回测失效</div><div class="ld">result['daily'][-600:] 硬截到 600 条。选 2021 年起始只看到 2023 年。改为按起止日期动态过滤 + 2000 条安全帽（~10年才触发）。</div></div>
     <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">32. 回测看板标准化模板一劳永逸</div><div class="ld">制作 shared/template-backtest.html，固定 4CSS+6JS+通用函数。新页面复制→改8处🔧标记→完成。nav.js 统一管理导航，新增页面只需加一行到 BACKTEST_ITEMS。chart-legend 迁入 components.css。</div></div>
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">33. nav.js 共享导航栏 — 一改全改</div><div class="ld">26个页面导航栏全部替换为 `<nav id="top-nav">` + `Nav.init({...})`。增删页面只需改 shared/js/nav.js 中的 BACKTEST_ITEMS/MAIN_ITEMS 数组，所有页面自动同步。</div></div>
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">34. YAML嵌套键 vs 引擎平铺读取 — 静默用默认值</div><div class="ld">前端 saveCfg 存 `composite: {threshold: 75}`（嵌套），引擎 load_params 平铺出 `volume_divergence_composite_threshold=75`。引擎读 `params.get('composite',{}).get('threshold',40)` 找不到→用默认40。修复：load_params 先解包顶层键，composite 保持嵌套。</div></div>
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">35. catch(e){} 静默吞错 + svp 函数未定义</div><div class="ld">loadCfg 中 catch(e){} 吞掉 ReferenceError:svp is not defined，整段参数恢复静默失败。前端辅助函数(svp/svn/svs/svs2)必须全部定义后再用。catch 块至少加 console.error。</div></div>
 
     <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>
