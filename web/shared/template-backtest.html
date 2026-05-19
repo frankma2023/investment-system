@@ -129,7 +129,7 @@
 // 🔧 初始化：替换 brandIcon / brandText / currentPage
 Nav.init({brandIcon:'📊',brandText:'模板回测',brandSub:'Template',currentPage:'home'});
 
-const API_URL='http://localhost:8788';
+const API_URL='http://'+window.location.hostname+':8788';
 
 // ─── 通用工具函数（不要删） ───
 function tc(id){document.getElementById(id+'-bd').classList.toggle('collapsed')}

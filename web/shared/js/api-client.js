@@ -1,8 +1,8 @@
 /**
  * api-client.js — Shared API client for all O'Neil backtest dashboards.
- * No hardcoded signal type — each page passes its own.
+ * Auto-detects host so both localhost and LAN (phone) access work.
  */
-const API_BASE = 'http://localhost:8788';
+const API_BASE = 'http://' + window.location.hostname + ':8788';
 
 async function apiFetch(path, opts = {}) {
   const url = API_BASE + path;

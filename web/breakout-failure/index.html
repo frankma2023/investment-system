@@ -145,7 +145,7 @@
 <script>
 Nav.init({brandIcon:'⚠️',brandText:'突破失败回测',currentPage:'breakout-failure'});
 
-const API_URL='http://localhost:8788', ST='breakout_failure';
+const API_URL='http://'+window.location.hostname+':8788', ST='breakout_failure';
 var dl=[],bpSignals=[],failureSignals=[],kc,runId=0,klineDisplayEnd='';
 
 // ─── 工具函数 ───

@@ -64,7 +64,7 @@
 function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('valpct-theme',n);setTimeout(loadData,200)}
 (function(){var s=localStorage.getItem('valpct-theme')||'light';document.documentElement.dataset.theme=s})();
 
-var API='http://localhost:8788',allIndices=[];
+var API='http://'+window.location.hostname+':8788',allIndices=[];
 
 async function init(){
   var resp=await fetch(API+'/api/crowding/indices');

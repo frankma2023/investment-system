@@ -194,12 +194,12 @@
       const code = document.getElementById('stock-code').value.trim();
       if (!code) { btn.disabled = false; btn.textContent = '🥏'; return; }
 
-      try { const nr = await fetch('http://localhost:8788/api/stock-name?code=' + code + '&mode=stock'); if (nr.ok) { const nd = await nr.json(); document.getElementById('stock-name').textContent = nd.name || ''; } } catch (e) { }
+      try { const nr = await fetch('http://'+window.location.hostname+':8788/api/stock-name?code=' + code + '&mode=stock'); if (nr.ok) { const nd = await nr.json(); document.getElementById('stock-name').textContent = nd.name || ''; } } catch (e) { }
 
       try {
         const start = document.getElementById('date-start').value;
         const end = document.getElementById('date-end').value;
-        const resp = await fetch('http://localhost:8788/api/saucer-base?stock=' + code + '&date=' + end + '&start=' + start);
+        const resp = await fetch('http://'+window.location.hostname+':8788/api/saucer-base?stock=' + code + '&date=' + end + '&start=' + start);
         const data = await resp.json();
 
         ck = data.klines || [];
@@ -335,7 +335,7 @@
 
     async function loadCfg() {
       try {
-        const r = await fetch('http://localhost:8788/api/config?signal_type=' + ST, { cache: 'no-store' });
+        const r = await fetch('http://'+window.location.hostname+':8788/api/config?signal_type=' + ST, { cache: 'no-store' });
         const c = await r.json();
         if (!c || !c.saucer_base) return;
         const b = c.saucer_base;
@@ -396,7 +396,7 @@
         ''
       ].join('\n');
       try {
-        const r = await fetch('http://localhost:8788/api/config?signal_type=' + ST, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: y });
+        const r = await fetch('http://'+window.location.hostname+':8788/api/config?signal_type=' + ST, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: y });
         const d = await r.json();
         if (d.ok) { btn.textContent = '✅'; btn.classList.add('saved'); setTimeout(() => { btn.textContent = '💾'; btn.classList.remove('saved'); btn.disabled = false; }, 2000); }
       } catch (e) { btn.textContent = '❌'; btn.disabled = false; }

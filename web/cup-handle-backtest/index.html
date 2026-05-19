@@ -203,12 +203,12 @@
       var code=document.getElementById('stock-code').value.trim();
       var mode=document.getElementById('mode').value;
       if(!code){btn.disabled=false;btn.textContent='☕';return}
-      try{var nr=await fetch('http://localhost:8788/api/stock-name?code='+code+'&mode='+mode);if(nr.ok){var nd=await nr.json();document.getElementById('stock-name').textContent=nd.name||''}}catch(e){}
+      try{var nr=await fetch('http://'+window.location.hostname+':8788/api/stock-name?code='+code+'&mode='+mode);if(nr.ok){var nd=await nr.json();document.getElementById('stock-name').textContent=nd.name||''}}catch(e){}
       try{
         var end=document.getElementById('date-end').value;
         var start=document.getElementById('date-start').value;
         var period=document.getElementById('period').value;
-        var url='http://localhost:8788/api/cup-handle?stock='+code+'&date='+end+'&start='+start+'&mode='+mode;
+        var url='http://'+window.location.hostname+':8788/api/cup-handle?stock='+code+'&date='+end+'&start='+start+'&mode='+mode;
         var resp=await fetch(url);
         var data=await resp.json();
         rawKlines=data.klines||[];
@@ -282,7 +282,7 @@
     }
 
     async function loadCfg(){try{
-      var r=await fetch('http://localhost:8788/api/config?signal_type='+ST,{cache:'no-store'});var c=await r.json();if(!c||!c.cup_handle)return;var b=c.cup_handle;
+      var r=await fetch('http://'+window.location.hostname+':8788/api/config?signal_type='+ST,{cache:'no-store'});var c=await r.json();if(!c||!c.cup_handle)return;var b=c.cup_handle;
       svs2('p-lb',b.lookback||120);svn('p-lb');svs2('p-pa',Math.round((b.min_prior_advance||0.30)*100));svp('p-pa');
       svs2('p-cut',Math.round((b.cut_pct||0.20)*100));svp('p-cut');svs2('p-ca',Math.round((b.cut_check_A_pct||0.02)*100));svp('p-ca');
       svs2('p-lw',b.local_extreme_window||13);svn('p-lw');
@@ -311,7 +311,7 @@
       div.innerHTML='<div style="font-size:0.7rem;color:var(--text-tertiary);padding:8px 0">⏳ 检测中...</div>';
       div.style.display='block';
       try{
-        var resp=await fetch('http://localhost:8788/api/cup-handle/diag?stock='+code+'&date='+date+'&mode='+mode);
+        var resp=await fetch('http://'+window.location.hostname+':8788/api/cup-handle/diag?stock='+code+'&date='+date+'&mode='+mode);
         var d=await resp.json();
         if(d.error){div.innerHTML='<div style="font-size:0.7rem;color:#FF6B6B">'+d.error+'</div>';return}
         var all=d.all_pass,r=d.results;
@@ -345,7 +345,7 @@
         '  breakout_vol_ratio: '+p.breakout_vol_ratio,'  require_green: '+(p.require_green?'true':'false'),
         '  close_position_min: '+p.close_position_min,'  rs_required: '+(p.rs_required?'true':'false'),'  rs_threshold: '+p.rs_threshold,''
       ].join('\n');
-      try{var r=await fetch('http://localhost:8788/api/config?signal_type='+ST,{method:'POST',headers:{'Content-Type':'text/plain'},body:y});var d=await r.json();
+      try{var r=await fetch('http://'+window.location.hostname+':8788/api/config?signal_type='+ST,{method:'POST',headers:{'Content-Type':'text/plain'},body:y});var d=await r.json();
       if(d.ok){btn.textContent='✅';btn.classList.add('saved');setTimeout(function(){btn.textContent='💾';btn.classList.remove('saved');btn.disabled=false},2000)}}
       catch(e){btn.textContent='❌';btn.disabled=false}
     }

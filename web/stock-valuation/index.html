@@ -141,7 +141,7 @@
 function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('stkv-theme',n);setTimeout(loadAll,200)}
 (function(){var s=localStorage.getItem('stkv-theme')||'light';document.documentElement.dataset.theme=s})();
 
-var API='http://localhost:8788';
+var API='http://'+window.location.hostname+':8788';
 
 function switchTab(tab){
   document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active')});

@@ -65,7 +65,7 @@
 <script src="../shared/js/kline-chart.js"></script>
 <script src="../shared/js/theme.js"></script>
 <script>
-  const API_URL='http://localhost:8788';
+  const API_URL='http://'+window.location.hostname+':8788';
   function tc(id){document.getElementById(id+'-bd').classList.toggle('collapsed')}
   function tog(id){var b=document.getElementById(id);b.classList.toggle('on');b.classList.toggle('off')}
   function svp(id){var e=document.getElementById(id),v=document.getElementById(id+'-v');if(e&&v)v.textContent=e.value+'%'}

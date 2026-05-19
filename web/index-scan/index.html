@@ -113,7 +113,7 @@
 
 <script>function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('idxscan-theme',n)}(function(){var s=localStorage.getItem('idxscan-theme')||'light';document.documentElement.dataset.theme=s})();</script>
 <script>
-var API='http://localhost:8788';
+var API='http://'+window.location.hostname+':8788';
 var allData=[];var poolData={};var currentPool='market';var sortCol='rs120';var sortDir='desc';var tierCounts={L1:0,L2:0,L3:0};
 var POOLS=[{key:'market',name:'全市场',count:29},{key:'sector_l1',name:'L1行业',count:11},{key:'sector_l2',name:'L2行业',count:45},{key:'thematic',name:'主题',count:229},{key:'strategy',name:'策略',count:93}];
 

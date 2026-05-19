@@ -156,7 +156,7 @@ th.sortable[data-indicator="desc"]::after { content:'↓'; opacity:1; color:#FE2
 </div>
 <script src="../shared/js/theme.js"></script>
 <script>
-var API='http://localhost:8788', lastData=[], tblSort={key:'code',dir:'asc'};
+var API='http://'+window.location.hostname+':8788', lastData=[], tblSort={key:'code',dir:'asc'};
 function toggleCard(id){document.getElementById(id+'-body').classList.toggle('collapsed')}
 function syncSlider(id){document.getElementById(id+'-v').textContent=document.getElementById(id).value}
 function syncRsi(){document.getElementById('rsi-period-v').textContent=document.getElementById('rsi-period').value}

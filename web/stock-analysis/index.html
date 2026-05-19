@@ -64,7 +64,7 @@
 </div>
 <script src="../shared/js/theme.js"></script>
 <script>
-var API='http://localhost:8788';
+var API='http://'+window.location.hostname+':8788';
 
 async function analyze(){
   var code=document.getElementById('stock-input').value.trim();
