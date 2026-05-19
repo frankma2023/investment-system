@@ -189,7 +189,7 @@ function renderChart(){
   });
   if(!kc||(kc.chart&&kc.chart.isDisposed())){
     kc=KlineChart.create({container:document.getElementById('chart'),klines:kl,signals:sigs,signalMap:sm,signalColor:'#C62828',extraMarkers:xmarks});
-  }else{kc.update(kl,sigs,sm,xmarks)}
+  }kc.update(kl,sigs,sm,xmarks)
 }
 
 // 🔧 信号表格：替换列定义

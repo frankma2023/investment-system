@@ -137,7 +137,7 @@
     });
     if(!kc){
       kc=KlineChart.create({container:document.getElementById('chart'),klines:kl,signals:sigs,signalMap:sm,signalColor:'#C62828',signalTooltipPrefix:'🚂 铁轨线',extraMarkers:xmarks});
-    }else{kc.update(kl,sigs,sm,xmarks)}
+    }kc.update(kl,sigs,sm,xmarks)
   }
 
   async function runDiag(){

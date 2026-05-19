@@ -47,13 +47,16 @@ document.addEventListener('DOMContentLoaded', function () {
   state.chart = echarts.init(document.getElementById('chart'));
 
   // 主题切换
-  document.querySelector('.theme-toggle').addEventListener('click', function () {
-    var html = document.documentElement;
-    var next = html.dataset.theme === 'light' ? 'dark' : 'light';
-    html.dataset.theme = next;
-    document.querySelector('.theme-toggle').textContent = next === 'light' ? '🌙' : '☀️';
-    if (state.data) renderChart();
-  });
+  var themeBtn = document.querySelector('.theme-toggle');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', function () {
+      var html = document.documentElement;
+      var next = html.dataset.theme === 'light' ? 'dark' : 'light';
+      html.dataset.theme = next;
+      themeBtn.textContent = next === 'light' ? '🌙' : '☀️';
+      if (state.data) renderChart();
+    });
+  }
 
   // 主题切换时重绘
   new MutationObserver(function () {

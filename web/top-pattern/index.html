@@ -166,7 +166,7 @@
     var sigColor=signals.length&&signals[0].status==='strong_confirmed'?'#C62828':signals.length&&signals[0].status==='weak_confirmed'?'#E65100':'#1565C0';
     if(!kc||(kc.chart&&kc.chart.isDisposed())){
       kc=KlineChart.create({container:document.getElementById('chart'),klines:kl,signals:sigs,signalMap:sm,signalColor:sigColor,extraMarkers:xmarks});
-    }else{kc.update(kl,sigs,sm,xmarks)}
+    }kc.update(kl,sigs,sm,xmarks)
 
     // 颈线 markLine（ECharts 原生）
     if(signals.length&&signals[0].neckline){

@@ -137,7 +137,7 @@
     });
     var sc=signals.length&&signals[0].signal_level==='strong'?'#C62828':signals.length&&signals[0].signal_level==='moderate'?'#E65100':'#1565C0';
     if(!kc||(kc.chart&&kc.chart.isDisposed())){kc=KlineChart.create({container:document.getElementById('chart'),klines:kl,signals:sigs,signalMap:sm,signalColor:sc})}
-    else{kc.update(kl,sigs,sm)}
+    kc.update(kl,sigs,sm)
   }
 
   function renderTable(){

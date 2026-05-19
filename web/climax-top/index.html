@@ -140,9 +140,8 @@
     });
     if(!kc){
       kc=KlineChart.create({container:document.getElementById('chart'),klines:kl,signals:warningSigs,signalMap:sm,signalColor:'#E65100',signalTooltipPrefix:'⚠️ 高潮进行中',extraMarkers:confirmedMarkers});
-    } else {
-      kc.update(kl,warningSigs,sm,confirmedMarkers);
     }
+    kc.update(kl,warningSigs,sm,confirmedMarkers);
   }
 
   async function runDiag(){
