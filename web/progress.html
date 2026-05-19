@@ -47,11 +47,11 @@
 
     <header class="panel-header">
       <h1>📋 欧奈尔投资系统 · 项目进展</h1>
-      <p>2026-05-19</p>
+      <p>2026-05-19（阶段收尾）</p>
     </header>
 
     <div class="pg-stats">
-      <div class="pg-stat"><div class="n" style="color:#4CAF50">40</div><div class="l">已完成</div></div>
+      <div class="pg-stat"><div class="n" style="color:#4CAF50">41</div><div class="l">已完成</div></div>
       <div class="pg-stat"><div class="n" style="color:#FF9800">0</div><div class="l">进行中</div></div>
       <div class="pg-stat"><div class="n">7</div><div class="l">待开发</div></div>
     </div>
@@ -98,12 +98,13 @@
       </div>
 
       <div class="pg-card">
-        <h3>🚨 卖出信号 <span class="badge" style="background:#FCE4EC;color:#C62828">5项</span></h3>
+        <h3>🚨 卖出信号 <span class="badge" style="background:#FCE4EC;color:#C62828">6项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-done"></span>🔴 高潮见顶+回测</td><td>/climax-top/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>🚂 铁轨线+回测</td><td>/railroad-tracks/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>📉 抛盘日 v3.0</td><td>重抛盘日×2+确认日抵消</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>📈 基部突破 Layer 1</td><td>/base-breakout/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>⚠️ 突破失败检测 v1.0</td><td>/breakout-failure/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>🏷️ VCP 形态标注器</td><td>base_tags.py</td></tr>
         </table>
       </div>
@@ -148,7 +149,6 @@
           <tr><td><span class="pg-dot dot-todo"></span>碟形基部</td><td>saucer_base</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>VCP波动率收缩</td><td>vcp</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>量价背离与出货</td><td>diverge_distribution</td></tr>
-          <tr><td><span class="pg-dot dot-todo"></span>突破失败形态</td><td>failed_breakout</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>基本面恶化</td><td>fundamental_deterioration</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>大盘环境卖出</td><td>market_exit</td></tr>
         </table>
@@ -192,6 +192,8 @@
     <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">33. nav.js 共享导航栏 — 一改全改</div><div class="ld">26个页面导航栏全部替换为 `<nav id="top-nav">` + `Nav.init({...})`。增删页面只需改 shared/js/nav.js 中的 BACKTEST_ITEMS/MAIN_ITEMS 数组，所有页面自动同步。</div></div>
     <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">34. YAML嵌套键 vs 引擎平铺读取 — 静默用默认值</div><div class="ld">前端 saveCfg 存 `composite: {threshold: 75}`（嵌套），引擎 load_params 平铺出 `volume_divergence_composite_threshold=75`。引擎读 `params.get('composite',{}).get('threshold',40)` 找不到→用默认40。修复：load_params 先解包顶层键，composite 保持嵌套。</div></div>
     <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">35. catch(e){} 静默吞错 + svp 函数未定义</div><div class="ld">loadCfg 中 catch(e){} 吞掉 ReferenceError:svp is not defined，整段参数恢复静默失败。前端辅助函数(svp/svn/svs/svs2)必须全部定义后再用。catch 块至少加 console.error。</div></div>
+
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">36. 突破失败检测架构：统一引擎 + 三级严重级别 + 7条独立规则</div><div class="ld">突破失败无需按8种基部形态分拆——和Layer 1统一突破检测同理，所有基部形态的突破失败共享同一个骨架：突破后N日收盘<关键价位+成交量验证。7条规则(B~H)每条可独立开关，三级严重级别(mild/confirmed/severe)，每次触发都独立产出信号。诊断端点用 need/actual 对比格式一目了然。K线图用五角星(SVG path)三级颜色，位于收盘价下方 range*0.75 偏移堆叠。回测看板三参数卡+信号表(11列)+单日排查(方案B:突破日+检查日双选)。</div></div>
 
     <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>

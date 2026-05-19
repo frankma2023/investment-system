@@ -756,7 +756,6 @@ def api_saucer_base():
         klines_out = daily
         if start:
             klines_out = [k for k in daily if k['date'] >= start]
-        klines_out = klines_out[-600:]
         
         return jsonify({'signals': filtered, 'klines': klines_out})
     except Exception as e:
@@ -816,7 +815,6 @@ def api_cup_handle():
         s['stock_code'] = code
     
     klines_out = [k for k in daily if k['date'] >= start]
-    klines_out = klines_out[-600:]
     
     return jsonify({'signals': signals, 'klines': klines_out})
 
@@ -1019,7 +1017,6 @@ def api_base_breakout():
         s['tags'] = tag_signal(daily, s, vcp_params)
     
     klines_out = [k for k in daily if k['date'] >= start]
-    klines_out = klines_out[-600:]
     
     return jsonify({'signals': signals, 'klines': klines_out})
 
@@ -1127,6 +1124,164 @@ def api_base_breakout_diag():
         'drawdown_pct': round(dd_pct, 1),
         'results': results, 'all_pass': all_pass,
     })
+
+
+# ═══════════════════════════════════════════════
+# API: GET /api/breakout-failure
+# ═══════════════════════════════════════════════
+
+@app.route('/api/breakout-failure')
+def api_breakout_failure():
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    start = request.args.get('start', None)
+    mode = request.args.get('mode', 'stock')
+
+    if not start:
+        start = (datetime.strptime(date_str, '%Y-%m-%d') - timedelta(days=730)).strftime('%Y-%m-%d')
+
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    kf = "AND kline_type='normal'" if mode == 'index' else ''
+    code_col = 'stock_code'
+
+    from scanners.breakout_failure import detect as detect_failure, load_params
+    from scanners.base_breakout import load_params as load_bp_params
+
+    params = load_params()
+    monitor_days = params['monitor_days']
+
+    # 方案A：静默扩展 end 最多 monitor_days 天，但不超过今天
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    display_end = date_str
+    extended_end = date_str
+    if date_str < today_str:
+        extended_dt = datetime.strptime(date_str, '%Y-%m-%d') + timedelta(days=monitor_days * 2)
+        max_dt = min(extended_dt, datetime.now())
+        extended_end = max_dt.strftime('%Y-%m-%d')
+
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? {kf} AND date>=date(?, '-500 days') AND date<=?
+        ORDER BY date""", (code, start, extended_end)).fetchall()
+
+    if not klines:
+        return jsonify({'signals': [], 'klines': [], 'klines_display_end': display_end, 'breakout_signals': [], 'failure_signals': [], 'stats': {}})
+
+    daily = [dict(r) for r in klines]
+
+    # 解析可选参数覆盖 YAML
+    bp_params = load_bp_params()
+    for k in ['lookback', 'min_base_days', 'min_descent_days', 'drawdown_min', 'drawdown_max',
+              'min_recovery', 'min_prior_advance', 'breakout_vol_ratio', 'close_position_min']:
+        if request.args.get(k):
+            bp_params[k] = float(request.args.get(k))
+    for k in ['require_green', 'sma50_check']:
+        if request.args.get(k) is not None:
+            bp_params[k] = request.args.get(k).lower() in ('true', '1', 'yes')
+
+    # 失败参数覆盖
+    for k in params:
+        if request.args.get(k) is not None:
+            v = request.args.get(k)
+            if isinstance(params[k], bool):
+                params[k] = v.lower() in ('true', '1', 'yes')
+            elif isinstance(params[k], int):
+                params[k] = int(v)
+            elif isinstance(params[k], float):
+                params[k] = float(v)
+
+    # 获取突破信号和失败信号
+    bp_signals_raw = []
+    from scanners.base_breakout import detect as detect_breakout
+    bp_signals_raw = detect_breakout(daily, bp_params)
+
+    # 只保留 display_end 之前的突破
+    bp_signals = [s for s in bp_signals_raw if s['signal_date'] <= display_end]
+
+    # 运行失败检测
+    failure_signals = detect_failure(daily, bp_params=bp_params)
+
+    # 过滤失败信号：只保留其 breakout_date <= display_end 且 date <= display_end 的
+    failure_signals = [f for f in failure_signals
+                       if f['breakout_date'] <= display_end and f['date'] <= display_end]
+
+    # K线输出
+    klines_out = [k for k in daily if k['date'] >= start]
+
+    # 统计
+    total_breakouts = len(bp_signals)
+    total_failures = len(failure_signals)
+    failed_bo_dates = set(f['breakout_date'] for f in failure_signals)
+    failed_breakouts = len(failed_bo_dates)
+    failure_rate = round(failed_breakouts / total_breakouts * 100, 1) if total_breakouts > 0 else 0
+    by_severity = {'mild': 0, 'confirmed': 0, 'severe': 0}
+    for f in failure_signals:
+        sev = f.get('severity', 'mild')
+        by_severity[sev] = by_severity.get(sev, 0) + 1
+
+    return jsonify({
+        'code': code,
+        'klines': klines_out,
+        'klines_display_end': display_end,
+        'breakout_signals': bp_signals,
+        'failure_signals': failure_signals,
+        'stats': {
+            'total_breakouts': total_breakouts,
+            'total_failures': total_failures,
+            'failed_breakouts': failed_breakouts,
+            'failure_rate_pct': failure_rate,
+            'by_severity': by_severity,
+        }
+    })
+
+
+# ═══════════════════════════════════════════════
+# API: GET /api/breakout-failure/diag
+# ═══════════════════════════════════════════════
+
+@app.route('/api/breakout-failure/diag')
+def api_breakout_failure_diag():
+    code = request.args.get('stock', '600519')
+    breakout_date = request.args.get('breakout_date', '')
+    check_date = request.args.get('check_date', datetime.now().strftime('%Y-%m-%d'))
+    mode = request.args.get('mode', 'stock')
+
+    if not breakout_date:
+        return jsonify({'error': '缺少 breakout_date 参数'})
+
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    kf = "AND kline_type='normal'" if mode == 'index' else ''
+    code_col = 'stock_code'
+
+    from scanners.breakout_failure import diagnose, load_params
+    params = load_params()
+    monitor_days = params['monitor_days']
+
+    # 获取从 breakout_date 前 500 天到 check_date 后 monitor_days 天的数据
+    extended_end = (datetime.strptime(check_date, '%Y-%m-%d') + timedelta(days=monitor_days * 2)).strftime('%Y-%m-%d')
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? {kf} AND date>=date(?, '-500 days') AND date<=?
+        ORDER BY date""", (code, breakout_date, extended_end)).fetchall()
+
+    if not klines:
+        return jsonify({'error': '无K线数据'})
+
+    daily = [dict(r) for r in klines]
+
+    result = diagnose(daily, breakout_date, check_date)
+
+    # 获取股票名称
+    name = code
+    if mode != 'index':
+        name_row = db.execute("SELECT name FROM stock_basic WHERE stock_code=?", (code,)).fetchone()
+        if name_row:
+            name = name_row['name']
+
+    result['code'] = code
+    result['name'] = name
+
+    return jsonify(result)
 
 
 @app.route('/api/climax-top')

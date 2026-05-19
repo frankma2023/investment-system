@@ -17,6 +17,7 @@
  *   | 'index-scan' | 'index-valuation' | 'stock-valuation' | 'market-scan'
  *   | 'daily-pattern-scan' | 'canslim-scores'
  *   | 'railroad-tracks' | 'climax-top' | 'top-pattern' | 'double-bottom' | 'flat-base'
+ *   | 'breakout-failure'
  */
 
 (function (global) {
@@ -46,6 +47,7 @@
     { href: '../climax-top/',           icon: '📉', label: '高潮见顶',         page: 'climax-top' },
     { href: '../top-pattern/',          icon: '⛰️', label: '头部形态',         page: 'top-pattern' },
     { href: '../volume-divergence/',    icon: '📊', label: '量价背离',         page: 'volume-divergence' },
+    { href: '../breakout-failure/',    icon: '⚠️', label: '突破失败',         page: 'breakout-failure' },
     { href: '../pattern-scan/',         icon: '🔎', label: '形态识别',         page: 'pattern-scan' },
     { href: '../canslim-scorecard/',    icon: '🎯', label: 'CAN SLIM 评分卡',  page: 'canslim-scorecard' },
   ];

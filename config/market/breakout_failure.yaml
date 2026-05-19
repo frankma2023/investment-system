@@ -1,0 +1,27 @@
+# 基部突破失败检测 配置
+breakout_failure:
+  # 监控窗口
+  monitor_days: 10
+
+  # 规则开关
+  rule_b_enabled: true
+  rule_c_enabled: true
+  rule_d_enabled: true
+  rule_e_enabled: true
+  rule_f_enabled: true
+  rule_g_enabled: true
+  rule_h_enabled: true
+
+  # 规则参数
+  rule_d_trough_mult: 0.98
+  rule_e_chg_pct: 3.0
+  rule_e_vol_ratio: 1.5
+  rule_f_days: 3
+  rule_f_vol_ratio: 1.0
+  rule_g_dd_threshold: -0.2
+  rule_g_window: 3
+  rule_g_count: 2
+  rule_h_total_vol_ratio: 1.2
+
+  # 基础参数
+  vol_ma_days: 50

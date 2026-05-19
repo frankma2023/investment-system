@@ -212,18 +212,23 @@
     var mas = {};
     o.maLines.forEach(function (p) { mas[p] = computeMA(ck, p); });
 
-    // ── 信号点 ──
+    // ── 信号点（支持 per-point 样式覆盖）──
     var pts = [];
     cs.forEach(function (s) {
-      var si = dates.indexOf(s.signal_date);
+      var si = dates.indexOf(s.signal_date || s.date);
       if (si < 0) return;
+      var y = s.y != null ? s.y : s.buy_point;
+      var sy = s.symbol || o.signalSymbol;
+      var ss = s.size || s.signalSize || o.signalSize;
+      var sc = s.color || o.signalColor;
+      var label = s.label || (o.signalTooltipPrefix + ' ¥' + (s.buy_point != null ? s.buy_point : y));
       pts.push({
         name: o.signalTooltipPrefix,
-        coord: [si, s.buy_point],
-        value: o.signalTooltipPrefix + ' ¥' + s.buy_point,
-        symbol: o.signalSymbol,
-        symbolSize: o.signalSize,
-        itemStyle: { color: o.signalColor, borderColor: '#FFF', borderWidth: 1 },
+        coord: [si, y],
+        value: label,
+        symbol: sy,
+        symbolSize: ss,
+        itemStyle: { color: sc, borderColor: '#FFF', borderWidth: 1 },
         label: { show: !!o.signalLabel },
       });
     });
