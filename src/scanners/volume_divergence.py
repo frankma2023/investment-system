@@ -52,11 +52,13 @@ def load_params() -> Dict:
         'high_shrink_dist_max': 0.10,
         'high_shrink_vol_ratio_max': 0.70,
         'enable_composite': True,
-        'composite_threshold': 40,
-        'composite_factor1': 25,
-        'composite_factor2': 25,
-        'composite_factor3': 25,
-        'composite_factor4': 25,
+        'composite': {
+            'threshold': 40,
+            'factor1': 25,
+            'factor2': 25,
+            'factor3': 25,
+            'factor4': 25,
+        },
         'nhs_lookback_days': 20,
         'nhs_vol_ratio_max': 0.85,
         'ss_lookback_days': 10,
@@ -73,12 +75,19 @@ def load_params() -> Dict:
     if os.path.exists(cfg_path):
         with open(cfg_path, encoding='utf-8') as f:
             cfg = yaml.safe_load(f) or {}
+        # 解包顶层 volume_divergence 键
+        if 'volume_divergence' in cfg:
+            cfg = cfg['volume_divergence']
         for k, v in cfg.items():
             if isinstance(v, dict):
-                prefix = {'new_high_shrink': 'nhs', 'stall_surge': 'ss',
-                          'drop_surge': 'ds', 'rally_dry': 'rd'}.get(k, k)
-                for kk, vv in v.items():
-                    defaults[f'{prefix}_{kk}'] = vv
+                # composite 保持嵌套结构，其他平铺
+                if k == 'composite':
+                    defaults['composite'].update(v)
+                else:
+                    prefix = {'new_high_shrink': 'nhs', 'stall_surge': 'ss',
+                              'drop_surge': 'ds', 'rally_dry': 'rd'}.get(k, k)
+                    for kk, vv in v.items():
+                        defaults[f'{prefix}_{kk}'] = vv
             else:
                 defaults[k] = v
     return defaults
@@ -271,8 +280,9 @@ def detect(
     if params.get('enable_composite', True) and today_idx >= 60:
         score = 0
         reasons = []
-        fw = {'f1': params.get('composite_factor1', 25), 'f2': params.get('composite_factor2', 25), 'f3': params.get('composite_factor3', 25), 'f4': params.get('composite_factor4', 25)}
-        threshold = params.get('composite_threshold', 40)
+        cp = params.get('composite', {}) or {}
+        fw = {'f1': cp.get('factor1', 25), 'f2': cp.get('factor2', 25), 'f3': cp.get('factor3', 25), 'f4': cp.get('factor4', 25)}
+        threshold = cp.get('threshold', 40)
         # 因子1: VR弹性 (0-25) — 价格加速但VR未同步放大
         seg30_c = closes[today_idx - 29:today_idx + 1]
         seg30_v = volumes[today_idx - 29:today_idx + 1]

@@ -12,9 +12,9 @@ volume_divergence:
     vol_ratio_max: 0.7
   high_shrink:
     dist_max: 0.1
-    vol_ratio_max: 0.7
+    vol_ratio_max: 0.62
   composite:
-    threshold: 55
+    threshold: 75
     factor1: 25
     factor2: 25
     factor3: 25
