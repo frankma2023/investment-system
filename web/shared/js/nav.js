@@ -45,6 +45,7 @@
     { href: '../railroad-tracks/',      icon: '🚂', label: '铁轨线',           page: 'railroad-tracks' },
     { href: '../climax-top/',           icon: '📉', label: '高潮见顶',         page: 'climax-top' },
     { href: '../top-pattern/',          icon: '⛰️', label: '头部形态',         page: 'top-pattern' },
+    { href: '../volume-divergence/',    icon: '📊', label: '量价背离',         page: 'volume-divergence' },
     { href: '../pattern-scan/',         icon: '🔎', label: '形态识别',         page: 'pattern-scan' },
     { href: '../canslim-scorecard/',    icon: '🎯', label: 'CAN SLIM 评分卡',  page: 'canslim-scorecard' },
   ];

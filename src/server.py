@@ -1353,6 +1353,56 @@ def api_top_pattern_diag():
     return jsonify(diag)
 
 # ═══════════════════════════════════════════════
+# API: GET /api/volume-divergence (量价背离)
+# ═══════════════════════════════════════════════
+
+@app.route('/api/volume-divergence')
+def api_volume_divergence():
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    start = request.args.get('start', None)
+    mode = request.args.get('mode', 'stock')
+    if not start:
+        start = (datetime.strptime(date_str, '%Y-%m-%d') - timedelta(days=730)).strftime('%Y-%m-%d')
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    code_col = 'stock_code'
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? AND date<=? AND date>=?
+        ORDER BY date""", (code, date_str, start)).fetchall()
+    if len(klines) < 60:
+        return jsonify({'error': f'K线不足 ({len(klines)}条)'})
+    daily = [dict(r) for r in klines]
+    from scanners.volume_divergence import detect_range, load_params
+    params = load_params()
+    result = detect_range(daily, params, stock_code=code)
+    return jsonify({'daily': daily, 'signals': result, 'stock_code': code})
+
+
+@app.route('/api/volume-divergence/diag')
+def api_volume_divergence_diag():
+    code = request.args.get('stock', '600519')
+    date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    start = request.args.get('start', None)
+    mode = request.args.get('mode', 'stock')
+    if not start:
+        start = (datetime.strptime(date_str, '%Y-%m-%d') - timedelta(days=730)).strftime('%Y-%m-%d')
+    db = get_db()
+    table = 'index_daily_kline' if mode == 'index' else 'daily_kline'
+    code_col = 'stock_code'
+    klines = db.execute(f"""SELECT date, open, high, low, close, volume FROM {table}
+        WHERE {code_col}=? AND date<=? AND date>=?
+        ORDER BY date""", (code, date_str, start)).fetchall()
+    if len(klines) < 60:
+        return jsonify({'error': f'K线不足 ({len(klines)}条)'})
+    daily = [dict(r) for r in klines]
+    from scanners.volume_divergence import get_diag, load_params
+    params = load_params()
+    diag = get_diag(daily, params, stock_code=code)
+    return jsonify(diag)
+
+
+# ═══════════════════════════════════════════════
 # API: GET /api/market-panorama
 # ═══════════════════════════════════════════════
 
