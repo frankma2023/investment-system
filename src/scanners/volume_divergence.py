@@ -218,7 +218,8 @@ def detect(
         prior_decline = (prior_high - prior_low) / prior_high if prior_high > 0 else 0
         if (rally >= params['rd_rally_min']
                 and prior_decline >= params['rd_prior_decline_min']
-                and vol_ratio < params['rd_vol_ratio_max']):
+                and vol_ratio < params['rd_vol_ratio_max']
+                and closes[today_idx] > closes[today_idx - 1]):
             signals.append({
                 'signal_date': dates[today_idx],
                 'stock_code': stock_code,

@@ -2,19 +2,24 @@
 volume_divergence:
   vol_ma_days: 20
   new_high_shrink:
-    vol_ratio_max: 0.5
-    prior_peak_vol_ratio: 0.6
+    lookback_days: 50
+    vol_ratio_max: 0.81
+    prior_peak_vol_ratio: 0.52
   drop_surge:
     decline_min: 0.02
     vol_ratio_min: 2
   rally_dry:
     rally_min: 0.02
-    vol_ratio_max: 0.53
+    vol_ratio_max: 0.5
+  stall_surge:
+    price_range_max: 0.08
+    prior_gain_min: 0.1
+    vol_ratio_min: 1.5
   high_shrink:
     dist_max: 0.1
-    vol_ratio_max: 0.53
+    vol_ratio_max: 0.52
   composite:
-    threshold: 75
+    threshold: 80
     factor1: 25
     factor2: 25
     factor3: 25
