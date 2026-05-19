@@ -41,8 +41,9 @@
       </div></div>
 
       <div class="param-card" id="c3"><div class="param-card-hd" onclick="tc('c3')"><span class="dot" style="background:#E65100"></span>🟡 新高缩量</div><div class="param-card-bd" id="c3-bd">
+        <div class="sr"><span class="sl">新高天数</span><input type="range" id="p-nd" min="10" max="50" value="20" oninput="svn('p-nd')"><span class="sv" id="p-nd-v">20</span></div>
         <div class="sr"><span class="sl">前高量比</span><input type="range" id="p-np" min="30" max="90" value="60" oninput="svs('p-np',0.01)"><span class="sv" id="p-np-v">0.60</span></div>
-        <div class="sr"><span class="sl">量比上限</span><input type="range" id="p-nv" min="50" max="95" value="60" oninput="svs('p-nv',0.01)"><span class="sv" id="p-nv-v">0.80</span></div>
+        <div class="sr"><span class="sl">量比上限</span><input type="range" id="p-nv" min="50" max="95" value="85" oninput="svs('p-nv',0.01)"><span class="sv" id="p-nv-v">0.80</span></div>
       </div></div>
 
       <div class="param-card" id="c4"><div class="param-card-hd" onclick="tc('c4')"><span class="dot" style="background:#1565C0"></span>⚠️ 回升无量</div><div class="param-card-bd" id="c4-bd">
@@ -58,7 +59,7 @@
 
       <!-- 综合因子参数 -->
       <div class="param-card" id="c5"><div class="param-card-hd" onclick="tc('c5')"><span class="dot" style="background:#7B1FA2"></span>🟣 综合因子</div><div class="param-card-bd" id="c5-bd">
-        <div class="sr"><span class="sl">触发阈值</span><input type="range" id="p-cs" min="25" max="80" value="55" oninput="svn('p-cs')"><span class="sv" id="p-cs-v">40</span></div>
+        <div class="sr"><span class="sl">触发阈值</span><input type="range" id="p-cs" min="25" max="80" value="40" oninput="svn('p-cs')"><span class="sv" id="p-cs-v">40</span></div>
         <div class="sr"><span class="sl">VR弹性</span><input type="range" id="p-f1" min="0" max="25" value="25" oninput="svn('p-f1')"><span class="sv" id="p-f1-v">25</span></div>
         <div class="sr"><span class="sl">量趋势斜率</span><input type="range" id="p-f2" min="0" max="25" value="25" oninput="svn('p-f2')"><span class="sv" id="p-f2-v">25</span></div>
         <div class="sr"><span class="sl">量峰衰减</span><input type="range" id="p-f3" min="0" max="25" value="25" oninput="svn('p-f3')"><span class="sv" id="p-f3-v">25</span></div>
@@ -154,7 +155,7 @@
 
   function gp(){return {volume_divergence:{
     vol_ma_days:parseInt(document.getElementById('p-vm').value),
-    new_high_shrink:{vol_ratio_max:parseInt(document.getElementById('p-nv').value)/100,prior_peak_vol_ratio:parseInt(document.getElementById('p-np').value)/100},
+    new_high_shrink:{lookback_days:parseInt(document.getElementById('p-nd').value),vol_ratio_max:parseInt(document.getElementById('p-nv').value)/100,prior_peak_vol_ratio:parseInt(document.getElementById('p-np').value)/100},
     drop_surge:{decline_min:parseInt(document.getElementById('p-dd').value)/1000,vol_ratio_min:parseInt(document.getElementById('p-dv').value)/10},
     rally_dry:{rally_min:parseInt(document.getElementById('p-rr').value)/1000,vol_ratio_max:parseInt(document.getElementById('p-rv').value)/100},
     high_shrink:{dist_max:parseInt(document.getElementById('p-hd').value)/100,vol_ratio_max:parseInt(document.getElementById('p-hv').value)/100},

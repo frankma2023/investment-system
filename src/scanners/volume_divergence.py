@@ -139,9 +139,9 @@ def detect(
 
     # ─── 信号1：新高缩量 ───
     if params.get('enable_new_high_shrink', True):
-        lb = params['nhs_lookback_days']
-        recent_high = max(highs[max(0, today_idx - lb):today_idx])
-        if highs[today_idx] > recent_high:
+        lb = params.get('nhs_lookback_days', 20)
+        recent_high = max(closes[max(0, today_idx - lb):today_idx])
+        if closes[today_idx] > recent_high:
             # 条件A：相对均量萎缩
             shrink_a = vol_ratio < params['nhs_vol_ratio_max']
             # 条件B：相对前高量萎缩（前40日最高量日，当日量 < 其60%）
