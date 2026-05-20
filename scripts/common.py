@@ -148,7 +148,7 @@ def api_post(path: str, payload: Dict[str, Any], timeout: int = DEFAULT_TIMEOUT)
         try:
             resp = session.post(url, json=payload, timeout=timeout)
             if resp.status_code == 429:
-                wait_s = 5 * (attempt + 1)  # 5s, 10s, 15s
+                wait_s = 2 ** attempt  # 1s, 2s, 4s
                 log.warning(f"触发 429 限流，等待 {wait_s} 秒后重试...")
                 time.sleep(wait_s)
                 continue

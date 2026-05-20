@@ -275,17 +275,29 @@ def save_quarterly(conn, raw_data: List[Dict]) -> int:
 
 
 # ════════════════════════════════════════════════════════
-# 年度数据拉取（逐只！参见踩坑指南坑1）
+# 年度数据拉取（时间范围模式 — 一次拉多年，减少80%请求）
 # ════════════════════════════════════════════════════════
+# 踩坑指南坑1：y. 前缀指标不能批量 stockCodes，只能逐只拉。
+# 优化：用 startDate+endDate 一次拉10年，替代逐只×逐年的双重循环。
 
-def fetch_annual_one(code: str, date_str: str) -> List[Dict]:
-    """逐只拉取年度财报（api_post 内置限流，无需额外 limiter）"""
+def fetch_annual_range(code: str, start_date: str, end_date: str) -> List[Dict]:
+    """逐只按时间范围拉取年度财报（一次拉多年，≤10年）"""
     payload = {
         "stockCodes": [code],
-        "date": date_str,
+        "startDate": start_date,
+        "endDate": end_date,
         "metricsList": [m[0] for m in ANNUAL_METRICS],
     }
     return api_post(API_PATH, payload)
+
+
+def get_existing_annual_years(conn, code: str) -> set:
+    """查询某只股票已有的年度数据年份"""
+    rows = conn.execute(
+        "SELECT report_date FROM stock_financials_annual WHERE stock_code = ?",
+        (code,)
+    ).fetchall()
+    return {r["report_date"][:4] for r in rows}
 
 
 def save_annual_one(conn, raw_data: List[Dict]) -> int:
@@ -442,30 +454,42 @@ def main():
     # ── 年度数据 ──
     if do_annual:
         log.info("=" * 60)
-        log.info("📊 年度财务数据（逐只模式，≈15只/秒）")
-        log.info(f"   报告期: {annual_dates}")
+        log.info("📊 年度财务数据（时间范围模式，1次/只拉10年）")
+        log.info(f"   报告期: {annual_dates[0]} ~ {annual_dates[-1]}")
 
         all_codes = get_all_stock_codes(conn)
         log.info(f"   股票数量: {len(all_codes)}")
-        log.info(f"   预估耗时: {len(all_codes) * len(annual_dates) / 15 / 60:.0f} 分钟")
+
+        # 确定目标年份集合
+        target_years = set(d[:4] for d in annual_dates)
+        start_date = annual_dates[0]
+        end_date = annual_dates[-1]
 
         total_a_saved = 0
-        for date_str in annual_dates:
-            log.info(f"  [{date_str}] 开始拉取...")
-            date_saved = 0
-            for i, code in enumerate(all_codes):
-                try:
-                    raw = fetch_annual_one(code, date_str)
-                    n = save_annual_one(conn, raw)
-                    total_a_saved += n
-                    date_saved += n
-                    if (i + 1) % 100 == 0 or (i + 1) == len(all_codes):
-                        log.info(f"    [{i+1}/{len(all_codes)}] +{date_saved} 条 (当前日期累计)")
-                except Exception as e:
-                    log.error(f"    [{i+1}/{len(all_codes)}] {code} ❌ {e}")
-                    time.sleep(5)
-            log.info(f"  [{date_str}] ✅ 完成: {date_saved} 条")
+        skipped = 0
+        batch_size = 200  # 进度汇报间隔
 
+        for i, code in enumerate(all_codes):
+            # 跳过已有全部目标年份数据的股票
+            existing = get_existing_annual_years(conn, code)
+            if target_years.issubset(existing):
+                skipped += 1
+                if (i + 1) % batch_size == 0:
+                    log.info(f"    [{i+1}/{len(all_codes)}] 已跳过 {skipped} 只（数据完整）")
+                continue
+
+            try:
+                raw = fetch_annual_range(code, start_date, end_date)
+                n = save_annual_one(conn, raw)
+                total_a_saved += n
+            except Exception as e:
+                log.error(f"    [{i+1}/{len(all_codes)}] {code} ❌ {e}")
+                time.sleep(5)
+
+            if (i + 1) % batch_size == 0:
+                log.info(f"    [{i+1}/{len(all_codes)}] +{total_a_saved} 条 (跳过 {skipped} 只)")
+
+        log.info(f"  ✅ 完成: +{total_a_saved} 条, 跳过 {skipped} 只（已有完整数据）")
         log.info(f"📊 年度合计: {total_a_saved} 条")
 
     # ── 打印最终统计 ──

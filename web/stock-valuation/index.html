@@ -77,6 +77,7 @@
     <button class="tab" onclick="switchTab('health')">🏥 财务健康</button>
     <button class="tab" onclick="switchTab('strength')">📈 市场强度</button>
     <button class="tab" onclick="switchTab('eval')">🧮 财务评估</button>
+    <button class="tab" onclick="switchTab('fund')">🩺 基本面评估</button>
   </div>
 
   <!-- Tab1: 估值仪表 -->
@@ -137,6 +138,11 @@
     <div id="eval-results"></div>
   </div>
 
+  <div class="tab-content" id="tab-fund">
+    <div id="fund-loading" style="text-align:center;padding:40px;color:var(--text-tertiary);font-family:var(--font-display);display:none">⏳ 检测中...</div>
+    <div id="fund-results"></div>
+  </div>
+
 <script>
 function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('stkv-theme',n);setTimeout(loadAll,200)}
 (function(){var s=localStorage.getItem('stkv-theme')||'light';document.documentElement.dataset.theme=s})();
@@ -150,6 +156,7 @@ function switchTab(tab){
   event.target.classList.add('active');
   if(tab!=='strength')setTimeout(function(){resizeCharts()},300);
   if(tab==='eval')loadEval();
+  if(tab==='fund')loadFund();
   if(tab==='strength'){setTimeout(function(){var c=document.getElementById('stock-input').value||'600519';loadStrength(c)},100)}
 }
 
@@ -807,6 +814,99 @@ function modelAnalysis(m){
   h+='<p>• <strong>CapEx是关键变量</strong>：如果未来公司不再需要大规模资本开支（比如产能建设高峰已过），自由现金流会大幅跳升。模型假定CapEx率恒定（'+capex+'），但实际情况可能变化——这是读这份报告时最需要关注的假设。</p>';
 
   return h;
+}
+
+// ══════ 基本面评估 ══════
+async function loadFund(){
+  var code=document.getElementById('stock-input').value||'600519';
+  var el=document.getElementById('fund-loading');
+  el.style.display='block';document.getElementById('fund-results').innerHTML='';
+  try{
+    var resp=await fetch(API+'/api/fundamental-deterioration?code='+code);
+    var data=await resp.json();
+    if(data.error){document.getElementById('fund-results').innerHTML='<div class="xhs-card"><div style="padding:16px;color:var(--color-up)">'+data.error+'</div></div>';return}
+    if(data.verdict==='insufficient_data'){document.getElementById('fund-results').innerHTML='<div class="xhs-card"><div style="padding:16px;color:var(--text-tertiary)">📋 '+ (data.reason || '数据不足，需积累更多财报') +'</div></div>';return}
+    renderFund(data);
+  }catch(e){document.getElementById('fund-results').innerHTML='<div style="padding:16px;color:var(--color-up)">请求失败: '+e.message+'</div>'}
+  finally{el.style.display='none'}
+}
+
+function renderFund(data){
+  var verdictMap={sell:{icon:'🔴',label:'基本面恶化 · 建议卖出',color:'#C62828',bg:'#FFEBEE'},watch:{icon:'🟡',label:'进入观察清单',color:'#E65100',bg:'#FFF3E0'},ok:{icon:'🟢',label:'基本面健康',color:'#2E7D32',bg:'#E8F5E9'}};
+  var v=verdictMap[data.verdict]||verdictMap.ok;
+  var checks=data.checks||{};
+  var order=['eps_growth','revenue_growth','net_margin','gross_margin','roe','annual_eps'];
+  var h='';
+  h+='<div class="xhs-card" style="margin-bottom:12px;border-left:4px solid '+v.color+'">';
+  h+='<div style="padding:12px 16px;display:flex;align-items:flex-start;gap:10px">';
+  h+='<span style="font-size:1.5rem">'+v.icon+'</span>';
+  h+='<div style="flex:1"><div style="font-weight:800;font-size:0.9rem;color:'+v.color+'">'+v.label+'</div>';
+  h+='<div style="font-size:0.62rem;color:var(--text-tertiary)">最新财报: '+data.latest_report_date+'</div>';
+  // 列出红灯项
+  var redItems=[];
+  order.forEach(function(key){
+    var c=checks[key];if(!c)return;
+    if(c.status==='red'&&!c.display_only)redItems.push(c.label);
+  });
+  if(redItems.length>0){
+    h+='<div style="font-size:0.6rem;color:#C62828;margin-top:4px;font-weight:600">🔴 红灯项：'+redItems.join('、')+'</div>';
+  }
+  h+='</div></div>';
+
+  order.forEach(function(key){
+    var c=checks[key];if(!c)return;
+    var isRed=c.status==='red',isGreen=c.status==='green',isNa=c.status==='na';
+    var icon=isRed?'🔴':isGreen?'🟢':'⚪';
+    var displayOnly=c.display_only?' (仅展示)':'';
+    h+='<div class="xhs-card" style="margin-bottom:8px">';
+    h+='<div class="xhs-card-header"><span class="xhs-card-label">'+icon+' '+c.label+displayOnly+'</span></div>';
+    // 趋势图
+    h+='<div id="chart-fund-'+key+'" style="width:100%;height:220px"></div>';
+    // 分析文字
+    if(c.analysis){
+      h+='<div style="font-size:0.65rem;color:var(--text-secondary);line-height:1.7;padding:8px 14px 12px">'+c.analysis+'</div>';
+    }
+    h+='</div>';
+  });
+
+  document.getElementById('fund-results').innerHTML=h;
+
+  // 渲染趋势图
+  setTimeout(function(){
+    order.forEach(function(key){
+      var c=checks[key];if(!c)return;
+      renderFundChart('chart-fund-'+key, c, key);
+    });
+  },200);
+}
+
+function renderFundChart(chartId, check, key){
+  var el=document.getElementById(chartId);
+  if(!el)return;
+  // 选择数据源
+  var seriesData=check.quarters||check.values||check.years||[];
+  if(!seriesData.length)return;
+  var dates=seriesData.map(function(d){var s=d.date||'';if(s)return s.substring(2,4)+'Q'+(parseInt(s.substring(5,7))/3);return d.year||''});
+  var values=seriesData.map(function(d){return d.value});
+
+  var isDark=document.documentElement.dataset.theme==='dark';
+  // 正负值分色
+  var barColors=values.map(function(v){return v>=0?'#FE2C55':'#26C6DA'});
+  if(el._echart)el._echart.dispose();
+  var chart=echarts.init(el);
+  el._echart=chart;
+  chart.setOption({
+    tooltip:{trigger:'axis',formatter:function(p){var d=p[0];return d.axisValue+'<br/>'+d.seriesName+': <b>'+(d.value!=null?d.value.toFixed(2):'—')+'%</b>'}},
+    grid:{left:'12%',right:'6%',top:16,bottom:28},
+    xAxis:{type:'category',data:dates,axisLabel:{fontSize:9,rotate:45},axisTick:{show:false}},
+    yAxis:{type:'value',axisLabel:{fontSize:9,formatter:function(v){return v.toFixed(0)+'%'}},splitLine:{lineStyle:{color:isDark?'#3a3a3a':'#eee'}}},
+    series:[{
+      name:check.label,type:'bar',data:values,
+      itemStyle:{color:function(p){return barColors[p.dataIndex]}},
+      barMaxWidth:24,
+      markLine:{silent:true,data:[{yAxis:0,label:{formatter:'0%',fontSize:9},lineStyle:{color:'#999',type:'dashed'}}]}
+    }]
+  });
 }
 </script>
   <script src="../shared/js/nav.js"></script>

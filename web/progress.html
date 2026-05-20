@@ -51,7 +51,7 @@
     </header>
 
     <div class="pg-stats">
-      <div class="pg-stat"><div class="n" style="color:#4CAF50">41</div><div class="l">已完成</div></div>
+      <div class="pg-stat"><div class="n" style="color:#4CAF50">42</div><div class="l">已完成</div></div>
       <div class="pg-stat"><div class="n" style="color:#FF9800">0</div><div class="l">进行中</div></div>
       <div class="pg-stat"><div class="n">7</div><div class="l">待开发</div></div>
     </div>
@@ -75,7 +75,7 @@
       </div>
 
       <div class="pg-card">
-        <h3>💎 个股分析 <span class="badge" style="background:#F3E5F5;color:#7B1FA2">5项</span></h3>
+        <h3>💎 个股分析 <span class="badge" style="background:#F3E5F5;color:#7B1FA2">7项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-done"></span>个股RS强度+回测</td><td>/stock-rs-backtest/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>个股全维度扫描</td><td>/stock-valuation/</td></tr>
@@ -83,6 +83,7 @@
           <tr><td><span class="pg-dot dot-done"></span>🎯 口袋支点</td><td>/pocket-pivot/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>🅱 双重底(个股)</td><td>/double-bottom/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>📏 扁平基部</td><td>/flat-base/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🩺 基本面恶化检测</td><td>/stock-valuation/</td></tr>
         </table>
       </div>
 
@@ -149,7 +150,6 @@
           <tr><td><span class="pg-dot dot-todo"></span>碟形基部</td><td>saucer_base</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>VCP波动率收缩</td><td>vcp</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>量价背离与出货</td><td>diverge_distribution</td></tr>
-          <tr><td><span class="pg-dot dot-todo"></span>基本面恶化</td><td>fundamental_deterioration</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>大盘环境卖出</td><td>market_exit</td></tr>
         </table>
       </div>
@@ -196,6 +196,8 @@
     <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">36. 突破失败检测架构：统一引擎 + 三级严重级别 + 7条独立规则</div><div class="ld">突破失败无需按8种基部形态分拆——和Layer 1统一突破检测同理，所有基部形态的突破失败共享同一个骨架：突破后N日收盘<关键价位+成交量验证。7条规则(B~H)每条可独立开关，三级严重级别(mild/confirmed/severe)，每次触发都独立产出信号。诊断端点用 need/actual 对比格式一目了然。K线图用五角星(SVG path)三级颜色，位于收盘价下方 range*0.75 偏移堆叠。回测看板三参数卡+信号表(11列)+单日排查(方案B:突破日+检查日双选)。</div></div>
 
     <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">37. KlineChart.create() 只建容器不渲染，首次加载空白图表</div><div class="ld">KlineChart 构造函数不调 _render()，原代码把 kc.update() 放在 else 分支，导致首次 create 后无数据渲染。6个页面(breakout-failure/volume-divergence/climax-top/railroad-tracks/top-pattern/template)全部中招。修复：create 后无条件调 update()，消除 if-else 分支。</div></div>
+
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">38. ROE检测必须用年度数据而非季度，避免季节性Q1陷阱</div><div class="ld">基本面恶化引擎最初用季度roe_single做ROE判定，宁德时代Q1 ROE=5.94%被误判为红灯（<12%阈值）。但制造业Q1天然是淡季，ROE全年最低。改为年度ROE（stock_financials_annual）后，宁德时代23.83%正确显示为绿色。教训：财务比率判读必须考虑行业季节性，同比跨年对比而非环比。阈值从12%调至17%。</div></div>
 
     <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>

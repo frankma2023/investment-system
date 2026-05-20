@@ -2497,6 +2497,23 @@ def api_stock_analysis():
         return jsonify({'error': str(e)}), 500
 
 # ═══════════════════════════════════════════════
+# API: GET /api/fundamental-deterioration
+# ═══════════════════════════════════════════════
+
+@app.route('/api/fundamental-deterioration')
+def api_fundamental_deterioration():
+    code = request.args.get('code', '')
+    if not code:
+        return jsonify({'error': 'code required'}), 400
+    try:
+        from analysis.fundamental_deterioration import check_fundamental_deterioration
+        result = check_fundamental_deterioration(code)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ═══════════════════════════════════════════════
 # API: GET /api/index-divergence
 # ═══════════════════════════════════════════════
 
