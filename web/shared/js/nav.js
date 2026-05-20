@@ -18,6 +18,7 @@
  *   | 'daily-pattern-scan' | 'canslim-scores'
  *   | 'railroad-tracks' | 'climax-top' | 'top-pattern' | 'double-bottom' | 'flat-base'
  *   | 'breakout-failure'
+ *   | 'discipline' | 'discipline-observation' | 'discipline-watchlist' | 'discipline-trades'
  */
 
 (function (global) {
@@ -74,24 +75,24 @@
     html += '</div><div class="nav-links">';
 
     // 首页
-    html += '<a href="../" class="nav-item' + (cp === 'home' ? ' active' : '') + '">🏠 看板</a>';
+    html += '<a href="../" class="nav-item' + (cp === 'home' ? ' active' : '') + '">看板</a>';
 
     // 回测下拉
     html += '<div class="nav-dropdown"><a href="javascript:void(0)" class="nav-item' + (BACKTEST_ITEMS.some(function (b) { return b.page === cp; }) ? ' active' : '') + '">回测 ▾</a><div class="nav-dropdown-menu">';
     for (var i = 0; i < BACKTEST_ITEMS.length; i++) {
       var b = BACKTEST_ITEMS[i];
-      html += '<a href="' + b.href + '" class="' + (b.page === cp ? 'active' : '') + '">' + b.icon + ' ' + b.label + '</a>';
+      html += '<a href="' + b.href + '" class="' + (b.page === cp ? 'active' : '') + '">' + b.label + '</a>';
     }
     html += '</div></div>';
 
     // 主导航项
     for (var j = 0; j < MAIN_ITEMS.length; j++) {
       var m = MAIN_ITEMS[j];
-      html += '<a href="' + m.href + '" class="nav-item' + (m.page === cp ? ' active' : '') + '">' + m.icon + ' ' + m.label + '</a>';
+      html += '<a href="' + m.href + '" class="nav-item' + (m.page === cp ? ' active' : '') + '">' + m.label + '</a>';
     }
 
-    // 仓位管理（占位）
-    html += '<a href="#" class="nav-item">💰 仓位管理</a>';
+    // 仓位管理 → 知行系统
+    html += '<a href="../discipline/" class="nav-item' + (cp === 'discipline' ? ' active' : '') + '">知行</a>';
     // 主题按钮
     html += '<button class="theme-toggle" onclick="if(typeof toggleTheme==\'function\')toggleTheme();else{document.documentElement.dataset.theme=document.documentElement.dataset.theme===\'dark\'?\'light\':\'dark\'}">🌙</button>';
 

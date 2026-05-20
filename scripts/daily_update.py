@@ -153,11 +153,11 @@ if date.today().weekday() == 0:
 else:
     log(f"⏭️  跳过回购数据（非周一）")
 
-# 步骤11：全量CAN SLIM评分（每周一执行）
-if date.today().weekday() == 0:
-    TASKS.append(("🎯 CAN SLIM评分", [PYTHON_EXE, "scripts/batch_canslim_score.py"]))
-else:
-    log(f"⏭️  跳过CAN SLIM评分（非周一）")
+# 步骤11：全量CAN SLIM评分（每日执行）
+TASKS.append(("🎯 CAN SLIM评分", [PYTHON_EXE, "scripts/batch_canslim_score.py"]))
+
+# 步骤12：观察池日更（每日执行，依赖个股RS + CANSLIM）
+TASKS.append(("🔍 观察池日更", [PYTHON_EXE, "src/discipline/observation.py", "--date", today_str]))
 
 for label, cmd in TASKS:
     lbl, ok, elapsed, _ = run_task(label, cmd)

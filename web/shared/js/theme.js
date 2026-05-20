@@ -23,6 +23,9 @@
     setTheme(current === DARK ? LIGHT : DARK);
   }
 
+  // 暴露到全局，供 nav.js 的 onclick 调用
+  window.toggleTheme = toggleTheme;
+
   function updateToggleIcon(theme) {
     const btn = document.querySelector('.theme-toggle');
     if (!btn) return;
