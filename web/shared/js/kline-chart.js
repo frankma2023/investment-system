@@ -339,7 +339,7 @@
           data: ck.map(function (k, i) {
             return {
               value: k.volume,
-              itemStyle: { color: ck[i].close >= ck[i].open ? 'rgba(229,57,53,0.35)' : 'rgba(38,198,218,0.35)' },
+              itemStyle: { color: ck[i].close >= ck[i].open ? o.upColor : o.downColor },
             };
           }),
           xAxisIndex: 1,

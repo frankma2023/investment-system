@@ -29,6 +29,7 @@ from detectors.divergence import (
 from engine_registry import discover_engines, get_engine_list, run_all_engines
 from scanners.recommend import generate as generate_recommendation
 from scanners.canslim_score import score_stock as canslim_score_stock, load_params as canslim_load_params
+from discipline.trades_api import discipline_bp
 import numpy as np
 import talib
 
@@ -41,6 +42,7 @@ DB_PATH = os.path.join(PROJECT_DIR, 'data', 'lixinger.db')
 DATA_DIR = os.path.join(PROJECT_DIR, 'data')
 
 app = Flask(__name__)
+app.register_blueprint(discipline_bp)
 
 # ═══════════════════════════════════════════════
 # Database helpers
@@ -62,6 +64,16 @@ def init_schema():
     schema_path = os.path.join(PROJECT_DIR, 'data', 'schema.sql')
     with open(schema_path, encoding='utf-8') as f:
         db.executescript(f.read())
+    # 扩展 watchlist 表（安全添加列，已存在则忽略）
+    for col, col_def in [
+        ('source', "TEXT DEFAULT 'observation'"),
+        ('review_status', "TEXT DEFAULT 'reviewed'"),
+        ('manual_reason', 'TEXT'),
+    ]:
+        try:
+            db.execute(f"ALTER TABLE watchlist ADD COLUMN {col} {col_def}")
+        except sqlite3.OperationalError:
+            pass  # 列已存在
     db.commit()
     db.close()
 
@@ -2154,6 +2166,43 @@ def api_stock_valuation():
     return jsonify(result)
 
 
+@app.route('/api/quarterly-fcf')
+def api_quarterly_fcf():
+    """个股季度自由现金流（单季拆分）"""
+    code = request.args.get('code', '600519')
+    db = get_db()
+    rows = db.execute('''
+        SELECT report_date, free_cash_flow
+        FROM stock_financials_quarterly
+        WHERE stock_code=? AND free_cash_flow IS NOT NULL
+        ORDER BY report_date
+    ''', (code,)).fetchall()
+    if len(rows) > 40:
+        rows = rows[-40:]
+
+    # 累计→单季拆分：Q1用原值，Q2~Q4减去上一季累计值
+    dates, fcf_single = [], []
+    for i, r in enumerate(rows):
+        d = r['report_date']
+        v = r['free_cash_flow']
+        month = int(d[5:7])
+        if month == 3:  # Q1 = 单季 = 累计
+            single = v
+        elif i > 0:  # Q2/Q3/Q4 = 累计 - 上年同季度累计
+            prev = rows[i-1]['free_cash_flow']
+            single = v - prev if prev is not None else v
+        else:
+            single = v
+        dates.append(d)
+        fcf_single.append(round(single, 2))
+
+    return jsonify({
+        'code': code,
+        'dates': dates,
+        'fcf': fcf_single,
+    })
+
+
 @app.route('/api/stock-financials')
 def api_stock_financials():
     """个股年度财务数据：ROE/毛利率/净利率/EPS/营收增速/净利增速/FCF/资产负债率等"""
@@ -2163,7 +2212,8 @@ def api_stock_financials():
         SELECT report_date, revenue, revenue_yoy, net_profit, net_profit_yoy,
                gross_margin, roe,
                free_cash_flow, asset_liability_ratio, interest_bearing_debt_ratio,
-               current_ratio, quick_ratio, receivables_turnover, inventory_turnover
+               current_ratio, quick_ratio, receivables_turnover, inventory_turnover,
+               total_liabilities, interest_bearing_debt
         FROM stock_financials_annual
         WHERE stock_code=? AND report_date >= '2016-12-31'
         ORDER BY report_date
@@ -2172,7 +2222,8 @@ def api_stock_financials():
               'net_profit': [], 'net_profit_yoy': [], 'gross_margin': [],
               'roe': [], 'eps': [], 'fcf': [], 'debt_ratio': [],
               'interest_debt_ratio': [], 'current_ratio': [], 'quick_ratio': [],
-              'receivables_turnover': [], 'inventory_turnover': []}
+              'receivables_turnover': [], 'inventory_turnover': [],
+              'total_debt': [], 'interest_debt': [], 'interest_free_debt': []}
     for r in rows:
         result['dates'].append(r['report_date'][:4])
         result['revenue'].append(r['revenue'])
@@ -2195,6 +2246,17 @@ def api_stock_financials():
         result['quick_ratio'].append(r['quick_ratio'])
         result['receivables_turnover'].append(r['receivables_turnover'])
         result['inventory_turnover'].append(r['inventory_turnover'])
+        # 负债绝对值（直接使用理杏仁提供的值，单位与总资产一致）
+        tl = r['total_liabilities']
+        ibd = r['interest_bearing_debt']
+        if tl is not None:
+            result['total_debt'].append(tl)
+            result['interest_debt'].append(ibd if ibd is not None else 0)
+            result['interest_free_debt'].append(tl - (ibd or 0))
+        else:
+            result['total_debt'].append(None)
+            result['interest_debt'].append(None)
+            result['interest_free_debt'].append(None)
         # 年度PE = 市值 / 净利润 = (股本 × 年末收盘价) / 净利润
         year_end_price = None
         if cap and r['net_profit']:

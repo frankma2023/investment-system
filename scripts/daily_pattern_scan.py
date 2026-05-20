@@ -319,23 +319,7 @@ tr:hover { background:var(--color-accent-subtle); }
 </head>
 <body>
 <div class="app-container">
-<nav class="top-nav">
-  <div class="nav-brand"><span class="nav-fox">📋</span><span>全市场股票形态扫描</span></div>
-  <div class="nav-links">
-    <a href="../" class="nav-item">🏠 看板</a>
-    <div class="nav-dropdown"><a href="#" class="nav-item">回测 ▾</a><div class="nav-dropdown-menu">
-      <a href="../distribution-day/">📉 抛盘日</a><a href="../follow-through-day/">📈 追盘日</a><a href="../accumulation-day/">📦 吸筹日</a>
-      <a href="../index-rs-backtest/">🏆 指数RS强度</a><a href="../index-crowdedness/">📊 指数拥挤度</a><a href="../stock-rs-backtest/">💪 个股RS强度</a>
-      <a href="../index-ad-backtest/">🔍 机构吸筹/出货</a><a href="../divergence-backtest/">⚠️ 指数背离</a>
-      <a href="../strongest-index/">⭐ 最强指数</a><a href="../base-detection/">📐 标准突破</a><a href="../pocket-pivot/">🎯 口袋支点</a>
-      <a href="../pattern-scan/">🔎 形态识别</a>
-    </div></div>
-    <a href="../index-scan/" class="nav-item">🔬 指数扫描</a><a href="../index-valuation/" class="nav-item">📈 指数估值</a>
-    <a href="../stock-valuation/" class="nav-item">💎 个股扫描</a><a href="../market-scan/" class="nav-item">📊 大盘扫描</a>
-    <a href="../pattern-scan/" class="nav-item">🔎 形态识别</a>
-    <button class="theme-toggle">🌙</button>
-  </div>
-</nav>
+<nav id="top-nav"></nav>
 
 <div class="top-bar">
   <div>
@@ -559,6 +543,8 @@ document.querySelector('.theme-toggle').addEventListener('click', function() {
 initPage();
 sortTable(4); sortDir = -1; sortTable(4);
 </script>
+  <script src="../shared/js/nav.js"></script>
+  <script>Nav.init({brandIcon:'📋',brandText:'全市场形态扫描',currentPage:'daily-pattern-scan'})</script>
 </body>
 </html>'''
 
@@ -626,6 +612,20 @@ def main():
             'candidates': candidates
         }, f, ensure_ascii=False, indent=2)
     print(f"JSON saved: {OUT_JSON}")
+
+    # Step 3.5: 写入数据库（供知行系统消费）
+    conn = sqlite3.connect(DB_PATH)
+    for c in candidates:
+        signals = c.get('signals', [])
+        if signals:
+            conn.execute(
+                "INSERT OR REPLACE INTO pattern_scan_signals (stock_code, date, signals_json) VALUES (?,?,?)",
+                (c['stock_code'], date_str, json.dumps(signals, ensure_ascii=False))
+            )
+    conn.commit()
+    conn.close()
+    signal_count = sum(1 for c in candidates if c.get('signals'))
+    print(f"DB saved: {len(candidates)} stocks ({signal_count} with signals) to pattern_scan_signals")
 
     # Step 4: 生成 HTML
     html = generate_html(candidates, date_str, elapsed, all_stocks=args.all_stocks)

@@ -103,6 +103,7 @@
       <div class="chart-card"><div class="chart-title">营收增速 (%)</div><div id="chart-revyoy" style="height:260px"></div><div id="text-revyoy" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">净利增速 (%)</div><div id="chart-npyoy" style="height:260px"></div><div id="text-npyoy" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">自由现金流（亿）</div><div id="chart-fcf" style="height:260px"></div><div id="text-fcf" class="analysis-text"></div></div>
+      <div class="chart-card"><div class="chart-title">季度自由现金流（亿）</div><div id="chart-qfcf" style="height:260px"></div><div id="text-qfcf" class="analysis-text"></div></div>
     </div>
   </div>
 
@@ -115,6 +116,7 @@
       <div class="chart-card"><div class="chart-title">速动比率</div><div id="chart-qr" style="height:260px"></div><div id="text-qr" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">应收周转率</div><div id="chart-rt" style="height:260px"></div><div id="text-rt" class="analysis-text"></div></div>
       <div class="chart-card"><div class="chart-title">存货周转率</div><div id="chart-it" style="height:260px"></div><div id="text-it" class="analysis-text"></div></div>
+      <div class="chart-card"><div class="chart-title">负债结构（亿）</div><div id="chart-debt-stack" style="height:260px"></div><div id="text-debt-stack" class="analysis-text"></div></div>
     </div>
   </div>
 
@@ -258,12 +260,50 @@ async function loadFinancials(code){
   buildBar('chart-revyoy','营收增速 %',d.dates,d.revenue_yoy,'#E8A838');genFText('text-revyoy','营收增速',d.revenue_yoy,'%');
   buildBar('chart-npyoy','净利增速 %',d.dates,d.net_profit_yoy,'#8B5CF6');genFText('text-npyoy','净利增速',d.net_profit_yoy,'%');
   buildBigBar('chart-fcf','自由现金流',d.dates,d.fcf,'亿');genFText('text-fcf','自由现金流',d.fcf,'亿');
+
+  // 季度自由现金流
+  try{
+    var qr=await fetch(API+'/api/quarterly-fcf?code='+code);
+    var qd=await qr.json();
+    if(qd.dates&&qd.dates.length){
+      var qLabels=qd.dates.map(function(d){return d.substring(2,4)+'Q'+(parseInt(d.substring(5,7))/3)});
+      buildBigBar('chart-qfcf','季度自由现金流',qLabels,qd.fcf,'亿');
+      genFText('text-qfcf','季度自由现金流',qd.fcf,'亿');
+    }
+  }catch(e){console.error('quarterly fcf failed',e)}
   buildBar('chart-debt','资产负债率 %',d.dates,d.debt_ratio,'#FF6B6B');genFText('text-debt','资产负债率',d.debt_ratio,'%');
   buildBar('chart-idebt','有息负债率 %',d.dates,d.interest_debt_ratio,'#FF6B6B');genFText('text-idebt','有息负债率',d.interest_debt_ratio,'%');
   buildBar('chart-cr','流动比率',d.dates,d.current_ratio,'#539BF5');genFText('text-cr','流动比率',d.current_ratio,'');
   buildBar('chart-qr','速动比率',d.dates,d.quick_ratio,'#4ECDC4');genFText('text-qr','速动比率',d.quick_ratio,'');
   buildBar('chart-rt','应收周转率',d.dates,d.receivables_turnover,'#E8A838');genFText('text-rt','应收周转率',d.receivables_turnover,'次');
   buildBar('chart-it','存货周转率',d.dates,d.inventory_turnover,'#8B5CF6');genFText('text-it','存货周转率',d.inventory_turnover,'次');
+
+  // 负债结构堆叠柱状图
+  if(d.total_debt&&d.total_debt.length){
+    var dom=document.getElementById('chart-debt-stack');if(dom._echart)dom._echart.dispose();
+    var ch=echarts.init(dom),isDark=document.documentElement.dataset.theme==='dark';
+    var tx=isDark?'#999':'#6E6E6E',sp=isDark?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.04)';
+    ch.setOption({
+      backgroundColor:'transparent',
+      tooltip:{trigger:'axis',formatter:function(p){return p[0].name+'<br/>'+p.map(function(x){return x.marker+x.seriesName+': '+x.value+'亿'}).join('<br/>')}},
+      grid:{left:'10%',right:'4%',top:20,bottom:36},
+      xAxis:{type:'category',data:d.dates,axisLabel:{color:tx,fontSize:9}},
+      yAxis:{type:'value',axisLabel:{color:tx,fontSize:9,formatter:function(v){return v+'亿'}},splitLine:{lineStyle:{color:sp}}},
+      series:[
+        {name:'有息负债',type:'bar',stack:'debt',data:d.interest_debt.map(function(v){return v?(v/1e8).toFixed(1):null}),itemStyle:{color:'#E8553D'},barWidth:'50%'},
+        {name:'无息负债',type:'bar',stack:'debt',data:d.interest_free_debt.map(function(v){return v?(v/1e8).toFixed(1):null}),itemStyle:{color:'#539BF5'},barWidth:'50%'},
+        {name:'合计',type:'bar',stack:'debt',data:d.total_debt.map(function(v){return v?(v/1e8).toFixed(1):null}),itemStyle:{color:'transparent'},barWidth:'50%',label:{show:true,position:'top',color:tx,fontSize:9,formatter:function(p){return p.value+'亿'}}}
+      ]
+    });dom._echart=ch;
+    // 文字分析
+    var td=d.total_debt.filter(function(v){return v!=null});
+    if(td.length){
+      var cur=td[td.length-1]/1e8,avg=td.reduce(function(a,b){return a+b},0)/td.length/1e8;
+      var curInt=d.interest_debt.filter(function(v){return v!=null});
+      var ci=curInt.length?curInt[curInt.length-1]/1e8:0;
+      document.getElementById('text-debt-stack').innerHTML='<b>最新总负债：</b>'+cur.toFixed(0)+'亿（有息 '+ci.toFixed(0)+'亿），历史均值 '+avg.toFixed(0)+'亿。'+(cur>avg?'当前高于':'当前低于')+'历史均值。';
+    }
+  }
 
   // 计算真实PEG = PE / 净利增速
   if(d.annual_pe&&d.net_profit_yoy){

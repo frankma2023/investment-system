@@ -84,6 +84,9 @@ CREATE TABLE IF NOT EXISTS stock_financials_annual (
     quick_ratio             REAL,                   -- 速动比率
     receivables_turnover    REAL,                   -- 应收账款周转率
     inventory_turnover      REAL,                   -- 存货周转率
+    total_assets            REAL,                   -- 资产总计
+    total_liabilities       REAL,                   -- 负债合计
+    interest_bearing_debt   REAL,                   -- 有息负债
     updated_at              TEXT DEFAULT (datetime('now','localtime')),
     PRIMARY KEY (stock_code, report_date)
 );
@@ -145,6 +148,9 @@ ANNUAL_METRICS = [
     ["y.bs.q_r.t",              "quick_ratio",              False],
     ["y.m.ar_tor.t",            "receivables_turnover",     False],
     ["y.m.i_tor.t",             "inventory_turnover",       False],
+    ["y.bs.ta.t",               "total_assets",             False],
+    ["y.bs.tl.t",               "total_liabilities",        False],
+    ["y.bs.lwi.t",              "interest_bearing_debt",    False],
 ]
 # 共 17 个指标，远低于 128 上限
 
@@ -291,12 +297,18 @@ def fetch_annual_range(code: str, start_date: str, end_date: str) -> List[Dict]:
     return api_post(API_PATH, payload)
 
 
-def get_existing_annual_years(conn, code: str) -> set:
-    """查询某只股票已有的年度数据年份"""
-    rows = conn.execute(
-        "SELECT report_date FROM stock_financials_annual WHERE stock_code = ?",
-        (code,)
-    ).fetchall()
+def get_existing_annual_years(conn, code: str, check_new_cols: bool = False) -> set:
+    """查询某只股票已有的年度数据年份。check_new_cols=True 时，排除新列为NULL的年份。"""
+    if check_new_cols:
+        rows = conn.execute(
+            "SELECT report_date FROM stock_financials_annual WHERE stock_code = ? AND total_liabilities IS NOT NULL",
+            (code,)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT report_date FROM stock_financials_annual WHERE stock_code = ?",
+            (code,)
+        ).fetchall()
     return {r["report_date"][:4] for r in rows}
 
 
@@ -337,6 +349,9 @@ def save_annual_one(conn, raw_data: List[Dict]) -> int:
             vals.get("quick_ratio"),
             vals.get("receivables_turnover"),
             vals.get("inventory_turnover"),
+            vals.get("total_assets"),
+            vals.get("total_liabilities"),
+            vals.get("interest_bearing_debt"),
         ))
 
     if rows:
@@ -349,8 +364,11 @@ def save_annual_one(conn, raw_data: List[Dict]) -> int:
              operating_cash_flow, free_cash_flow, free_cash_flow_yoy,
              asset_liability_ratio, interest_bearing_debt_ratio,
              current_ratio, quick_ratio,
-             receivables_turnover, inventory_turnover)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", rows)
+             receivables_turnover, inventory_turnover,
+             total_assets,
+             total_liabilities,
+             interest_bearing_debt)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", rows)
         conn.commit()
     return len(rows)
 
@@ -359,7 +377,7 @@ def save_annual_one(conn, raw_data: List[Dict]) -> int:
 # 日期工具
 # ════════════════════════════════════════════════════════
 
-def recent_report_dates(years_back: int = 2) -> List[str]:
+def recent_report_dates(years_back: int = 10) -> List[str]:
     """生成最近的季度报告日期列表（从 YYYY-03-31 到当前最新季度）"""
     today = datetime.now()
     current_quarter = (today.month - 1) // 3 + 1
@@ -377,7 +395,7 @@ def recent_report_dates(years_back: int = 2) -> List[str]:
     return dates
 
 
-def recent_annual_dates(years_back: int = 5) -> List[str]:
+def recent_annual_dates(years_back: int = 10) -> List[str]:
     """生成最近的年度报告日期"""
     today = datetime.now()
     dates = []
@@ -416,11 +434,11 @@ def main():
             annual_dates = [f"{y}-12-31" for y in years]
             quarterly_dates = [f"{y}-{m}" for y in years for m in ["03-31", "06-30", "09-30", "12-31"]]
         else:
-            annual_dates = recent_annual_dates(5)
-            quarterly_dates = recent_report_dates(2)
+            annual_dates = recent_annual_dates()
+            quarterly_dates = recent_report_dates()
     else:
-        annual_dates = recent_annual_dates(5)
-        quarterly_dates = recent_report_dates(2)
+        annual_dates = recent_annual_dates()
+        quarterly_dates = recent_report_dates()
 
     # ── 季度数据 ──
     if do_quarterly:
@@ -471,7 +489,7 @@ def main():
 
         for i, code in enumerate(all_codes):
             # 跳过已有全部目标年份数据的股票
-            existing = get_existing_annual_years(conn, code)
+            existing = get_existing_annual_years(conn, code, check_new_cols=True)
             if target_years.issubset(existing):
                 skipped += 1
                 if (i + 1) % batch_size == 0:

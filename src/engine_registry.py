@@ -127,14 +127,31 @@ def run_all_engines(klines, indicators=None):
 
             if 'klines' in params:
                 kwargs['klines'] = klines
+            if 'daily' in params:
+                kwargs['daily'] = klines
+            if 'daily_klines' in params:
+                kwargs['daily_klines'] = klines
             if 'indicators' in params and indicators is not None:
                 kwargs['indicators'] = indicators
+            if 'params' in params:
+                # 尝试加载引擎自己的默认参数
+                try:
+                    mod_params = eng['module'].load_params()
+                    kwargs['params'] = mod_params
+                except Exception:
+                    pass
 
             raw_signals = eng['detect'](**kwargs)
+            # 引擎可能返回 dict（含 signals 键）或直接返回 list
+            if isinstance(raw_signals, dict):
+                raw_signals = raw_signals.get('signals', raw_signals.get('daily', []))
             if not raw_signals:
                 continue
             for sig_item in raw_signals:
                 sig_item['source'] = name  # 框架自动注入 source
+                # 归一化日期字段：有的引擎用 signal_date，统一补 date
+                if 'date' not in sig_item and 'signal_date' in sig_item:
+                    sig_item['date'] = sig_item['signal_date']
                 all_signals.append(sig_item)
         except Exception as e:
             print(f"[engine_registry] 引擎 {name} 执行失败: {e}")
