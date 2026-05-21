@@ -2,7 +2,7 @@
 
 > 引擎：SQLite，WAL 模式，PRAGMA synchronous=NORMAL  
 > 数据库文件：`data/lixinger.db`  
-> 更新时间：2026-05-14
+> 更新时间：2026-05-21
 
 ---
 
@@ -857,19 +857,147 @@
 
 ---
 
-## 32. watchlist — 自选股
+## 32. watchlist — 自选池
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| stock_code | TEXT | **PK**，股票代码 |
+| stock_code | TEXT | **UNIQUE**，股票/指数代码 |
 | stock_name | TEXT | 股票名称 |
+| source | TEXT | 来源：`observation`(观察池) / `manual`(手动添加) |
+| review_status | TEXT | 评估状态：`pending_review`(评估中) / `reviewed`(已评估) |
+| manual_reason | TEXT | 手动添加理由（source=manual 时填写） |
 | added_at | TEXT | 添加时间 |
 | removed_at | TEXT | 移除时间(NULL=有效) |
 | note | TEXT | 备注 |
 
 **数据量**：少量  
-**写入脚本**：`src/server.py`  
-**读取场景**：自选股管理
+**写入脚本**：`src/discipline/trades_api.py`  
+**读取场景**：自选池管理，支持移除后重新添加(UPSERT)
+
+---
+
+## 52. pattern_scan_signals — 形态扫描信号
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| stock_code | TEXT | **PK(1)** |
+| date | TEXT | **PK(2)**，扫描日期 |
+| signals_json | TEXT | JSON 信号数组 |
+
+**数据量**：~3,678 条/日  
+**写入脚本**：`scripts/daily_pattern_scan.py`（Step 3.5）  
+**读取场景**：复核详情页信号标记、观察池信号列
+
+---
+
+## 53. discipline_observation_pool — 观察池日快照
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| stock_code | TEXT | **PK(1)** |
+| date | TEXT | **PK(2)**，快照日期 |
+| stock_name | TEXT | 股票名称 |
+| industry_name | TEXT | 申万一级行业 |
+| rs_category | TEXT | RS分类（龙头/加速/短爆/稳健/双强） |
+| rps_20/60/120/250 | REAL | RPS 各周期值 |
+| canslim_total/c/a/n/s/l/i/m | REAL | CAN SLIM 七维评分 |
+| roe/eps_yoy/revenue_yoy/debt_ratio/gross_margin | REAL | 财务指标 |
+| pe_ttm/pb/pe_percentile/market_cap | REAL | 估值指标 |
+| signals_json | TEXT | V2 统一信号列（替代 buy/sell 拆分） |
+| composite_score | REAL | 综合评分 |
+| grade | TEXT | 等级 |
+| suggestion | TEXT | 建议 |
+
+**数据量**：~1,489 条/日  
+**写入脚本**：`src/discipline/observation.py`  
+**读取场景**：观察池浏览、复核详情
+
+---
+
+## 54. discipline_trades — 交易记录
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INTEGER | **PK**，自增 |
+| stock_code | TEXT | 股票/指数代码 |
+| stock_name | TEXT | 名称 |
+| asset_type | TEXT | 类型：`stock`(股票) / `index`(指数) |
+| buy_date | TEXT | 买入日期 |
+| buy_price | REAL | 买入价 |
+| buy_qty | INTEGER | 买入数量 |
+| buy_amount | REAL | 买入金额 |
+| buy_reason | TEXT | 买入理由 |
+| buy_emotion | TEXT | 买入时情绪 |
+| target_period | TEXT | 目标周期(swing/medium/long) |
+| target_price | REAL | 目标价 |
+| stop_loss_price | REAL | 止损价 |
+| position_pct | REAL | 仓位占比 |
+| checklist_json | TEXT | 买入前检查清单JSON |
+| sell_date | TEXT | 卖出日期 |
+| sell_price | REAL | 卖出价 |
+| sell_reason | TEXT | 卖出理由 |
+| sell_emotion | TEXT | 卖出时情绪 |
+| pnl_amount | REAL | 盈亏金额 |
+| pnl_pct | REAL | 盈亏% |
+| hold_days | INTEGER | 持股天数 |
+| review_* | — | 复盘字段（合规率/α/β/笔记/心力） |
+
+**数据量**：少量  
+**写入脚本**：`src/discipline/trades_api.py`  
+**读取场景**：交易录入、持仓监控、盈亏汇总、仪表盘
+
+---
+
+## 55. discipline_rules_config — 规则配置
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| rule_name | TEXT | **PK**，规则名 |
+| display_name | TEXT | 显示名 |
+| category | TEXT | 分类：`system_config` / `pre_trade` |
+| parameters_json | TEXT | 参数JSON |
+| is_active | INTEGER | 是否启用 |
+
+**数据量**：少量  
+**写入脚本**：`src/discipline/trades_api.py`  
+**读取场景**：总资产存储、检查清单模板
+
+---
+
+## 56. discipline_alerts — 告警记录
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INTEGER | **PK**，自增 |
+| trade_id | INTEGER | 关联交易ID |
+| stock_code | TEXT | 股票代码 |
+| alert_date | TEXT | 告警日期 |
+| alert_level | TEXT | 级别：`red`(红色) / `yellow`(黄色) / `green`(绿色) |
+| alert_type | TEXT | 类型：`stop_loss` / `market_risk` / `stock_weakness` / `top_signal` |
+| alert_message | TEXT | 告警消息 |
+| acknowledged | INTEGER | 是否已知晓(0/1) |
+
+**数据量**：少量  
+**写入脚本**：`src/discipline/monitoring.py`  
+**读取场景**：持仓监控页告警灯、已知晓操作
+
+---
+
+## 57. discipline_daily_snapshots — 持仓日快照
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| date | TEXT | **PK(1)** |
+| trade_id | INTEGER | **PK(2)** |
+| current_price | REAL | 当日收盘价 |
+| market_value | REAL | 当日市值 |
+| pnl_pct | REAL | 当日浮盈% |
+| position_pct | REAL | 当日仓位% |
+| alerts_json | TEXT | 当日告警JSON
+
+**数据量**：少量  
+**写入脚本**：`src/discipline/monitoring.py`（预留）  
+**读取场景**：持仓历史回溯（V3）
 
 ---
 
@@ -1276,6 +1404,27 @@
 
 ## 51. cansim_scores — CAN SLIM评分结果
 
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| stock_code | TEXT | **PK(1)** |
+| date | TEXT | **PK(2)**，评分日期 |
+| score | REAL | 综合评分(0-100) |
+| score_c | REAL | C 当季利润 |
+| score_a | REAL | A 年度利润 |
+| score_n | REAL | N 新事物 |
+| score_s | REAL | S 供需关系 |
+| score_l | REAL | L 领涨股/行业 |
+| score_i | REAL | I 机构持股 |
+| grade | TEXT | 等级 |
+
+**数据量**：~5,500 条/次  
+**写入脚本**：`scripts/batch_canslim_score.py`  
+**读取场景**：观察池评分、复核页CANSLIM七维体检
+
+---
+
+## 全表汇总
+
 | # | 表名 | 行数 | 说明 |
 |---|------|------|------|
 | 1 | stock_basic | ~5,595 | 股票基础信息 |
@@ -1309,7 +1458,7 @@
 | 29 | market_scan_results | ~201 | 扫描结果 |
 | 30 | buy_signals_daily | ~0 | 买点信号 |
 | 31 | stock_candidates_daily | ~5,220 | 个股扫描结果 |
-| 32 | watchlist | 少量 | 自选股 |
+| 32 | watchlist | 少量 | 自选池 |
 | 33 | portfolio_holdings | ~12 | 组合持仓 |
 | 34 | portfolio_signals | ~44 | 持仓信号 |
 | 35 | seven_week_state | ~7 | 七周规则状态 |
@@ -1328,14 +1477,20 @@
 | 48 | stock_report_raw | — | 研报原始记录 |
 | 49 | stock_buyback | ~62(活跃) | 股票回购 |
 | 50 | cansim_scores | — | CAN SLIM评分(新) |
+| 52 | pattern_scan_signals | ~3,678/日 | 形态扫描信号 |
+| 53 | discipline_observation_pool | ~1,489/日 | 观察池日快照 |
+| 54 | discipline_trades | 少量 | 交易记录 |
+| 55 | discipline_rules_config | 少量 | 规则配置 |
+| 56 | discipline_alerts | 少量 | 告警记录 |
+| 57 | discipline_daily_snapshots | 少量 | 持仓日快照 |
 
 ---
 
-## 数据库统计（2026-05-04）
+## 数据库统计（2026-05-21）
 
 | 指标 | 数值 |
 |------|------|
-| 总表数 | 50 |
+| 总表数 | 56 |
 | 最大表 | fundamental_indicator (~1.25亿行) |
 | K线数据 | daily_kline ~1794万 + weekly_kline ~222万 |
 | RS数据 | rs_daily ~527万 |

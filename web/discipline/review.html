@@ -115,6 +115,16 @@
     };
     const DEFAULT_STYLE = { color: '#999', symbol: 'circle', size: 10 };
 
+    // ── 引擎中文名 ──
+    const DISPLAY_NAMES = {
+      'base_breakout': '基部突破', 'double_bottom': '双重底', 'flat_base': '扁平基部',
+      'saucer_base': '碟形基部', 'box_range': '箱体震荡', 'high_tight_flag': '高紧旗',
+      'stepping_bottom': '递升底部', 'pocket_pivot': '口袋支点', 'lower_low_breakout': '递升突破',
+      'standard_breakout': '标准突破', 'top_pattern': '顶部形态', 'cdl': 'K线形态',
+      'volume_divergence': '量价背离', 'talib': 'TA指标',
+    };
+    function getDisplayName(src) { return DISPLAY_NAMES[src] || src; }
+
     function getSignalStyle(signal) {
       const src = signal.source || '';
       if (src === 'cdl') {
@@ -196,8 +206,9 @@
         const gap = Math.max(range * 0.50, 0.06);
         sigs.forEach((sig, i) => {
           const style = getSignalStyle(sig);
-          const name = sig.source || '信号';
-          legendSrcs.add(name);
+          const src = sig.source || '?';
+          const name = getDisplayName(src);
+          legendSrcs.add(src);
           signalPoints.push({
             name: name,
             value: [idx, k.low - gap * (i + 1)],
@@ -215,7 +226,7 @@
       for (const src of legendSrcs) {
         const st = getSignalStyle({ source: src });
         const sym = symChars[st.symbol] || '●';
-        legendHtml += `<span class="legend-item"><span style="color:${st.color};font-size:0.75rem;">${sym}</span> ${src}</span>`;
+        legendHtml += `<span class="legend-item"><span style="color:${st.color};font-size:0.75rem;">${sym}</span> ${getDisplayName(src)}</span>`;
       }
       document.getElementById('chart-legend').innerHTML = legendHtml || '<span style="font-size:0.6rem;color:var(--text-tertiary)">无形态信号</span>';
 
