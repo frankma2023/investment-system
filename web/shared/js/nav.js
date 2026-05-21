@@ -21,6 +21,18 @@
  *   | 'discipline' | 'discipline-observation' | 'discipline-watchlist' | 'discipline-trades'
  */
 
+// ── API 代理：前端与后端分离部署时，自动将 /api/ 请求转发到 Flask ──
+(function () {
+  var API_BASE = 'http://localhost:8788';
+  var _fetch = window.fetch;
+  window.fetch = function (url, options) {
+    if (typeof url === 'string' && url.indexOf('/api/') === 0) {
+      url = API_BASE + url;
+    }
+    return _fetch.call(window, url, options);
+  };
+})();
+
 (function (global) {
   'use strict';
 

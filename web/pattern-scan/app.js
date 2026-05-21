@@ -418,7 +418,7 @@ function renderChart() {
       var up = ck[i].close >= ck[i].open;
       return {
         value: v,
-        itemStyle: { color: up ? 'rgba(229,57,53,0.4)' : 'rgba(38,198,218,0.4)' }
+        itemStyle: { color: up ? '#E53935' : '#26C6DA' }
       };
     })
   });

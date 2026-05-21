@@ -44,6 +44,14 @@ DATA_DIR = os.path.join(PROJECT_DIR, 'data')
 app = Flask(__name__)
 app.register_blueprint(discipline_bp)
 
+# CORS — 允许前端独立部署（http.server :8772）跨域访问 API
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
+
 # ═══════════════════════════════════════════════
 # Database helpers
 # ═══════════════════════════════════════════════
@@ -74,6 +82,16 @@ def init_schema():
             db.execute(f"ALTER TABLE watchlist ADD COLUMN {col} {col_def}")
         except sqlite3.OperationalError:
             pass  # 列已存在
+    # V2: 添加 signals_json 列到观察池
+    try:
+        db.execute("ALTER TABLE discipline_observation_pool ADD COLUMN signals_json TEXT")
+    except sqlite3.OperationalError:
+        pass
+    # V2: 添加 asset_type 列到交易记录（区分股票/指数）
+    try:
+        db.execute("ALTER TABLE discipline_trades ADD COLUMN asset_type TEXT DEFAULT 'stock'")
+    except sqlite3.OperationalError:
+        pass
     db.commit()
     db.close()
 

@@ -22,6 +22,8 @@
   12. 研报拉取          (fetch_stock_reports — 周一)
   13. 回购数据          (fetch_buyback — 周一)
   14. CAN SLIM评分      (batch_canslim_score — 周一)
+  15. 观察池日更        (observation — 每日)
+  16. 持仓监控扫描      (monitoring — 每日)
 
 步骤 1~3 可并行，但为简单起见串行执行，出错时终止。
 """
@@ -158,6 +160,9 @@ TASKS.append(("🎯 CAN SLIM评分", [PYTHON_EXE, "scripts/batch_canslim_score.p
 
 # 步骤12：观察池日更（每日执行，依赖个股RS + CANSLIM）
 TASKS.append(("🔍 观察池日更", [PYTHON_EXE, "src/discipline/observation.py", "--date", today_str]))
+
+# 步骤13：持仓监控扫描（每日执行，依赖观察池 + 形态信号 + 大盘环境）
+TASKS.append(("📡 持仓监控扫描", [PYTHON_EXE, "src/discipline/monitoring.py"]))
 
 for label, cmd in TASKS:
     lbl, ok, elapsed, _ = run_task(label, cmd)
