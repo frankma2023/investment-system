@@ -223,9 +223,16 @@ def get_holdings_status(db):
         stock_code = t['stock_code']
         asset_type = t['asset_type'] if 'asset_type' in t.keys() else 'stock'
 
-        # 最新收盘价
-        close = _get_latest_close(db, stock_code, asset_type)
-        current_price = close if close is not None else t['buy_price']
+        # 最新收盘价：优先手工录入的快照（取最新日期），其次K线表，最后买入价
+        snap = db.execute("""
+            SELECT current_price FROM discipline_daily_snapshots
+            WHERE trade_id = ? ORDER BY date DESC LIMIT 1
+        """, (t['id'],)).fetchone()
+        if snap and snap['current_price'] is not None:
+            current_price = snap['current_price']
+        else:
+            close = _get_latest_close(db, stock_code, asset_type)
+            current_price = close if close is not None else t['buy_price']
         pnl_pct = round((current_price - t['buy_price']) / t['buy_price'] * 100, 2)
 
         # 最新告警

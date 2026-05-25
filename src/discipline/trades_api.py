@@ -68,6 +68,114 @@ def api_observation():
     return jsonify({'items': items, 'date': target_date, 'count': len(items)})
 
 
+@discipline_bp.route('/screening', methods=['GET', 'OPTIONS'])
+def api_screening():
+    """欧奈尔每日精选列表"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    from discipline.screener import run
+    target_date = request.args.get('date', None)
+    result = run(target_date=target_date)
+    return jsonify({
+        'market_gate': result.get('market_gate', 'ok'),
+        'market_warning': result.get('market_warning', False),
+        'market_phase': result.get('market_phase', ''),
+        'items': result.get('items', []),
+        'count': len(result.get('items', [])),
+        'strongest_indices': result.get('strongest_indices', {}),
+        'date': result.get('date') or target_date or 'latest',
+    })
+
+
+@discipline_bp.route('/recommendation/<stock_code>', methods=['GET', 'OPTIONS'])
+def api_recommendation(stock_code):
+    """欧奈尔精选推荐信"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    db = get_db()
+
+    # 六层数据汇总
+    # 大盘
+    market = db.execute("SELECT * FROM market_direction_daily ORDER BY date DESC LIMIT 1").fetchone()
+    mkt = dict(market) if market else {}
+
+    # 观察池
+    obs = db.execute("""
+        SELECT * FROM discipline_observation_pool
+        WHERE stock_code=? AND date=(SELECT MAX(date) FROM discipline_observation_pool)
+    """, (stock_code,)).fetchone()
+    obs_data = dict(obs) if obs else {}
+
+    # CANSLIM
+    cs = db.execute("SELECT * FROM cansim_scores WHERE stock_code=? ORDER BY date DESC LIMIT 1", (stock_code,)).fetchone()
+    canslim = dict(cs) if cs else {}
+
+    # RS
+    rs = db.execute("SELECT * FROM stock_rs_daily WHERE stock_code=? ORDER BY date DESC LIMIT 1", (stock_code,)).fetchone()
+    rs_data = dict(rs) if rs else {}
+
+    # 信号
+    sig_rows = db.execute("SELECT signals_json FROM pattern_scan_signals WHERE stock_code=? ORDER BY date DESC", (stock_code,)).fetchall()
+    all_signals = []
+    for sr in sig_rows:
+        if sr['signals_json']:
+            try: all_signals.extend(json.loads(sr['signals_json']))
+            except: pass
+
+    # 行业
+    ind = db.execute("SELECT industry_name FROM stock_sw_industry WHERE stock_code=?", (stock_code,)).fetchone()
+    industry = ind['industry_name'] if ind else ''
+
+    # 机构
+    inst = db.execute("SELECT * FROM stock_institutional_holdings WHERE stock_code=? ORDER BY date DESC LIMIT 1", (stock_code,)).fetchone()
+    inst_data = dict(inst) if inst else {}
+
+    # 财务
+    fin = db.execute("SELECT * FROM stock_financials_annual WHERE stock_code=? ORDER BY report_date DESC LIMIT 1", (stock_code,)).fetchone()
+    fin_data = dict(fin) if fin else {}
+
+    # 名称
+    name_row = db.execute("SELECT name FROM stock_basic WHERE stock_code=?", (stock_code,)).fetchone()
+    stock_name = name_row['name'] if name_row else stock_code
+
+    # 买点/止损
+    ideal_buy = None
+    buy_src = ''
+    for s in all_signals:
+        bp = s.get('breakout_price') or s.get('buy_point')
+        if bp:
+            ideal_buy = round(bp, 2)
+            buy_src = s.get('source', '')
+            break
+    stop_loss = round(ideal_buy * 0.92, 2) if ideal_buy else None
+
+    # 信号分类统计
+    buy_count = sum(1 for s in all_signals if s.get('source','') in ('base_breakout','double_bottom','flat_base','saucer_base','standard_breakout','cup_handle','pocket_pivot'))
+    veto_count = sum(1 for s in all_signals if s.get('source','') in ('top_pattern','climax_top','breakout_failure'))
+
+    return jsonify({
+        'stock_code': stock_code,
+        'stock_name': stock_name,
+        'industry': industry,
+        'market': {'phase': mkt.get('market_phase',''), 'risk': mkt.get('risk_level',''),
+                   'position': mkt.get('suggested_position_size'), 'ftd': mkt.get('ftd_date',''),
+                   'dist_days': mkt.get('distribution_days_25d')},
+        'rs': {'rps_20': rs_data.get('rps_20'), 'rps_250': rs_data.get('rps_250'),
+               'rs_line': rs_data.get('rs_line')},
+        'canslim': {k: canslim.get(k) for k in ['score','score_c','score_a','score_n','score_s','score_l','score_i','grade']},
+        'financial': {'roe': fin_data.get('roe'), 'revenue_yoy': fin_data.get('revenue_yoy'),
+                      'gross_margin': fin_data.get('gross_margin'), 'debt_ratio': fin_data.get('asset_liability_ratio')},
+        'institutional': {'fund_count': inst_data.get('fund_count'), 'top10_pct': inst_data.get('top10_inst_proportion'),
+                          'total_pct': inst_data.get('total_inst_proportion')},
+        'signals': {'total': len(all_signals), 'buy': buy_count, 'veto': veto_count,
+                    'sources': list(set(s.get('source','?') for s in all_signals))},
+        'ideal_buy': ideal_buy,
+        'buy_source': buy_src,
+        'stop_loss': stop_loss,
+        'current_price': rs_data.get('close'),
+    })
+
+
 @discipline_bp.route('/lookup-name', methods=['GET', 'OPTIONS'])
 def api_lookup_name():
     """查询代码名称（用于录入表单实时预览）"""
@@ -185,7 +293,9 @@ def api_review(stock_code):
         try:
             from engine_registry import run_all_engines
             # klines 已按日期升序排列
-            engine_signals = run_all_engines(klines=klines, indicators=None)
+            from src.server import _compute_indicators
+            ind = _compute_indicators(klines)
+            engine_signals = run_all_engines(klines=klines, indicators=ind)
             if not signal_source:
                 signal_source = 'real_time'
             for s in engine_signals:
@@ -624,17 +734,25 @@ def api_summary():
         WHERE sell_date IS NULL
     """).fetchone()
 
-    # V2: 计算持仓市值（使用最新收盘价）
+    # V2: 计算持仓市值（优先手工快照，其次K线表）
     market_value = 0.0
     holding_trades = db.execute("""
-        SELECT stock_code, buy_qty FROM discipline_trades WHERE sell_date IS NULL
+        SELECT id, stock_code, buy_qty, asset_type FROM discipline_trades WHERE sell_date IS NULL
     """).fetchall()
     for ht in holding_trades:
         code = ht['stock_code']
         atype = ht['asset_type'] if 'asset_type' in ht.keys() else 'stock'
-        rows = _lookup_kline(db, code, atype, 1)
-        if rows:
-            market_value += rows[0]['close'] * ht['buy_qty']
+        # 优先手工录入的快照
+        snap = db.execute("""
+            SELECT current_price FROM discipline_daily_snapshots
+            WHERE trade_id = ? ORDER BY date DESC LIMIT 1
+        """, (ht['id'],)).fetchone()
+        if snap and snap['current_price'] is not None:
+            market_value += snap['current_price'] * ht['buy_qty']
+        else:
+            rows = _lookup_kline(db, code, atype, 1)
+            if rows:
+                market_value += rows[0]['close'] * ht['buy_qty']
 
     win_count = closed['win_count'] or 0
     total_closed = closed['total_trades'] or 0
@@ -834,6 +952,28 @@ def api_acknowledge_alert(alert_id):
     db.execute("UPDATE discipline_alerts SET acknowledged = 1 WHERE id = ?", (alert_id,))
     db.commit()
     return jsonify({'acknowledged': True, 'alert_id': alert_id})
+
+
+@discipline_bp.route('/monitor/price', methods=['PUT', 'OPTIONS'])
+def api_update_price():
+    """手工更新持仓现价（用于无K线数据的指数）"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    db = get_db()
+    data = request.get_json()
+    trade_id = data.get('trade_id')
+    price = data.get('price')
+    if not trade_id or price is None:
+        return jsonify({'error': 'trade_id and price required'}), 400
+
+    from datetime import datetime
+    today = datetime.now().strftime('%Y-%m-%d')
+    db.execute("""
+        INSERT OR REPLACE INTO discipline_daily_snapshots (date, trade_id, current_price)
+        VALUES (?, ?, ?)
+    """, (today, trade_id, float(price)))
+    db.commit()
+    return jsonify({'updated': True, 'trade_id': trade_id, 'date': today, 'price': float(price)})
 
 
 # ══════════════════════════════════════════════════════

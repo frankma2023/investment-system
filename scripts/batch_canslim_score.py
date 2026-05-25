@@ -1,24 +1,18 @@
 """
-全量A股 CAN SLIM 批量评分
-
-读取 config/canslim_scorecard.yaml，对全部A股逐一评分并入库。
+批量 CAN SLIM 评分 v2 — 独立引擎调用，不依赖 engine_registry
 
 用法:
-  python scripts/batch_canslim_score.py                    # 增量（7天内已评分的跳过）
-  python scripts/batch_canslim_score.py --force             # 强制全量重评
-  python scripts/batch_canslim_score.py --limit 100         # 仅前100只
-  python scripts/batch_canslim_score.py --workers 4         # 4线程并行
-
-执行频率: 每周一 (daily_update.py 步骤11)
+  python scripts/batch_canslim_score.py --force
+  python scripts/batch_canslim_score.py --limit 100
+  python scripts/batch_canslim_score.py --workers 4
 """
 
-import os, sys, time, sqlite3, json, argparse
+import os, sys, time, sqlite3, argparse
 from datetime import datetime, timedelta, date
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_DIR = SCRIPT_DIR.parent
+PROJECT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_DIR))
 sys.path.insert(0, str(PROJECT_DIR / 'src'))
 
@@ -27,8 +21,75 @@ from scanners.canslim_score import score_stock, load_params
 DB_PATH = PROJECT_DIR / "data" / "lixinger.db"
 
 
+def clean_klines(rows):
+    """过滤掉 close/volume 为 None 的 K 线记录"""
+    return [dict(r) for r in rows if r['close'] is not None and r['volume'] is not None]
+
+
+def get_stock_klines(db, stock_code, target_date, lookback=500):
+    """获取并清洗 K 线数据"""
+    rows = db.execute(f"""SELECT date, open, high, low, close, volume FROM daily_kline
+        WHERE stock_code='{stock_code}' AND date<='{target_date}' ORDER BY date DESC LIMIT {lookback}
+    """).fetchall()
+    rows = list(reversed(rows))
+    return clean_klines(rows)
+
+
+def get_breakout_signals(klines):
+    """直接调 base_breakout，不经过 engine_registry"""
+    try:
+        from scanners.base_breakout import detect, load_params as load_bp
+        params = load_bp()
+        return detect(klines, params)
+    except Exception:
+        return []
+
+
+def get_pocket_pivot_signals(klines):
+    """直接调 pocket_pivot"""
+    try:
+        from scanners.pocket_pivot import detect, load_params as load_pp
+        params = load_pp()
+        return detect(klines=klines)
+    except Exception:
+        return []
+
+
+def get_all_signals(klines):
+    """获取 base_breakout + pocket_pivot + cdl/talib 信号"""
+    signals = []
+    # 基部突破
+    for s in get_breakout_signals(klines):
+        s['source'] = 'base_breakout'
+        s['type'] = 'bullish'
+        signals.append(s)
+    # 口袋支点
+    for s in get_pocket_pivot_signals(klines):
+        s['source'] = 'pocket_pivot'
+        s['type'] = 'bullish'
+        signals.append(s)
+    return signals
+
+
+def score_one(code, name, target_date, params):
+    """对单只股票评分并入库"""
+    db = sqlite3.connect(str(DB_PATH))
+    db.row_factory = sqlite3.Row
+    try:
+        klines = get_stock_klines(db, code, target_date)
+        if len(klines) < 50:
+            return None
+
+        signals = get_all_signals(klines)
+        result = score_stock(code, target_date, params, save=True, signals=signals)
+        return result
+    except Exception as e:
+        return None
+    finally:
+        db.close()
+
+
 def get_stocks(limit=None):
-    """获取全量正常上市A股"""
     conn = sqlite3.connect(str(DB_PATH))
     q = """SELECT stock_code, name FROM stock_basic
         WHERE listing_status='normally_listed'
@@ -42,9 +103,7 @@ def get_stocks(limit=None):
 
 
 def get_skip_set(days=7):
-    """查询最近N天内已评分的股票"""
     conn = sqlite3.connect(str(DB_PATH))
-    # 确保表存在
     conn.execute("""CREATE TABLE IF NOT EXISTS cansim_scores (
         stock_code TEXT, date TEXT, score_c REAL, score_a REAL, score_n REAL,
         score_s REAL, score_l REAL, score_i REAL, raw_total REAL,
@@ -60,76 +119,51 @@ def get_skip_set(days=7):
     return result
 
 
-def score_one(code, name, target_date, params, save):
-    """评分单只股票"""
-    try:
-        r = score_stock(code, target_date, params=params, save=save)
-        return code, name, r['score'], r['grade'], r
-    except Exception as e:
-        return code, name, None, None, str(e)
-
-
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--force', action='store_true', help='强制全量重评')
-    ap.add_argument('--limit', type=int, default=None, help='仅前N只')
-    ap.add_argument('--workers', type=int, default=1, help='并行线程数（默认1=串行）')
-    ap.add_argument('--date', type=str, default=None)
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--force', action='store_true')
+    parser.add_argument('--limit', type=int, default=0)
+    parser.add_argument('--workers', type=int, default=1)
+    args = parser.parse_args()
 
-    target_date = args.date or date.today().strftime("%Y-%m-%d")
-    params = load_params()
+    target_date = date.today().strftime("%Y-%m-%d")
+    print(f"Date: {target_date}")
 
-    stocks = get_stocks(args.limit)
-    skip_set = set() if args.force else get_skip_set(7)
-    todo = [(c, n) for c, n in stocks if c not in skip_set]
+    stocks = get_stocks(args.limit or None)
+    skip_set = set() if args.force else get_skip_set()
+    to_score = [(c, n) for c, n in stocks if c not in skip_set]
+    print(f"Stocks: {len(stocks)} total, {len(skip_set)} skip, {len(to_score)} to score")
 
-    print("Date: %s" % target_date)
-    print("Stocks: %d total, %d skip, %d to score" % (
-        len(stocks), len(skip_set), len(todo)))
-    if not todo:
-        print("All up to date.")
+    if not to_score:
+        print("All stocks up to date.")
         return
 
+    params = load_params()
     t0 = time.time()
-    results = []
+    done = 0; scored = 0
 
     if args.workers > 1:
-        with ThreadPoolExecutor(max_workers=args.workers) as pool:
-            futures = {pool.submit(score_one, c, n, target_date, params, True): (c, n)
-                       for c, n in todo}
-            for f in as_completed(futures):
-                results.append(f.result())
+        with ThreadPoolExecutor(max_workers=args.workers) as ex:
+            futures = {ex.submit(score_one, c, n, target_date, params): c for c, n in to_score}
+            for future in as_completed(futures):
+                done += 1
+                if future.result():
+                    scored += 1
+                if done % 50 == 0:
+                    elapsed = time.time() - t0
+                    print(f"  [{done}/{len(to_score)}] {scored} scored ({done/elapsed:.1f}/s)")
     else:
-        for i, (code, name) in enumerate(todo):
-            results.append(score_one(code, name, target_date, params, True))
-            if (i + 1) % 50 == 0:
+        for code, name in to_score:
+            done += 1
+            if score_one(code, name, target_date, params):
+                scored += 1
+            if done % 50 == 0:
                 elapsed = time.time() - t0
-                print("  %d/%d (%.0fs)" % (i + 1, len(todo), elapsed))
+                print(f"  [{done}/{len(to_score)}] {scored} scored ({done/elapsed:.1f}/s)")
 
     elapsed = time.time() - t0
-
-    # 统计
-    scored = [r for r in results if r[2] is not None]
-    errors = [r for r in results if r[2] is None]
-
-    grades = {}
-    for _, _, s, g, _ in scored:
-        grades[g] = grades.get(g, 0) + 1
-
-    print()
-    print("Done: %d stocks in %.0fs (%.1f s/stock)" % (
-        len(scored), elapsed, elapsed / max(len(scored), 1)))
-    if errors:
-        print("Errors: %d" % len(errors))
-    print("Grades: %s" % dict(sorted(grades.items())))
-
-    # TOP 20
-    top = sorted(scored, key=lambda x: -x[2])[:20]
-    print("\nTOP 20:")
-    for code, name, s, g, _ in top:
-        print("  %s %s: %d pts %s" % (code, name, s, g))
+    print(f"Done: {scored}/{len(to_score)} scored in {elapsed:.0f}s ({len(to_score)/elapsed:.1f}/s)")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

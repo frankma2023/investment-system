@@ -57,28 +57,32 @@ def load_params():
 
 
 def _sma(arr, n):
-    if len(arr) < n: return sum(arr) / max(len(arr), 1)
-    return sum(arr[-n:]) / n
+    clean = [v for v in arr if v is not None]
+    if len(clean) < n: return sum(clean) / max(len(clean), 1) if clean else 0
+    return sum(clean[-n:]) / n
 
 def _sma_before(arr, n, idx):
     start = max(0, idx - n)
-    vals = arr[start:idx]
-    return sum(vals) / max(len(vals), 1)
+    vals = [v for v in arr[start:idx] if v is not None]
+    return sum(vals) / max(len(vals), 1) if vals else 0
 
 def _linear_slope(y):
-    n = len(y)
+    clean = [v for v in y if v is not None]
+    n = len(clean)
     if n < 2: return 0
     xs = list(range(n))
-    xm = (n - 1) / 2; ym = sum(y) / n
-    num = sum((xs[i] - xm) * (y[i] - ym) for i in range(n))
+    xm = (n - 1) / 2; ym = sum(clean) / n
+    num = sum((xs[i] - xm) * (clean[i] - ym) for i in range(n))
     den = sum((xs[i] - xm) ** 2 for i in range(n))
     return num / den if den else 0
 
 def _is_local_high(values, idx, window=10):
-    lo, hi = max(0, idx - window), min(len(values) - 1, idx + window)
     peak = values[idx]
+    if peak is None: return False
+    lo, hi = max(0, idx - window), min(len(values) - 1, idx + window)
     for i in range(lo, hi + 1):
-        if values[i] > peak: return False
+        vi = values[i]
+        if vi is not None and vi > peak: return False
     return True
 
 
@@ -92,14 +96,19 @@ def _find_trough_and_prior_high(daily, t_idx, params):
     closes = [k['close'] for k in daily]
     dates = [k['date'] for k in daily]
 
+    # 跳过 None
+    def _close(i):
+        v = closes[i]
+        return v if v is not None else float('inf')  # None 当作无穷大，不会被选为谷
+
     search_end = t_idx - min_base
     search_start = max(0, t_idx - lookback)
     if search_end < search_start: return None
 
     trough_price = float('inf'); trough_idx = None
     for i in range(search_start, search_end + 1):
-        if closes[i] < trough_price:
-            trough_price = closes[i]; trough_idx = i
+        if _close(i) < trough_price:
+            trough_price = _close(i); trough_idx = i
     if trough_idx is None: return None
 
     candidate_price = trough_price
@@ -108,7 +117,8 @@ def _find_trough_and_prior_high(daily, t_idx, params):
     max_back = max(0, trough_idx - lookback)
 
     for i in range(trough_idx - 1, max_back - 1, -1):
-        ci = closes[i]
+        ci = _close(i)
+        if ci is None or ci == float('inf'): continue
         if ci > candidate_price:
             candidate_price = ci; candidate_idx = i
         if _is_local_high(closes, i, local_window):
@@ -143,7 +153,7 @@ def _find_trough_and_prior_high(daily, t_idx, params):
 
 def _check_prior_advance(daily, prior_high_idx, prior_high, lookback, min_adv):
     start = max(0, prior_high_idx - lookback)
-    lows = [k['close'] for k in daily[start:prior_high_idx]]
+    lows = [k['close'] for k in daily[start:prior_high_idx] if k.get('close') is not None]
     if not lows: return 0
     prior_low = min(lows)
     return (prior_high - prior_low) / prior_low if prior_low > 0 else 0
@@ -172,6 +182,9 @@ def detect(daily, params=None, market_cap=None):
 
     for t_idx in range(lookback + 50, n):
         today = daily[t_idx]
+        # 跳过缺失关键数据的交易日
+        if today.get('close') is None or today.get('volume') is None:
+            continue
 
         if sma50_check:
             sma50c = _sma(closes[:t_idx+1], 50)
@@ -183,9 +196,10 @@ def detect(daily, params=None, market_cap=None):
         dd = base['drawdown']
         if dd < dd_min or dd > dd_max: continue
 
-        max_rec = max(k['close'] for k in daily[base['trough_idx']:t_idx+1])
+        max_rec = max(k['close'] for k in daily[base['trough_idx']:t_idx+1] if k.get('close') is not None)
+        if max_rec is None: continue
         if max_rec < base['prior_high'] * min_recovery: continue
-        asc_slope = _linear_slope([k['close'] for k in daily[base['trough_idx']:t_idx+1]])
+        asc_slope = _linear_slope([k['close'] for k in daily[base['trough_idx']:t_idx+1] if k.get('close') is not None])
         if asc_slope <= 0: continue
 
         pa = _check_prior_advance(daily, base['prior_high_idx'], base['prior_high'], lookback, min_adv)

@@ -7,6 +7,11 @@ CAN SLIM 评分引擎 v1
 """
 
 import sys, os, yaml, sqlite3, json
+import numpy as np
+try:
+    import talib
+except ImportError:
+    talib = None
 from datetime import datetime, timedelta, date
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,6 +20,25 @@ sys.path.insert(0, os.path.join(PROJECT_DIR, 'src'))
 
 DB_PATH = os.path.join(PROJECT_DIR, "data", "lixinger.db")
 CONFIG_PATH = os.path.join(PROJECT_DIR, "config", "canslim_scorecard.yaml")
+
+
+def _compute_indicators(klines):
+    """计算技术指标 dict，供 batch 模式引擎使用"""
+    if talib is None or len(klines) < 50:
+        return {}
+    close = np.array([k.get('close') or np.nan for k in klines], dtype=np.float64)
+    result = {}
+    try:
+        for p in [5, 10, 20, 50, 120, 250]:
+            sma = talib.SMA(close, p)
+            result[f'sma{p}'] = [float(x) if not np.isnan(x) else None for x in sma]
+        bb_u, bb_m, bb_l = talib.BBANDS(close, 20, 2, 2, 0)
+        result['bb_upper'] = [float(x) if not np.isnan(x) else None for x in bb_u]
+        result['bb_middle'] = [float(x) if not np.isnan(x) else None for x in bb_m]
+        result['bb_lower'] = [float(x) if not np.isnan(x) else None for x in bb_l]
+    except Exception:
+        pass
+    return result
 
 
 def load_params():
@@ -55,7 +79,7 @@ def score_c(db, stock_code, target_date, p):
     # EPS YoY
     eps_yoy = latest.get('net_profit_yoy') or 0
     tiers = cfg.get('eps_yoy_tiers', [25, 18, 10])
-    scs = cfg.get('eps_yoy_scores', [12, 8, 5])
+    scs = cfg.get('eps_yoy_scores', [11, 7, 4])
     eps_sc = 0
     for i, t in enumerate(tiers):
         if eps_yoy >= t:
@@ -115,7 +139,7 @@ def score_a(db, stock_code, target_date, p):
     old = anns[3].get('net_profit') if len(anns) > 3 else (anns[-1].get('net_profit') or 0)
     cagr = ((lat / old) ** (1.0/3.0) - 1) * 100 if (old > 0 and lat > 0) else 0
     tiers = cfg.get('eps_cagr_3y_tiers', [25, 15, 5])
-    scs = cfg.get('eps_cagr_scores', [9, 6, 3])
+    scs = cfg.get('eps_cagr_scores', [8, 5, 2])
     cagr_sc = 0
     for i, t in enumerate(tiers):
         if cagr >= t: cagr_sc = scs[i]; break
@@ -125,7 +149,7 @@ def score_a(db, stock_code, target_date, p):
 
     # Positive years
     pos = sum(1 for i in range(len(anns)-1) if (anns[i].get('net_profit') or 0) > (anns[i+1].get('net_profit') or 0))
-    pos_s = cfg.get('positive_years_score', [5, 2])
+    pos_s = cfg.get('positive_years_score', [4, 2])
     if pos >= 3: score += pos_s[0]; bd['pos_years'] = {'value': pos, 'score': pos_s[0]}
     elif pos >= 2: score += pos_s[1]; bd['pos_years'] = {'value': pos, 'score': pos_s[1]}
     else: bd['pos_years'] = {'value': pos, 'score': 0}
@@ -143,7 +167,7 @@ def score_a(db, stock_code, target_date, p):
             score += 1
             bd['stability'] = {'value': round(cv, 1), 'score': 1}
 
-    return {"score": min(score, 17), "detail": ", ".join(detail), "breakdown": bd}
+    return {"score": min(score, 15), "detail": ", ".join(detail), "breakdown": bd}
 
 
 def score_n(db, stock_code, target_date, p, klines=None, signals=None):
@@ -165,7 +189,7 @@ def score_n(db, stock_code, target_date, p, klines=None, signals=None):
     if high52 > 0:
         pct = (close - high52) / high52 * 100
         tiers = cfg.get('high52_tiers', [-5, -15])
-        scs = cfg.get('high52_scores', [7, 5])
+        scs = cfg.get('high52_scores', [6, 4])
         high_sc = 0
         for i, t in enumerate(tiers):
             if pct > t: high_sc = scs[i]; break
@@ -177,7 +201,8 @@ def score_n(db, stock_code, target_date, p, klines=None, signals=None):
     if signals is None:
         try:
             from engine_registry import run_all_engines
-            all_sigs = run_all_engines(klines=klines, indicators=None)
+            ind = _compute_indicators(klines)
+            all_sigs = run_all_engines(klines=klines, indicators=ind, silent=True)
         except:
             all_sigs = []
     else:
@@ -217,43 +242,30 @@ def score_n(db, stock_code, target_date, p, klines=None, signals=None):
                 ta_sum += base * factor
                 form_sc += base * factor
 
-    form_sc = min(form_sc, 14)
+    form_sc = min(form_sc, 17)
     score += round(form_sc, 1)
     bd['form_breakout'] = {'value': round(form_sc, 1), 'score': round(form_sc, 1)}
 
-    return {"score": min(score, 14), "detail": ", ".join(detail), "breakdown": bd}
+    return {"score": min(score, 17), "detail": ", ".join(detail), "breakdown": bd}
 
 
 def score_s(db, stock_code, target_date, p):
     cfg = p.get('s_supply_demand', {})
     score = 0; detail = []; bd = {}
 
-    # Market cap
-    row = db.execute("""SELECT value FROM fundamental_indicator
-        WHERE stock_code=? AND metric_code='mc' AND date<=?
-        ORDER BY date DESC LIMIT 1""",
-        (stock_code, target_date)).fetchone()
-    mcap = (row['value'] or 0) / 1e8 if row else 0
-    tiers = cfg.get('market_cap_tiers', [50, 200, 500])
-    scs = cfg.get('market_cap_scores', [4, 2, 1])
-    mcap_sc = 0
-    for i, t in enumerate(tiers):
-        if mcap <= t: mcap_sc = scs[i]; break
-    score += mcap_sc
-    bd['market_cap'] = {'value': round(mcap, 0), 'score': mcap_sc}
-    detail.append('MCap {:.0f}B'.format(mcap))
-
     # Volume ratio
-    row5 = db.execute("""SELECT AVG(volume) as av FROM daily_kline
-        WHERE stock_code=? AND date<=? ORDER BY date DESC LIMIT 5""",
+    row5 = db.execute("""SELECT AVG(volume) as av FROM (
+        SELECT volume FROM daily_kline
+        WHERE stock_code=? AND date<=? ORDER BY date DESC LIMIT 5)""",
         (stock_code, target_date)).fetchone()
-    row50 = db.execute("""SELECT AVG(volume) as av FROM daily_kline
-        WHERE stock_code=? AND date<=? ORDER BY date DESC LIMIT 50""",
+    row50 = db.execute("""SELECT AVG(volume) as av FROM (
+        SELECT volume FROM daily_kline
+        WHERE stock_code=? AND date<=? ORDER BY date DESC LIMIT 50)""",
         (stock_code, target_date)).fetchone()
     if row50 and row50['av'] and row50['av'] > 0 and row5 and row5['av']:
         vr = row5['av'] / row50['av']
-        vol_t = cfg.get('vol_ratio_tiers', [1.5, 1.2])
-        vol_s = cfg.get('vol_ratio_scores', [3, 2])
+        vol_t = cfg.get('vol_ratio_tiers', [2.0, 1.5, 1.2])
+        vol_s = cfg.get('vol_ratio_scores', [7, 5, 2])
         vol_sc = 0
         for i, t in enumerate(vol_t):
             if vr >= t: vol_sc = vol_s[i]; break
@@ -261,40 +273,7 @@ def score_s(db, stock_code, target_date, p):
         bd['vol_ratio'] = {'value': round(vr, 2), 'score': vol_sc}
         detail.append('Vol {:.1f}x'.format(vr))
 
-    # 回购注销 — stock_buyback 表（只查实施中的，不限制公告日期）
-    try:
-        bb_row = db.execute("""SELECT SUM(amount_yuan) as total_amount, MAX(is_cancellation) as has_cancel
-            FROM stock_buyback
-            WHERE stock_code=? AND progress='001'""",
-            (stock_code,)).fetchone()
-        if bb_row and bb_row['total_amount']:
-            bb_amount = bb_row['total_amount']
-            # 获取市值用于计算比例
-            mc_row = db.execute("""SELECT value FROM fundamental_indicator
-                WHERE stock_code=? AND metric_code='mc' AND date<=?
-                ORDER BY date DESC LIMIT 1""",
-                (stock_code, target_date)).fetchone()
-            mc = (mc_row['value'] or 1) if mc_row else 1
-            if mc > 0:
-                bb_ratio = bb_amount / mc * 100
-                bb_tiers = cfg.get('buyback_ratio_tiers', [1.0, 0.5])
-                bb_scores = cfg.get('buyback_scores', [2, 1])
-                bb_sc = 0
-                for i, t in enumerate(bb_tiers):
-                    if bb_ratio >= t:
-                        bb_sc = bb_scores[i]
-                        break
-                score += bb_sc
-                bd['buyback'] = {'value': round(bb_ratio, 2), 'score': bb_sc}
-                if bb_row['has_cancel']:
-                    bd['buyback']['note'] = 'incl. cancellation'
-            else:
-                bd['buyback'] = {'value': 0, 'score': 0}
-        else:
-            bd['buyback'] = {'value': 0, 'score': 0}
-    except sqlite3.OperationalError:
-        bd['buyback'] = {'value': 0, 'score': 0, 'note': 'no table'}
-    return {"score": min(score, 9), "detail": ", ".join(detail), "breakdown": bd}
+    return {"score": min(score, 7), "detail": ", ".join(detail), "breakdown": bd}
 
 
 def score_l(db, stock_code, target_date, p):
@@ -309,7 +288,7 @@ def score_l(db, stock_code, target_date, p):
 
     rs250 = row['rps_250'] or 0
     tiers = cfg.get('rs250_tiers', [95, 90, 80, 70])
-    scs = cfg.get('rs250_scores', [11, 9, 6, 3])
+    scs = cfg.get('rs250_scores', [10, 8, 5, 2])
     rs_sc = 0
     for i, t in enumerate(tiers):
         if rs250 >= t: rs_sc = scs[i]; break
@@ -328,6 +307,15 @@ def score_l(db, stock_code, target_date, p):
         score += cfg.get('rs_momentum_penalty', -2)
         bd['rs_momentum'] = {'value': 'decel', 'score': cfg.get('rs_momentum_penalty', -2)}
 
+    # v3: RS_20 short-term bonus
+    rs20_bonus = 0
+    rs20_tiers = cfg.get('rs20_bonus_tiers', [95, 90])
+    rs20_scores = cfg.get('rs20_bonus_scores', [2, 1])
+    for i, t in enumerate(rs20_tiers):
+        if rs20 >= t: rs20_bonus = rs20_scores[i]; break
+    score += rs20_bonus
+    bd['rs_20_bonus'] = {'value': rs20, 'score': rs20_bonus}
+
     # Industry RS — 取所属全部指数中 RS_20 最高值
     try:
         ind_rs_row = db.execute("""
@@ -341,8 +329,8 @@ def score_l(db, stock_code, target_date, p):
             ind_rs = ind_rs_row['best_rs']
             th = cfg.get('industry_rs_threshold', 80)
             if ind_rs >= th:
-                score += cfg.get('industry_rs_score_high', 5)
-                bd['industry_rs'] = {'value': ind_rs, 'score': cfg.get('industry_rs_score_high', 5)}
+                score += cfg.get('industry_rs_score_high', 4)
+                bd['industry_rs'] = {'value': ind_rs, 'score': cfg.get('industry_rs_score_high', 4)}
             elif ind_rs >= 70:
                 score += cfg.get('industry_rs_score_mid', 2)
                 bd['industry_rs'] = {'value': ind_rs, 'score': cfg.get('industry_rs_score_mid', 2)}
@@ -367,7 +355,7 @@ def score_l(db, stock_code, target_date, p):
             ir = (idx_rows[0]['close'] - idx_rows[-1]['close']) / idx_rows[-1]['close'] * 100
             excess = sr - ir
             th = cfg.get('excess_return_threshold', 5)
-            ex_s = cfg.get('excess_return_scores', [3, 1])
+            ex_s = cfg.get('excess_return_scores', [4, 2])
             if excess > th:
                 score += ex_s[0]; bd['excess'] = {'value': round(excess, 1), 'score': ex_s[0]}
             elif excess > 0:
@@ -376,7 +364,7 @@ def score_l(db, stock_code, target_date, p):
                 bd['excess'] = {'value': round(excess, 1), 'score': 0}
             detail.append('Excess {:.1f}%'.format(excess))
 
-    return {"score": max(0, min(score, 21)), "detail": ", ".join(detail), "breakdown": bd}
+    return {"score": max(0, min(score, 22)), "detail": ", ".join(detail), "breakdown": bd}
 
 
 def score_i(db, stock_code, target_date, p):
@@ -500,7 +488,7 @@ def score_market(db, target_date, p):
     return {"health_score": hs, "position": pos}
 
 
-def score_stock(stock_code, target_date, params=None, save=False):
+def score_stock(stock_code, target_date, params=None, save=False, signals=None):
     if params is None: params = load_params()
     db = sqlite3.connect(DB_PATH); db.row_factory = sqlite3.Row
 
@@ -509,11 +497,11 @@ def score_stock(stock_code, target_date, params=None, save=False):
         (stock_code, target_date)).fetchall()
     klines = [dict(r) for r in rows]
 
-    signals = None
-    if len(klines) >= 50:
+    if signals is None and len(klines) >= 50:
         try:
             from engine_registry import run_all_engines
-            signals = run_all_engines(klines=klines, indicators=None)
+            ind = _compute_indicators(klines)
+            signals = run_all_engines(klines=klines, indicators=ind, silent=True)
         except: pass
 
     c = score_c(db, stock_code, target_date, params)
@@ -526,7 +514,7 @@ def score_stock(stock_code, target_date, params=None, save=False):
     db.close()
 
     raw = c['score'] + a['score'] + n['score'] + s['score'] + l['score'] + i['score']
-    final = round(raw / 102 * 100)
+    final = min(raw, 100)  # v3: 各维度满分之和=100，无需缩放
 
     grades = [(85, 'S'), (75, 'A'), (65, 'B'), (55, 'C'), (45, 'D')]
     grade = 'E'

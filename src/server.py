@@ -2387,11 +2387,27 @@ def api_index_rs():
             AND date = (SELECT MAX(date) FROM index_rs_daily WHERE date <= ?)
         """, [as_of_date] + codes + [as_of_date]).fetchall()
 
+        # 获取当日涨跌幅（index_daily_kline.change 是百分比小数）
+        daily_changes = {}
+        if rows:
+            krows = db.execute(f"""
+                SELECT stock_code, change, date FROM index_daily_kline
+                WHERE stock_code IN ({ph}) AND kline_type='normal' AND date<=?
+                ORDER BY date DESC
+            """, codes + [as_of_date]).fetchall()
+            # 取每个 code 的最新一条
+            seen = set()
+            for kr in krows:
+                if kr['stock_code'] not in seen:
+                    seen.add(kr['stock_code'])
+                    daily_changes[kr['stock_code']] = round((kr['change'] or 0) * 100, 2)
+
         rankings = []
         for r in rows:
             rankings.append({
                 'code': r['stock_code'], 'name': index_names.get(r['stock_code'], r['stock_code']),
-                'close': r['close'], 'change_pct': round(r['ret_20'] or 0, 2),
+                'close': r['close'],
+                'change_pct': round(daily_changes.get(r['stock_code'], 0) or 0, 2),
                 'RET_20': r['ret_20'], 'RET_60': r['ret_60'], 'RET_120': r['ret_120'], 'RET_250': r['ret_250'],
                 'RS_20': r['rs_20'], 'RS_60': r['rs_60'], 'RS_120': r['rs_120'], 'RS_250': r['rs_250'],
             })

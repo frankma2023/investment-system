@@ -57,38 +57,38 @@ function renderResults(d) {
 
   // Render each dimension with sub-items
   var dimConfig = [
-    {key: 'C', name: 'C 当期盈利', max: 23, color: '#E53935', cls: 'dim-c',
+    {key: 'C', name: 'C 当期盈利', max: 22, color: '#E53935', cls: 'dim-c',
      subs: [
        {key: 'eps_yoy', label: 'EPS同比增速'},
        {key: 'eps_accel', label: 'EPS加速度'},
        {key: 'revenue_yoy', label: '营收同比增速'},
        {key: 'nonrecurring', label: '扣非占比'}
      ]},
-    {key: 'A', name: 'A 年度盈利', max: 17, color: '#FF9800', cls: 'dim-a',
+    {key: 'A', name: 'A 年度盈利', max: 15, color: '#FF9800', cls: 'dim-a',
      subs: [
        {key: 'eps_cagr_3y', label: '3年EPS CAGR'},
        {key: 'pos_years', label: '正增长年数'},
        {key: 'stability', label: '盈利稳定性'}
      ]},
-    {key: 'N', name: 'N 形态新高', max: 14, color: '#4CAF50', cls: 'dim-n',
+    {key: 'N', name: 'N 形态新高', max: 17, color: '#4CAF50', cls: 'dim-n',
      subs: [
        {key: 'high52', label: '距52周高点'},
        {key: 'form_breakout', label: '形态突破'}
      ]},
-    {key: 'S', name: 'S 供给需求', max: 9, color: '#2196F3', cls: 'dim-s',
+    {key: 'S', name: 'S 供给需求', max: 7, color: '#2196F3', cls: 'dim-s',
      subs: [
        {key: 'market_cap', label: '流通市值'},
        {key: 'vol_ratio', label: '成交量放大'},
        {key: 'buyback', label: '回购注销'}
      ]},
-    {key: 'L', name: 'L 领军股', max: 21, color: '#9C27B0', cls: 'dim-l',
+    {key: 'L', name: 'L 领军股', max: 22, color: '#9C27B0', cls: 'dim-l',
      subs: [
        {key: 'rs_250', label: 'RS评级(250日)'},
        {key: 'rs_momentum', label: 'RS动量'},
        {key: 'industry_rs', label: '行业RS评级'},
        {key: 'excess', label: '近期超额收益'}
      ]},
-    {key: 'I', name: 'I 机构认同', max: 18, color: '#795548', cls: 'dim-i',
+    {key: 'I', name: 'I 机构认同', max: 17, color: '#795548', cls: 'dim-i',
      subs: [
        {key: 'inst_holding', label: '机构持股比例'},
        {key: 'inst_change', label: '机构数量变化'},

@@ -102,13 +102,14 @@ def get_engine_list():
     ]
 
 
-def run_all_engines(klines, indicators=None):
+def run_all_engines(klines, indicators=None, silent=False):
     """
     运行全部已发现的引擎。
 
     Args:
         klines: 用 OHLCV 列构建的 dict 列表或 pd.DataFrame
         indicators: TA-Lib 指标 dict（由框架统一计算后传入）
+        silent: True 时不打印错误日志（批量模式）
 
     Returns:
         all_signals: List[dict]，每条信号已自动注入 source 字段
@@ -154,7 +155,8 @@ def run_all_engines(klines, indicators=None):
                     sig_item['date'] = sig_item['signal_date']
                 all_signals.append(sig_item)
         except Exception as e:
-            print(f"[engine_registry] 引擎 {name} 执行失败: {e}")
+            if not silent:
+                print(f"[engine_registry] 引擎 {name} 执行失败: {e}")
 
     return all_signals
 

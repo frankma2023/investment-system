@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>欧奈尔每日精选 · 产品需求书</title>
+<style>
+  body{max-width:900px;margin:40px auto;font-family:system-ui,-apple-system,sans-serif;color:#333;line-height:1.8}
+  h1{font-size:1.6rem;border-bottom:3px solid #FE2C55;padding-bottom:8px}
+  h2{font-size:1.2rem;margin-top:32px;color:#C62828}
+  h3{font-size:1rem;margin-top:20px;color:#555}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.9rem}
+  th,td{border:1px solid #ddd;padding:6px 12px;text-align:left}
+  th{background:#f5f5f5;font-weight:600}
+  pre{background:#f5f5f5;padding:12px;border-radius:6px;overflow-x:auto}
+  code{background:#f0f0f0;padding:1px 5px;border-radius:3px}
+  .meta{color:#888;font-size:.85rem;margin-bottom:24px}
+  .section{border-left:4px solid #FE2C55;padding:12px 18px;margin:16px 0;background:#fafafa;border-radius:0 8px 8px 0}
+  ol li{margin-bottom:6px}
+</style>
+</head>
+<body>
+
+<h1>📋 欧奈尔每日精选 · 产品需求书</h1>
+<p class="meta">版本：v1.0 · 日期：2026-05-23 · 状态：已实现</p>
+
+<h2>Problem Statement</h2>
+<div class="section">
+<p>投资者每天面对 A 股全市场约 5,000 只股票，人工筛选耗时巨大、容易遗漏关键信号、且带有个人情绪偏差。虽然系统已具备观察池（RS+CANSLIM 粗筛）、形态扫描引擎（10+ 种技术形态）、最强指数（5 个指数池的行业动量排名）等能力，但缺少一个将这些数据<strong>统一打分、层层过滤、生成可操作买卖建议</strong>的决策引擎。</p>
+<p>用户需要一个每日盘后自动运行的筛选系统，从全市场缩小到 <strong>20 只最值得关注的股票</strong>，并提供买卖点、止损价和详细评估理由。</p>
+</div>
+
+<h2>Solution</h2>
+<div class="section">
+<p>基于威廉·欧奈尔 CAN SLIM 投资体系，构建<strong>六层漏斗筛选引擎</strong>，每天盘后自动执行：</p>
+<pre>
+第 1 层：大盘闸门（非理想环境 → 强烈提醒）
+第 2 层：RS 精英（RPS250 ≥ 90, RPS20 ≥ 85, 仅双强+龙头）
+第 3 层：CANSLIM 质量（总分 ≥ 48, ROE ≥ 5%, 营收增速 ≥ 5%, 负债率 &lt; 70%）
+第 4 层：技术形态（近 20 自然日基部突破信号，过滤顶部/高潮/失败）
+第 5 层：行业共振（命中最强 TOP 5×3 指数池加分 ×1.15~1.25）
+第 6 层：综合得分排序 → TOP 20
+</pre>
+<p>输出到交互页面 <code>http://localhost:8772/discipline/screening.html</code>，支持搜索、筛选、排序，每只股票可查看六层详细推荐信，并可一键加入自选池。</p>
+</div>
+
+<h2>User Stories</h2>
+<ol>
+<li>作为投资者，我希望每天盘后自动看到 20 只最值得关注的股票，不需要人工逐只翻看。</li>
+<li>作为投资者，我希望精选结果按 O'Neil 综合得分降序排列，一眼看出优先级。</li>
+<li>作为投资者，我希望知道每只股票的理想买点和止损价，方便制定交易计划。</li>
+<li>作为投资者，我希望看到每只股票命中了哪些形态信号（基部突破/口袋支点等），且信号名用中文显示。</li>
+<li>作为投资者，我希望知道哪些股票属于当前最强的行业主题（如芯片、半导体、新能源），以便把握结构性机会。</li>
+<li>作为投资者，当大盘处于震荡或回调阶段时，我仍想看到精选结果，但需要系统给出强烈提醒，让我自己判断风险。</li>
+<li>作为投资者，我希望在精选列表中点击股票代码能跳转到复核详情页，看到完整的 K 线图和信号标记。</li>
+<li>作为投资者，我希望点击"精选理由"能看到一篇以欧奈尔口吻撰写的推荐信，包含六层评估的详细数据和总结。</li>
+<li>作为投资者，我希望推荐信中有雪球和东方财富的快捷搜索链接，方便查看外部观点。</li>
+<li>作为投资者，我希望能直接从精选列表把股票加入自选池，无需跳转页面。</li>
+<li>作为投资者，我希望能按 RS 分类（双强/龙头）、最低得分筛选精选结果。</li>
+<li>作为投资者，我希望能按代码或名称实时搜索精选结果。</li>
+<li>作为投资者，我希望精选页面明确显示当前大盘阶段和建议仓位。</li>
+<li>作为投资者，我希望信号列只显示近 20 自然日的信号数量，而非历史全部信号，避免数字过大。</li>
+<li>作为投资者，如果大盘处于上升趋势/反弹确认阶段，精选结果应直接推荐买入；否则显示为"观察参考"。</li>
+</ol>
+
+<h2>Implementation Decisions</h2>
+
+<h3>架构</h3>
+<ol>
+<li><strong>筛选引擎</strong>：新建 <code>src/discipline/screener.py</code>，串行执行六层过滤。每日由 <code>daily_update.py</code> 步骤 14 自动调用。</li>
+<li><strong>信号来源</strong>：第四层不依赖观察池单日快照（数据仅 1 天），改为对 L3 幸存者加载 400 天 K 线、调用 <code>engine_registry.run_all_engines()</code> 实时扫描全量信号。每只约 0.5 秒，61 只约 30 秒。</li>
+<li><strong>最强指数匹配</strong>：调用 <code>load_index_pools()</code> 获取指数池配置，从 <code>index_rs_daily</code> 取二级行业/主题/策略三个池的 TOP 5（RS_250≥80, RS_60≥85, RS_20≥90），查 <code>index_constituents</code>（精确 ×1.25）和 <code>stock_index</code>（模糊 ×1.15）匹配股票。</li>
+<li><strong>大盘闸门</strong>：从 <code>market_direction_daily</code> 读取 <code>market_phase</code>。非上升/反弹/确认时不阻断筛选，但设置 <code>market_warning=true</code>，前端显示橙色警告横幅。</li>
+</ol>
+
+<h3>数据</h3>
+<ol start="5">
+<li><strong>CANSLIM 阈值</strong>：基于 RS 精英 207 只的实际分值分布（中位数 45，P75=54，P90=62），总分 ≥ 48（前 75%）。C/A 维度分值过低（最高 23/17），不作为硬过滤，但在推荐信中完整展示。</li>
+<li><strong>财务阈值</strong>：ROE ≥ 5%（略高于中位数 4.8%），营收增速 ≥ 5%（P25），负债率 &lt; 70%（P90）。</li>
+<li><strong>信号窗口</strong>：20 个自然日。买入信号类型：基部突破、双重底、扁平基部、碟形基部、标准突破、杯柄突破。一票否决：顶部形态、高潮见顶、突破失败、抛盘日。</li>
+<li><strong>信号分值</strong>：基部突破类 +12，口袋支点 +10，高紧旗/箱体 +6，其他看涨 +4。</li>
+</ol>
+
+<h3>前端</h3>
+<ol start="9">
+<li><strong>筛选页</strong>：12 列表格（O'Neil 得分/代码/名称/行业/RS/RPS250/CANSLIM/信号/买点/止损/共振/操作），支持排序、搜索、RS 分类和最低得分筛选。</li>
+<li><strong>推荐信</strong>：新增 <code>/api/discipline/recommendation/&lt;code&gt;</code> 端点，聚合六层全量数据，生成结构化推荐信（大盘/RS/CANSLIM/形态/机构/总结），含雪球和东财搜索链接。弹窗展示。</li>
+<li><strong>加入自选</strong>：复用现有 <code>/api/discipline/watchlist</code> POST 端点。</li>
+</ol>
+
+<h3>综合得分公式</h3>
+<pre>
+O'Neil = CANSLIM/100 × 40 + RPS250/100 × 25 + 信号加分 × 0.5 + (共振权重-1) × 15
+</pre>
+<p>得分上限 100。</p>
+
+<h2>Testing Decisions</h2>
+<ul>
+<li>筛选逻辑正确性：手动跑 <code>python src/discipline/screener.py --date YYYY-MM-DD</code> 验证每层通过数量与预期一致。</li>
+<li>前端交互：验证搜索框/下拉筛选/排序/加入自选按钮功能正常。</li>
+<li>大盘闸门：分别测试上升趋势和非上升趋势场景，验证警告横幅正确显示。</li>
+<li>推荐信：验证 API 返回所有六层字段，弹窗内容包含雪球/东财链接。</li>
+</ul>
+
+<h2>Out of Scope</h2>
+<ul>
+<li>卖出规则筛选（高潮见顶/突破失败仅作为否决条件，不生成卖出推荐）</li>
+<li>AI 生成推荐信（当前为模板化数据填充）</li>
+<li>论坛文章自动抓取和摘要</li>
+<li>欧奈尔 Skill 化（未来迭代）</li>
+<li>历史回测验证筛选规则有效性</li>
+</ul>
+
+<h2>API 端点</h2>
+<table>
+<tr><th>端点</th><th>方法</th><th>说明</th></tr>
+<tr><td><code>/api/discipline/screening</code></td><td>GET</td><td>欧奈尔每日精选列表（含 market_warning）</td></tr>
+<tr><td><code>/api/discipline/recommendation/&lt;code&gt;</code></td><td>GET</td><td>单标的全量推荐信数据</td></tr>
+</table>
+
+</body>
+</html>

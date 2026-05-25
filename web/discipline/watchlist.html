@@ -2,6 +2,7 @@
 <html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="../images/favicon.svg" type="image/svg+xml">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>自选池 · 知行</title>
   <link rel="stylesheet" href="../shared/css/theme.css">
@@ -38,7 +39,7 @@
 
     <div class="panel-header">
       <h1>⭐ 自选池</h1>
-      <button class="btn-run" onclick="showManualForm()">+ 手动添加</button>
+      <button class="btn-run" onclick="showManualForm()" style="width:auto;font-size:0.7rem;padding:4px 14px;">+ 手动添加</button>
     </div>
 
     <div id="table-wrap"><div class="loading">加载中...</div></div>
@@ -104,9 +105,9 @@
         html += `<td>${statusTag}</td>`;
         html += `<td>${(item.added_at || '').slice(0, 10)}</td>`;
         html += `<td>${item.manual_reason || (item.source === 'manual' ? '手动添加' : '')}</td>`;
-        html += `<td style="display:flex;gap:4px;">`;
-        html += `<a href="trades.html" style="font-size:0.6rem;padding:2px 6px;background:var(--accent);color:#fff;border-radius:6px;text-decoration:none;">买入</a>`;
-        html += `<button class="btn-run" onclick="removeFromWatchlist('${item.stock_code}')" style="font-size:0.55rem;padding:2px 6px;">移除</button>`;
+        html += `<td style="display:flex;gap:4px;justify-content:center;">`;
+        html += `<a href="trades.html" style="font-size:0.65rem;padding:3px 10px;background:#FE2C55;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;line-height:1.4;">买入</a>`;
+        html += `<button class="btn-run" onclick="removeFromWatchlist('${item.stock_code}')" style="font-size:0.65rem;padding:3px 10px;width:auto;line-height:1.4;border-radius:6px;">移除</button>`;
         html += `</td>`;
         html += '</tr>';
       }

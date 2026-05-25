@@ -346,12 +346,13 @@
     let html = '<table class="data-table"><thead><tr>';
     html += '<th class="sortable" data-col="0" data-type="string">代码</th>';
     html += '<th class="sortable" data-col="1" data-type="string">名称</th>';
-    html += '<th class="sortable" data-col="2" data-type="number">RS_20</th>';
-    html += '<th class="sortable" data-col="3" data-type="number">RS_60</th>';
-    html += '<th class="sortable" data-col="4" data-type="number">RS_120</th>';
-    html += '<th class="sortable" data-col="5" data-type="number">RS_250</th>';
-    if (tierType === 'l2') html += '<th class="sortable" data-col="6" data-type="number">加速力度</th>';
-    if (tierType === 'l3') html += '<th class="sortable" data-col="6" data-type="string">MA状态</th>';
+    html += '<th class="sortable" data-col="2" data-type="number">涨跌幅</th>';
+    html += '<th class="sortable" data-col="3" data-type="number">RS_20</th>';
+    html += '<th class="sortable" data-col="4" data-type="number">RS_60</th>';
+    html += '<th class="sortable" data-col="5" data-type="number">RS_120</th>';
+    html += '<th class="sortable" data-col="6" data-type="number">RS_250</th>';
+    if (tierType === 'l2') html += '<th class="sortable" data-col="7" data-type="number">加速力度</th>';
+    if (tierType === 'l3') html += '<th class="sortable" data-col="7" data-type="string">MA状态</th>';
     html += '</tr></thead><tbody>';
 
     for (const item of items) {
@@ -361,9 +362,14 @@
       const rs120 = item.RS_120 ?? '—';
       const rs250 = item.RS_250 ?? '—';
 
+      const change = item.change_pct ?? 0;
+      const changeStr = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+      const changeCls = change > 0 ? 'up' : change < 0 ? 'down' : '';
+
       html += `<tr>
         <td class="mono">${item.code}</td>
         <td><span class="clickable-name" data-code="${item.code}">${name}</span></td>
+        <td class="${changeCls}">${changeStr}</td>
         <td class="${rsClass(rs20)}">${rs20}</td>
         <td class="${rsClass(rs60)}">${rs60}</td>
         <td class="${rsClass(rs120)}">${rs120}</td>

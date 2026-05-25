@@ -2,6 +2,7 @@
 <html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="../images/favicon.svg" type="image/svg+xml">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>复核详情 · 知行</title>
   <link rel="stylesheet" href="../shared/css/theme.css">
@@ -122,6 +123,8 @@
       'stepping_bottom': '递升底部', 'pocket_pivot': '口袋支点', 'lower_low_breakout': '递升突破',
       'standard_breakout': '标准突破', 'top_pattern': '顶部形态', 'cdl': 'K线形态',
       'volume_divergence': '量价背离', 'talib': 'TA指标',
+      'breakout_failure': '突破失败', 'climax_top': '高潮见顶',
+      'distribution_day': '抛盘日',
     };
     function getDisplayName(src) { return DISPLAY_NAMES[src] || src; }
 
@@ -274,7 +277,7 @@
               daySigs.forEach(sig => {
                 const st = getSignalStyle(sig);
                 const tb = sig.type === 'bearish' ? '看跌' : '看涨';
-                h += `<span style="color:${st.color};font-weight:700">●</span> <b>${sig.source||'信号'}</b> · ${tb}<br/>`;
+                h += `<span style="color:${st.color};font-weight:700">●</span> <b>${getDisplayName(sig.source||'?')}</b> · ${tb}<br/>`;
               });
             }
             return h;

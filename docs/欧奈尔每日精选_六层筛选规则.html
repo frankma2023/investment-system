@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>欧奈尔每日精选 · 六层筛选规则</title>
+<style>
+  body { max-width:900px; margin:40px auto; font-family: system-ui,-apple-system,sans-serif; color:#333; line-height:1.7; }
+  h1 { font-size:1.6rem; border-bottom:3px solid #FE2C55; padding-bottom:8px; }
+  h2 { font-size:1.15rem; margin-top:32px; color:#C62828; }
+  .layer { background:#fafafa; border-left:4px solid #FE2C55; padding:12px 18px; margin:16px 0; border-radius:0 8px 8px 0; }
+  .layer h3 { margin:0 0 6px; font-size:1rem; }
+  .layer .count { font-size:0.8rem; color:#888; }
+  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:0.9rem; }
+  th, td { border:1px solid #ddd; padding:6px 10px; text-align:left; }
+  th { background:#f5f5f5; font-weight:600; }
+  .yes { color:#2E7D32; font-weight:600; }
+  .no  { color:#C62828; }
+  .note { background:#FFF8E1; border:1px solid #FFE082; padding:10px 14px; border-radius:6px; font-size:0.85rem; margin:10px 0; }
+  .output { background:#E8F5E9; border:1px solid #A5D6A7; padding:16px; border-radius:8px; margin:20px 0; }
+  code { background:#f0f0f0; padding:1px 5px; border-radius:3px; font-size:0.9em; }
+</style>
+</head>
+<body>
+
+<h1>📋 欧奈尔每日精选 · 六层筛选规则</h1>
+<p>数据源：观察池（RS+CANSLIM+信号快照）+ 最强指数 + 大盘环境<br>目标：每天输出 <b>10-30 只</b>最值得关注/买入的标的</p>
+
+<!-- ──────────────────────────────── -->
+<h2>第一层：大盘闸门</h2>
+<div class="layer">
+  <h3>🔴 一票否决层</h3>
+  <p class="count">输入：全部候选 → 通过或全部拦截</p>
+  <table>
+    <tr><th>大盘阶段</th><th>动作</th></tr>
+    <tr><td>上升趋势 / 反弹确认</td><td class="yes">✅ 继续筛选，推荐买入</td></tr>
+    <tr><td>回调 / 修正 / 下跌</td><td class="no">🛑 不推荐新买入，输出"市场观望"</td></tr>
+  </table>
+  <div class="note">
+    数据来源：<code>market_direction_daily</code> 表 <code>market_phase</code> 字段<br>
+    理由：O'Neil 统计 3/4 的股票跟随大盘方向。逆势选股胜率骤降。
+  </div>
+</div>
+
+<!-- ──────────────────────────────── -->
+<h2>第二层：RS 精英</h2>
+<div class="layer">
+  <h3>🟠 动量过滤层</h3>
+  <p class="count">输入：~1,489 → 输出：~400</p>
+  <table>
+    <tr><th>条件</th><th>阈值</th></tr>
+    <tr><td>RPS 250</td><td><b>≥ 90</b></td></tr>
+    <tr><td>RPS 20</td><td><b>≥ 85</b></td></tr>
+    <tr><td>RS 分类</td><td>仅保留 <b>双强</b> 和 <b>龙头</b></td></tr>
+  </table>
+  <div class="note">
+    砍掉"短爆"（长期动量不足）和"稳健"（短期动能不够）。<br>
+    只保留长期+短期共振最强的品种 —— 领涨股，不碰补涨股。
+  </div>
+</div>
+
+<!-- ──────────────────────────────── -->
+<h2>第三层：CANSLIM 质量</h2>
+<div class="layer">
+  <h3>🟡 基本面过滤层</h3>
+  <p class="count">输入：~400 → 输出：~120</p>
+  <table>
+    <tr><th>维度</th><th>条件</th><th>数据来源</th></tr>
+    <tr><td>CANSLIM 总分</td><td><b>≥ 48</b>（前 75%）</td><td><code>canslim_scores.score</code></td></tr>
+    <tr><td>ROE</td><td><b>≥ 5%</b></td><td><code>stock_financials_annual.roe</code></td></tr>
+    <tr><td>营收增速</td><td><b>≥ 5%</b></td><td><code>stock_financials_annual.revenue_yoy</code></td></tr>
+    <tr><td>资产负债率</td><td><b>&lt; 70%</b></td><td><code>stock_financials_annual.asset_liability_ratio</code></td></tr>
+  </table>
+  <div class="note">
+    CANSLIM 总分筛掉基本面最弱的 25%，ROE + 营收增速排除财务虚胖的票，负债率排除高杠杆风险。<br>
+    C、A、N、S、L、I 各维度分值在精选理由推荐信中完整展示，供人工复核。
+  </div>
+</div>
+
+<!-- ──────────────────────────────── -->
+<h2>第四层：技术形态确认</h2>
+<div class="layer">
+  <h3>🟢 买入信号层</h3>
+  <p class="count">输入：~120 → 输出：~25</p>
+  <table>
+    <tr><th>类型</th><th>信号</th><th>规则</th></tr>
+    <tr><td rowspan="2"><b>必须要有<br>（至少一个）</b></td><td><code>base_breakout</code> 基部突破</td><td rowspan="2">20 日内信号<br>（实时扫描引擎）</td></tr>
+    <tr><td><code>pocket_pivot</code> 口袋支点</td></tr>
+
+    <tr><td rowspan="4"><b>一票否决<br>（有即排除）</b></td><td><code>top_pattern</code> 顶部形态</td><td rowspan="4">最近 20 日内出现</td></tr>
+    <tr><td><code>climax_top</code> 高潮见顶</td></tr>
+    <tr><td><code>breakout_failure</code> 突破失败</td></tr>
+    <tr><td><code>distribution_day</code> 抛盘日信号</td></tr>
+  </table>
+  <div class="note">
+    信号必须来自 <code>pattern_scan_signals</code> 表或实时引擎扫描。<br>
+    突破失败和高潮见顶是 O'Neil 的核心卖出规则 —— 出现这些信号的票坚决不碰。
+  </div>
+</div>
+
+<!-- ──────────────────────────────── -->
+<h2>第五层：行业共振</h2>
+<div class="layer">
+  <h3>🔵 主题加分层</h3>
+  <p class="count">在第四层结果上叠加权重</p>
+  <table>
+    <tr><th>匹配方式</th><th>权重</th><th>数据来源</th></tr>
+    <tr><td>股票是指数成分股（精确）</td><td><b>× 1.25</b></td><td><code>index_constituents</code> 表</td></tr>
+    <tr><td>股票属于该指数（标注）</td><td><b>× 1.15</b></td><td><code>stock_index</code> 表</td></tr>
+  </table>
+  <div class="note">
+    <b>最强指数来源</b>：<code>/api/strongest-index</code> 接口<br>
+    取 <b>二级行业 TOP 5</b> + <b>主题指数 TOP 5</b> + <b>策略指数 TOP 5</b>，共 15 只<br><br>
+    最强指数筛选条件（your system）：RS_250≥80, RS_60≥85, RS_20≥90, MA50>MA150>MA200, AD斜率>0<br>
+    理由：O'Neil 核心原则 —— 买龙头行业的龙头股。资金涌入的方向，个股才有最大上涨空间。
+  </div>
+</div>
+
+<!-- ──────────────────────────────── -->
+<h2>第六层：量价确认 + 最终排序</h2>
+<div class="layer">
+  <h3>🟣 最终验证 & 排序输出</h3>
+  <p class="count">输入：~25 → 输出：TOP 30</p>
+  <table>
+    <tr><th>检查项</th><th>条件</th></tr>
+    <tr><td>突破日量比</td><td>成交量 ≥ 50日均量的 <b>1.5 倍</b></td></tr>
+    <tr><td>RS 线位置</td><td>RS 线 ≥ 20日高点的 <b>95%</b></td></tr>
+  </table>
+  <br>
+  <b>综合得分公式</b>：
+  <pre style="background:#f5f5f5;padding:12px;border-radius:6px;">
+O'Neil 得分 = CANSLIM × 0.40 + RPS250 × 0.25 + 形态信号 × 0.20 + 行业共振 × 0.15
+
+其中：
+  CANSLIM    = cansim_scores.score / 100 × 40
+  RPS250     = rps_250 / 100 × 25
+  形态信号    = 基部突破类(×12) + 口袋支点(×10) + 其他突破(×6~8)
+  行业共振    = 命中最强指数 × (1.15~1.25)
+  </pre>
+  <p>按得分降序排列，输出 <b>TOP 30</b>。</p>
+</div>
+
+<!-- ──────────────────────────────── -->
+<h2>📊 输出格式</h2>
+<div class="output">
+  <table>
+    <tr><th>排名</th><th>代码</th><th>名称</th><th>行业</th><th>O'Neil</th><th>信号</th><th>买点</th><th>止损</th><th>量比</th><th>行业共振</th></tr>
+    <tr><td>1</td><td>300750</td><td>宁德时代</td><td>电力设备</td><td>95</td><td>基部突破+口袋支点</td><td>¥245</td><td>¥225</td><td>2.1×</td><td>新能源×1.25</td></tr>
+    <tr><td>2</td><td>002850</td><td>科达利</td><td>电力设备</td><td>91</td><td>杯柄突破</td><td>¥138</td><td>¥127</td><td>1.8×</td><td>新能源×1.25</td></tr>
+    <tr><td>3</td><td>002281</td><td>光迅科技</td><td>通信</td><td>87</td><td>基部突破</td><td>¥62</td><td>¥57</td><td>1.6×</td><td>科创芯片×1.15</td></tr>
+  </table>
+</div>
+
+<!-- ──────────────────────────────── -->
+<h2>📐 六层漏斗总览</h2>
+<table>
+  <tr><th>层</th><th>名称</th><th>类型</th><th>输入</th><th>输出</th></tr>
+  <tr><td>1</td><td>大盘闸门</td><td>一票否决</td><td>全部</td><td>继续/观望</td></tr>
+  <tr><td>2</td><td>RS 精英</td><td>过滤</td><td>~1,489</td><td>~400</td></tr>
+  <tr><td>3</td><td>CANSLIM 质量</td><td>过滤</td><td>~400</td><td>~120</td></tr>
+  <tr><td>4</td><td>技术形态确认</td><td>过滤+否决</td><td>~120</td><td>~25</td></tr>
+  <tr><td>5</td><td>行业共振</td><td>加分</td><td>~25</td><td>~25</td></tr>
+  <tr><td>6</td><td>量价确认</td><td>验证</td><td>~25</td><td>TOP 30</td></tr>
+</table>
+
+</body>
+</html>
