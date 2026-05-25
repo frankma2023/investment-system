@@ -51,9 +51,9 @@
     </header>
 
     <div class="pg-stats">
-      <div class="pg-stat"><div class="n" style="color:#4CAF50">43</div><div class="l">已完成</div></div>
+      <div class="pg-stat"><div class="n" style="color:#4CAF50">50</div><div class="l">已完成</div></div>
       <div class="pg-stat"><div class="n" style="color:#FF9800">0</div><div class="l">进行中</div></div>
-      <div class="pg-stat"><div class="n">7</div><div class="l">待开发</div></div>
+      <div class="pg-stat"><div class="n">1</div><div class="l">待开发</div></div>
     </div>
 
     <div class="section-title">功能模块</div>
@@ -75,15 +75,39 @@
       </div>
 
       <div class="pg-card">
-        <h3>💎 个股分析 <span class="badge" style="background:#F3E5F5;color:#7B1FA2">7项</span></h3>
+        <h3>💎 个股分析 <span class="badge" style="background:#F3E5F5;color:#7B1FA2">5项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-done"></span>个股RS强度+回测</td><td>/stock-rs-backtest/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>个股全维度扫描</td><td>/stock-valuation/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>个股财务分析</td><td>/stock-analysis/</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>🎯 口袋支点</td><td>/pocket-pivot/</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>🅱 双重底(个股)</td><td>/double-bottom/</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>📏 扁平基部</td><td>/flat-base/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>DCF+可比+三表模型</td><td>/stock-valuation/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>🩺 基本面恶化检测</td><td>/stock-valuation/</td></tr>
+        </table>
+      </div>
+
+      <div class="pg-card">
+        <h3>🔍 形态与信号 <span class="badge" style="background:#E8EAF6;color:#283593">12项</span></h3>
+        <table class="pg-table">
+          <tr><td><span class="pg-dot dot-done"></span>📈 基部突破 Layer 1</td><td>/base-breakout/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>⚠️ 突破失败检测</td><td>/breakout-failure/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🥏 碟形基部</td><td>/saucer-base-backtest/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>☕ 杯柄形态</td><td>/cup-handle-backtest/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🎯 口袋支点</td><td>/pocket-pivot/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>📏 扁平基部</td><td>/flat-base/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🅱 双重底</td><td>/double-bottom/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🔴 高潮见顶</td><td>/climax-top/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🚂 铁轨线</td><td>/railroad-tracks/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>📊 量价背离</td><td>/volume-divergence/</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🕯️ K线形态引擎(14种)</td><td>cdl_engine</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>📐 TA-Lib 指标</td><td>talib_engine</td></tr>
+        </table>
+      </div>
+
+      <div class="pg-card">
+        <h3>🚨 卖出信号 <span class="badge" style="background:#FCE4EC;color:#C62828">2项</span></h3>
+        <table class="pg-table">
+          <tr><td><span class="pg-dot dot-done"></span>📉 抛盘日 v3.0</td><td>重抛盘日×2+确认日抵消</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>⛰️ 头部形态</td><td>/top-pattern/</td></tr>
         </table>
       </div>
 
@@ -99,27 +123,12 @@
       </div>
 
       <div class="pg-card">
-        <h3>🚨 卖出信号 <span class="badge" style="background:#FCE4EC;color:#C62828">6项</span></h3>
-        <table class="pg-table">
-          <tr><td><span class="pg-dot dot-done"></span>🔴 高潮见顶+回测</td><td>/climax-top/</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>🚂 铁轨线+回测</td><td>/railroad-tracks/</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>📉 抛盘日 v3.0</td><td>重抛盘日×2+确认日抵消</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>📈 基部突破 Layer 1</td><td>/base-breakout/</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>⚠️ 突破失败检测 v1.0</td><td>/breakout-failure/</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>🏷️ VCP 形态标注器</td><td>base_tags.py</td></tr>
-        </table>
-      </div>
-
-      <div class="pg-card">
-        <h3>🔧 基础设施 <span class="badge" style="background:#ECEFF1;color:#546E7A">17项</span></h3>
+        <h3>🔧 基础设施 <span class="badge" style="background:#ECEFF1;color:#546E7A">13项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-done"></span>理杏仁数据拉取</td><td>scripts/fetch_*</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>每日更新脚本(14步)</td><td>daily_update.py</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>看板样式系统</td><td>xhs-cards.css</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>回测配置持久化</td><td>YAML ↔ API</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>TA-Lib 指标引擎</td><td>talib_engine</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>K线形态引擎(14种)</td><td>cdl_engine</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>建议合成引擎</td><td>recommend</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>引擎自动发现框架</td><td>engine_registry</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>RPS_60/120存储</td><td>stock_rs → stock_rs_daily</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>机构持股拉取(理杏仁)</td><td>fetch_institutional_holdings</td></tr>
@@ -128,28 +137,22 @@
           <tr><td><span class="pg-dot dot-done"></span>机构持股8季回补</td><td>backfill_institutional</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>CAN SLIM评分引擎</td><td>canslim_score</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>批量评分脚本</td><td>batch_canslim_score</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>碟形基部识别引擎</td><td>saucer_base</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>数据库Schema文档</td><td>DATABASE_SCHEMA.md</td></tr>
         </table>
       </div>
 
       <div class="pg-card">
-        <h3>🎯 CAN SLIM <span class="badge" style="background:#FCE4EC;color:#C62828">4项</span></h3>
+        <h3>🎯 CAN SLIM <span class="badge" style="background:#FCE4EC;color:#C62828">3项</span></h3>
         <table class="pg-table">
           <tr><td><span class="pg-dot dot-done"></span>🎯 评分卡看板</td><td>/canslim-scorecard/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>📊 全市场评分查询</td><td>/canslim-scores/</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>📋 全市场形态扫描</td><td>/daily-pattern-scan/</td></tr>
-          <tr><td><span class="pg-dot dot-done"></span>🥏 碟形基部回测</td><td>/saucer-base-backtest/</td></tr>
         </table>
       </div>
 
       <div class="pg-card">
-        <h3>📐 未来引擎 <span class="badge" style="background:#FFF3E0;color:#E65100">5项</span></h3>
+        <h3>📐 未来引擎 <span class="badge" style="background:#FFF3E0;color:#E65100">1项</span></h3>
         <table class="pg-table">
-          <tr><td><span class="pg-dot dot-todo"></span>杯柄形态</td><td>cup_handle</td></tr>
-          <tr><td><span class="pg-dot dot-todo"></span>碟形基部</td><td>saucer_base</td></tr>
-          <tr><td><span class="pg-dot dot-todo"></span>VCP波动率收缩</td><td>vcp</td></tr>
-          <tr><td><span class="pg-dot dot-todo"></span>量价背离与出货</td><td>diverge_distribution</td></tr>
           <tr><td><span class="pg-dot dot-todo"></span>大盘环境卖出</td><td>market_exit</td></tr>
         </table>
       </div>
