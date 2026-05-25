@@ -73,8 +73,75 @@ def api_screening():
     """欧奈尔每日精选列表"""
     if request.method == 'OPTIONS':
         return '', 204
-    from discipline.screener import run
+    db = get_db()
+    mode = request.args.get('mode', 'stock')
+    if mode == 'index':
+        target_date = request.args.get('date', None)
+        # 优先从快照表读取
+        if not target_date:
+            row = db.execute("SELECT MAX(date) FROM discipline_screening_daily_index").fetchone()
+            target_date = row[0] if row and row[0] else None
+        if target_date:
+            cached = db.execute("SELECT * FROM discipline_screening_daily_index WHERE date=? ORDER BY rank", (target_date,)).fetchall()
+            if cached:
+                items = [dict(r) for r in cached]
+                return jsonify({
+                    'market_gate': 'ok', 'market_warning': False, 'market_phase': items[0].get('market_phase',''),
+                    'items': items, 'count': len(items), 'date': target_date, 'mode': 'index',
+                })
+        # 缓存未命中，实时计算
+        from discipline.index_screener import run as index_run
+        result = index_run(target_date=request.args.get('date', None))
+        return jsonify({
+            'market_gate': 'ok',
+            'market_warning': result.get('market_warning', False),
+            'market_phase': result.get('market_phase', ''),
+            'items': result.get('items', []),
+            'count': len(result.get('items', [])),
+            'date': result.get('date', 'latest'),
+            'mode': 'index',
+        })
+
     target_date = request.args.get('date', None)
+    # 优先从快照表读取
+    if not target_date:
+        row = db.execute("SELECT MAX(date) FROM discipline_screening_daily").fetchone()
+        target_date = row[0] if row and row[0] else None
+    if target_date:
+        cached = db.execute("SELECT * FROM discipline_screening_daily WHERE date=? ORDER BY rank", (target_date,)).fetchall()
+        if cached:
+            items = [dict(r) for r in cached]
+            # 补全行业和RS字段（快照表未存）
+            # 优先同天观察池，无则取最新
+            obs_date = target_date
+            obs_check = db.execute("SELECT COUNT(*) as cnt FROM discipline_observation_pool WHERE date=?", (obs_date,)).fetchone()
+            if not obs_check or obs_check['cnt'] == 0:
+                obs_date = db.execute("SELECT MAX(date) FROM discipline_observation_pool").fetchone()[0]
+            for it in items:
+                ext = db.execute("""
+                    SELECT industry_name, rs_category, rps_60, rps_120, rps_20,
+                           roe, revenue_yoy, debt_ratio, gross_margin
+                    FROM discipline_observation_pool
+                    WHERE stock_code=? AND date=?
+                """, (it['stock_code'], obs_date)).fetchone()
+                if ext:
+                    it['industry_name'] = ext['industry_name']
+                    it['rs_category'] = ext['rs_category']
+                    it['rps_60'] = ext['rps_60']
+                    it['rps_120'] = ext['rps_120']
+                    it['rps_20'] = ext['rps_20']
+                    it['roe'] = ext['roe']
+                    it['revenue_yoy'] = ext['revenue_yoy']
+                    it['debt_ratio'] = ext['debt_ratio']
+                    it['gross_margin'] = ext['gross_margin']
+            market = db.execute("SELECT market_phase FROM market_direction_daily ORDER BY date DESC LIMIT 1").fetchone()
+            phase = market['market_phase'] if market else ''
+            return jsonify({
+                'market_gate': 'ok', 'market_warning': False, 'market_phase': phase,
+                'items': items, 'count': len(items), 'date': target_date, 'mode': 'stock',
+            })
+    # 缓存未命中，实时计算
+    from discipline.screener import run
     result = run(target_date=target_date)
     return jsonify({
         'market_gate': result.get('market_gate', 'ok'),
@@ -84,6 +151,166 @@ def api_screening():
         'count': len(result.get('items', [])),
         'strongest_indices': result.get('strongest_indices', {}),
         'date': result.get('date') or target_date or 'latest',
+        'mode': 'stock',
+    })
+
+
+@discipline_bp.route('/screening-backtest', methods=['GET', 'OPTIONS'])
+def api_screening_backtest():
+    """精选回测：指定日期 → 精选股票列表 + 至今收益"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    db = get_db()
+
+    target_date = request.args.get('date', None)
+    if not target_date:
+        row = db.execute("SELECT MAX(date) FROM discipline_screening_daily").fetchone()
+        target_date = row[0] if row and row[0] else None
+    if not target_date:
+        return jsonify({'error': '无历史精选数据', 'items': [], 'date': None})
+
+    try:
+        rows = db.execute("""
+            SELECT * FROM discipline_screening_daily WHERE date = ? ORDER BY rank
+        """, (target_date,)).fetchall()
+    except sqlite3.OperationalError:
+        return jsonify({'error': '数据表未创建，请重启 Flask 后先访问筛选页生成数据', 'items': [], 'date': target_date, 'available_dates': []})
+
+    items = []
+    for r in rows:
+        entry = dict(r)
+        ideal_buy = r['ideal_buy']
+
+        if ideal_buy and ideal_buy > 0:
+            # 取该日期之后的全部K线
+            krows = db.execute("""
+                SELECT date, close FROM daily_kline
+                WHERE stock_code = ? AND date >= ? ORDER BY date
+            """, (r['stock_code'], target_date)).fetchall()
+
+            # 精选日当日收盘价（index 0）
+            entry['close_0d'] = round(krows[0]['close'], 2) if krows else None
+
+            # 计算第 N 个交易日（跳过信号日当天 = index 0）
+            for tag, nth in [('return_5d', 5), ('return_10d', 10), ('return_20d', 20)]:
+                idx = nth  # 第 N 个交易日后
+                if idx < len(krows):
+                    close_n = krows[idx]['close']
+                    entry[tag] = round((close_n - ideal_buy) / ideal_buy * 100, 1)
+                else:
+                    entry[tag] = None
+            entry['holding_days'] = len(krows)
+        else:
+            for tag in ['return_5d', 'return_10d', 'return_20d']:
+                entry[tag] = None
+            entry['holding_days'] = 0
+
+        items.append(entry)
+
+    # 汇总统计（5/10/20 日）
+    stats = {'count': len(items)}
+    for tag in ['return_5d', 'return_10d', 'return_20d']:
+        valid = [i for i in items if i[tag] is not None]
+        if valid:
+            wins = [i for i in valid if i[tag] > 0]
+            stats[tag] = {
+                'valid': len(valid),
+                'avg_return': round(sum(i[tag] for i in valid) / len(valid), 1),
+                'win_rate': round(len(wins) / len(valid) * 100, 1),
+                'best': max(valid, key=lambda x: x[tag]),
+                'worst': min(valid, key=lambda x: x[tag]),
+            }
+        else:
+            stats[tag] = {'valid': 0, 'avg_return': None, 'win_rate': None, 'best': None, 'worst': None}
+
+    # 可用日期列表
+    try:
+        dates = [r[0] for r in db.execute(
+            "SELECT DISTINCT date FROM discipline_screening_daily ORDER BY date DESC LIMIT 60"
+        ).fetchall()]
+    except sqlite3.OperationalError:
+        dates = []
+
+    return jsonify({
+        'date': target_date,
+        'available_dates': dates,
+        'items': items,
+        'stats': stats,
+    })
+
+
+@discipline_bp.route('/screening-backtest-index', methods=['GET', 'OPTIONS'])
+def api_screening_backtest_index():
+    """指数精选回测"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    db = get_db()
+    target_date = request.args.get('date', None)
+    if not target_date:
+        row = db.execute("SELECT MAX(date) FROM discipline_screening_daily_index").fetchone()
+        target_date = row[0] if row and row[0] else None
+    if not target_date:
+        return jsonify({'error': '无历史精选数据', 'items': [], 'date': None})
+
+    try:
+        rows = db.execute("""
+            SELECT * FROM discipline_screening_daily_index WHERE date = ? ORDER BY rank
+        """, (target_date,)).fetchall()
+    except sqlite3.OperationalError:
+        return jsonify({'error': '数据表未创建', 'items': [], 'date': target_date, 'available_dates': []})
+
+    items = []
+    for r in rows:
+        entry = dict(r)
+        ideal_buy = r['ideal_buy']
+        if ideal_buy and ideal_buy > 0:
+            krows = db.execute("""
+                SELECT date, close FROM index_daily_kline
+                WHERE stock_code=? AND date>=? AND kline_type='normal' ORDER BY date
+            """, (r['index_code'], target_date)).fetchall()
+            entry['close_0d'] = round(krows[0]['close'], 2) if krows else None
+            for tag, nth in [('return_5d', 5), ('return_10d', 10), ('return_20d', 20)]:
+                idx = nth
+                if idx < len(krows):
+                    entry[tag] = round((krows[idx]['close'] - ideal_buy) / ideal_buy * 100, 1)
+                else:
+                    entry[tag] = None
+            entry['holding_days'] = len(krows)
+        else:
+            entry['close_0d'] = None
+            for tag in ['return_5d', 'return_10d', 'return_20d']:
+                entry[tag] = None
+            entry['holding_days'] = 0
+        items.append(entry)
+
+    stats = {'count': len(items)}
+    for tag in ['return_5d', 'return_10d', 'return_20d']:
+        valid = [i for i in items if i[tag] is not None]
+        if valid:
+            wins = [i for i in valid if i[tag] > 0]
+            stats[tag] = {
+                'valid': len(valid),
+                'avg_return': round(sum(i[tag] for i in valid) / len(valid), 1),
+                'win_rate': round(len(wins) / len(valid) * 100, 1),
+                'best': max(valid, key=lambda x: x[tag]),
+                'worst': min(valid, key=lambda x: x[tag]),
+            }
+        else:
+            stats[tag] = {'valid': 0, 'avg_return': None, 'win_rate': None}
+
+    try:
+        dates = [r[0] for r in db.execute(
+            "SELECT DISTINCT date FROM discipline_screening_daily_index ORDER BY date DESC LIMIT 60"
+        ).fetchall()]
+    except sqlite3.OperationalError:
+        dates = []
+
+    return jsonify({
+        'date': target_date,
+        'available_dates': dates,
+        'items': items,
+        'stats': stats,
+        'mode': 'index',
     })
 
 

@@ -4,7 +4,7 @@ var filteredData = [];
 var currentPage = 1;
 var pageSize = 200;
 var sortCol = 3;
-var sortDir = -1;
+var sortDir = 1;
 var colNames = ['#','代码','名称','总评分','C 当期盈利','A 年度盈利','N 形态新高','S 供给需求','L 领军股','I 机构认同'];
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -32,6 +32,8 @@ function loadData() {
         return;
       }
       sortBy(3);
+      filteredData = [];  // reset filter to show all sorted data
+      renderTable();
       renderPager();
     });
 }

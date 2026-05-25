@@ -55,3 +55,4 @@ Thumbs.db
 # Temporary
 tmp/
 data/backups/
+\".codegraph/\" 

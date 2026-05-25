@@ -162,8 +162,11 @@ TASKS.append(("🔍 观察池日更", [PYTHON_EXE, "src/discipline/observation.p
 # 步骤13：持仓监控扫描（每日执行，依赖观察池 + 形态信号 + 大盘环境）
 TASKS.append(("📡 持仓监控扫描", [PYTHON_EXE, "src/discipline/monitoring.py"]))
 
-# 步骤14：欧奈尔每日精选（每日执行，依赖观察池 + 形态信号）
-TASKS.append(("📋 欧奈尔每日精选", [PYTHON_EXE, "src/discipline/screener.py", "--date", today_str]))
+# 步骤14：欧奈尔每日精选·股票（每日执行，依赖观察池 + 形态信号）
+TASKS.append(("📋 欧奈尔每日精选·股票", [PYTHON_EXE, "src/discipline/screener.py", "--date", today_str]))
+
+# 步骤15：欧奈尔每日精选·指数（每日执行，依赖指数K线 + 指数RS）
+TASKS.append(("📊 欧奈尔每日精选·指数", [PYTHON_EXE, "src/discipline/index_screener.py", "--date", today_str]))
 
 for label, cmd in TASKS:
     lbl, ok, elapsed, _ = run_task(label, cmd)

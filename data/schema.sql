@@ -121,6 +121,48 @@ CREATE TABLE IF NOT EXISTS discipline_observation_pool (
     PRIMARY KEY (stock_code, date)
 );
 
+-- 每日精选快照（供回测回溯）
+CREATE TABLE IF NOT EXISTS discipline_screening_daily (
+    date            TEXT NOT NULL,
+    rank            INTEGER NOT NULL,
+    stock_code      TEXT NOT NULL,
+    stock_name      TEXT,
+    oneil_score     REAL,
+    canslim_total   REAL,
+    rps_250         REAL,
+    signal_score    REAL,
+    signal_count    INTEGER,
+    signal_summary  TEXT,
+    ideal_buy       REAL,
+    buy_signal_date TEXT,
+    buy_source      TEXT,
+    stop_loss       REAL,
+    resonance_name  TEXT,
+    correction_stock INTEGER DEFAULT 0,
+    market_phase    TEXT,
+    PRIMARY KEY (date, rank)
+);
+
+-- 每日精选快照·指数版（供回测回溯）
+CREATE TABLE IF NOT EXISTS discipline_screening_daily_index (
+    date            TEXT NOT NULL,
+    rank            INTEGER NOT NULL,
+    index_code      TEXT NOT NULL,
+    index_name      TEXT,
+    pool_name       TEXT,
+    index_score     REAL,
+    rps_250         REAL,
+    rps_20          REAL,
+    signal_score    REAL,
+    signal_count    INTEGER,
+    signal_summary  TEXT,
+    ideal_buy       REAL,
+    buy_signal_date TEXT,
+    buy_source      TEXT,
+    market_phase    TEXT,
+    PRIMARY KEY (date, rank)
+);
+
 -- 交易记录（买入→卖出闭环）
 CREATE TABLE IF NOT EXISTS discipline_trades (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,

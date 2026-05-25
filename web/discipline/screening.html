@@ -30,6 +30,9 @@
     .btn-xs{font-size:.55rem;padding:2px 8px;border-radius:5px;cursor:pointer;border:1px solid var(--divider);background:var(--card-bg);color:var(--text-primary);text-decoration:none;display:inline-block}
     .btn-xs.add{background:#FE2C55;color:#fff;border-color:#FE2C55}
     .info-row{font-size:.6rem;color:var(--text-tertiary);margin:4px 0}
+    .mode-tabs{display:flex;gap:4px;margin:8px 0}
+    .mode-tab{padding:5px 14px;border-radius:8px;font-size:.7rem;font-weight:600;cursor:pointer;border:1px solid var(--divider);background:var(--card-bg);color:var(--text-secondary)}
+    .mode-tab.active{background:#FE2C55;color:#fff;border-color:#FE2C55}
     .loading{text-align:center;padding:40px;color:var(--text-tertiary)}
   </style>
 </head>
@@ -41,6 +44,10 @@
     <span id="market-badge" class="mkt-badge">加载中...</span>
   </div>
   <div class="info-row" id="info-row"></div>
+  <div class="mode-tabs">
+    <div class="mode-tab active" id="tab-stock" onclick="switchMode('stock')">📈 股票精选</div>
+    <div class="mode-tab" id="tab-index" onclick="switchMode('index')">📊 指数精选</div>
+  </div>
   <div class="toolbar">
     <input type="text" id="filter-input" placeholder="搜索..." oninput="renderTable()">
     <select id="cat-filter" onchange="renderTable()">
@@ -62,14 +69,25 @@
 
 <script src="../shared/js/nav.js"></script>
 <script>
-Nav.init({brandIcon:'🦊',brandText:'知行',currentPage:'discipline'});
-let allItems=[],sortCol='oneil_score',sortDir='desc';
+Nav.init({brandIcon:'🦊',brandText:'知行',currentPage:'screening'});
+let allItems=[],sortCol='oneil_score',sortDir='desc',currentMode='stock';
 const DISPLAY_NAMES={'base_breakout':'基部突破','double_bottom':'双重底','flat_base':'扁平基部','saucer_base':'碟形基部','standard_breakout':'标准突破','cup_handle':'杯柄突破','pocket_pivot':'口袋支点','top_pattern':'顶部形态','climax_top':'高潮见顶','breakout_failure':'突破失败','distribution_day':'抛盘日','box_range':'箱体震荡','high_tight_flag':'高紧旗','stepping_bottom':'递升底部','lower_low_breakout':'递升突破','cdl':'K线形态','talib':'TA指标','volume_divergence':'量价背离','railroad_tracks':'铁轨线','double_top':'双重顶','head_shoulders_top':'头肩顶'};
 function cn(s){return DISPLAY_NAMES[s]||s}
 
+function switchMode(mode){
+  currentMode=mode;
+  document.getElementById('tab-stock').className='mode-tab'+(mode==='stock'?' active':'');
+  document.getElementById('tab-index').className='mode-tab'+(mode==='index'?' active':'');
+  // 指数模式下隐藏股票专属筛选器
+  document.getElementById('cat-filter').style.display=mode==='stock'?'':'none';
+  document.getElementById('score-filter').style.display=mode==='stock'?'':'none';
+  allItems=[]; sortCol=(mode==='stock'?'oneil_score':'index_score');
+  document.getElementById('table-wrap').innerHTML='<div class="loading">加载中...</div>';
+  load();
+}
 async function load(){
   try{
-    const r=await fetch('/api/discipline/screening');const d=await r.json();
+    const r=await fetch('/api/discipline/screening?mode='+currentMode);const d=await r.json();
     if(d.market_warning){
       document.getElementById('info-row').insertAdjacentHTML('beforebegin','<div style="background:#FFF3E0;border:1px solid #FF9800;border-radius:8px;padding:8px 14px;margin:8px 0;font-size:.7rem;color:#E65100;text-align:center;">⚠ <b>市场提醒</b>：当前大盘处于「'+d.market_phase+'」阶段，非 O\'Neil 理想买入环境。以下精选仅供观察参考，建议控制仓位、等待追盘日确认后再行动。</div>');
     }
@@ -97,35 +115,58 @@ function renderTable(){
   items.sort((a,b)=>{let va=a[col]!=null?a[col]:-Infinity,vb=b[col]!=null?b[col]:-Infinity;if(typeof va==='string'){va=va.toLowerCase();vb=(vb||'').toLowerCase();return dir==='asc'?va.localeCompare(vb):vb.localeCompare(va)}return dir==='asc'?(va-vb):(vb-va)});
   if(!items.length){document.getElementById('table-wrap').innerHTML='<div class="loading">无匹配结果</div>';return}
   let h='<table class="scr-table"><thead><tr>';
-  h+=`<th onclick="tc('oneil_score')">O'Neil${sa('oneil_score')}</th>`;
-  h+=`<th onclick="tc('stock_code')">代码${sa('stock_code')}</th>`;
-  h+=`<th onclick="tc('stock_name')">名称${sa('stock_name')}</th>`;
-  h+=`<th onclick="tc('industry_name')">行业${sa('industry_name')}</th>`;
-  h+=`<th>RS</th>`;
-  h+=`<th onclick="tc('rps_250')">RPS250${sa('rps_250')}</th>`;
-  h+=`<th onclick="tc('canslim_total')">CANSLIM${sa('canslim_total')}</th>`;
-  h+=`<th onclick="tc('signal_count')">信号${sa('signal_count')}</th>`;
-  h+=`<th onclick="tc('ideal_buy')">买点${sa('ideal_buy')}</th>`;
-  h+=`<th onclick="tc('resonance_name')">共振${sa('resonance_name')}</th>`;
-  h+=`<th>操作</th>`;
+  if(currentMode==='index'){
+    h+=`<th onclick="tc('index_score')">得分${sa('index_score')}</th>`;
+    h+=`<th onclick="tc('index_code')">指数代码${sa('index_code')}</th>`;
+    h+=`<th onclick="tc('index_name')">名称${sa('index_name')}</th>`;
+    h+=`<th onclick="tc('pool_name')">池${sa('pool_name')}</th>`;
+    h+=`<th onclick="tc('rps_250')">RPS250${sa('rps_250')}</th>`;
+    h+=`<th onclick="tc('rps_20')">RPS20${sa('rps_20')}</th>`;
+    h+=`<th onclick="tc('signal_count')">信号${sa('signal_count')}</th>`;
+    h+=`<th onclick="tc('ideal_buy')">买点${sa('ideal_buy')}</th>`;
+  }else{
+    h+=`<th onclick="tc('oneil_score')">O'Neil${sa('oneil_score')}</th>`;
+    h+=`<th onclick="tc('stock_code')">代码${sa('stock_code')}</th>`;
+    h+=`<th onclick="tc('stock_name')">名称${sa('stock_name')}</th>`;
+    h+=`<th onclick="tc('industry_name')">行业${sa('industry_name')}</th>`;
+    h+=`<th>RS</th>`;
+    h+=`<th onclick="tc('rps_250')">RPS250${sa('rps_250')}</th>`;
+    h+=`<th onclick="tc('canslim_total')">CANSLIM${sa('canslim_total')}</th>`;
+    h+=`<th onclick="tc('signal_count')">信号${sa('signal_count')}</th>`;
+    h+=`<th onclick="tc('ideal_buy')">买点${sa('ideal_buy')}</th>`;
+    h+=`<th onclick="tc('resonance_name')">共振${sa('resonance_name')}</th>`;
+    h+=`<th>操作</th>`;
+  }
   h+='</tr></thead><tbody>';
   for(const it of items){
-    const cats=(it.rs_category||'').split(' / ').map(c=>{let cl='tag-l';if(c==='加速')cl='tag-b';if(c==='双强')cl='tag-d';return`<span class="tag ${cl}">${c.trim()}</span>`}).join(' ');
     h+='<tr>';
-    h+=`<td>${fs(it.oneil_score)}</td>`;
-    h+=`<td><a href="review.html?code=${it.stock_code}">${it.stock_code}</a></td>`;
-    h+=`<td>${it.stock_name||''}</td>`;
-    h+=`<td>${it.industry_name||''}</td>`;
-    h+=`<td>${cats}</td>`;
-    h+=`<td>${(it.rps_250||0).toFixed(0)}</td>`;
-    h+=`<td>${it.canslim_total!=null?it.canslim_total.toFixed(0):'-'}</td>`;
-    h+=`<td>${it.signal_count||0} <span style="font-size:.5rem;color:var(--text-tertiary)">${it.signal_summary.split('/').map(cn).join('/')}</span></td>`;
-    h+=`<td>${it.ideal_buy?'¥'+it.ideal_buy.toFixed(2):'—'}</td>`;
-    h+=`<td>${it.resonance_name?`<span style="color:#E65100;font-weight:600">${it.resonance_name}</span><br><span style="font-size:.5rem;color:var(--text-tertiary)">${it.resonance_pool||''}</span>`:'—'}</td>`;
-    h+=`<td style="display:flex;gap:3px;justify-content:center;">`;
-    h+=`<button class="btn-xs add" onclick="addWL('${it.stock_code}','${it.stock_name}')">+自选</button>`;
-    h+=`<a class="btn-xs" href="javascript:void(0)" onclick="showRec('${it.stock_code}','${it.stock_name}')">📝 精选理由</a>`;
-    h+=`</td>`;
+    if(currentMode==='index'){
+      const poolTag = `<span style="font-size:.55rem;color:var(--text-secondary)">${it.pool_name||''}</span>`;
+      h+=`<td>${fs(it.index_score)}</td>`;
+      h+=`<td><a href="review-index.html?code=${it.index_code||''}"><b>${it.index_code||''}</b></a></td>`;
+      h+=`<td>${it.index_name||''}</td>`;
+      h+=`<td>${poolTag}</td>`;
+      h+=`<td>${(it.rps_250||0).toFixed(0)}</td>`;
+      h+=`<td>${(it.rps_20||0).toFixed(0)}</td>`;
+      h+=`<td>${it.signal_count||0} <span style="font-size:.5rem;color:var(--text-tertiary)">${(it.signal_summary||'').split('/').map(cn).join('/')}</span></td>`;
+      h+=`<td>${it.ideal_buy?'¥'+it.ideal_buy.toFixed(2):'—'}</td>`;
+    }else{
+      const cats=(it.rs_category||'').split(' / ').map(c=>{let cl='tag-l';if(c==='加速')cl='tag-b';if(c==='双强')cl='tag-d';return`<span class="tag ${cl}">${c.trim()}</span>`}).join(' ');
+      h+=`<td>${fs(it.oneil_score)}</td>`;
+      h+=`<td><a href="review.html?code=${it.stock_code}">${it.stock_code}</a></td>`;
+      h+=`<td>${it.stock_name||''}</td>`;
+      h+=`<td>${it.industry_name||''}</td>`;
+      h+=`<td>${cats}</td>`;
+      h+=`<td>${(it.rps_250||0).toFixed(0)}</td>`;
+      h+=`<td>${it.canslim_total!=null?it.canslim_total.toFixed(0):'-'}</td>`;
+      h+=`<td>${it.signal_count||0} <span style="font-size:.5rem;color:var(--text-tertiary)">${it.signal_summary.split('/').map(cn).join('/')}</span></td>`;
+      h+=`<td>${it.ideal_buy?'¥'+it.ideal_buy.toFixed(2):'—'}</td>`;
+      h+=`<td>${it.resonance_name?`<span style="color:#E65100;font-weight:600">${it.resonance_name}</span><br><span style="font-size:.5rem;color:var(--text-tertiary)">${it.resonance_pool||''}</span>`:'—'}</td>`;
+      h+=`<td style="display:flex;gap:3px;justify-content:center;">`;
+      h+=`<button class="btn-xs add" onclick="addWL('${it.stock_code}','${it.stock_name}')">+自选</button>`;
+      h+=`<a class="btn-xs" href="javascript:void(0)" onclick="showRec('${it.stock_code}','${it.stock_name}')">📝 精选理由</a>`;
+      h+=`</td>`;
+    }
     h+='</tr>';
   }
   h+='</tbody></table>';

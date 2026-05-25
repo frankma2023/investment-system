@@ -51,7 +51,7 @@
     </header>
 
     <div class="pg-stats">
-      <div class="pg-stat"><div class="n" style="color:#4CAF50">42</div><div class="l">已完成</div></div>
+      <div class="pg-stat"><div class="n" style="color:#4CAF50">43</div><div class="l">已完成</div></div>
       <div class="pg-stat"><div class="n" style="color:#FF9800">0</div><div class="l">进行中</div></div>
       <div class="pg-stat"><div class="n">7</div><div class="l">待开发</div></div>
     </div>
@@ -198,6 +198,20 @@
     <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">37. KlineChart.create() 只建容器不渲染，首次加载空白图表</div><div class="ld">KlineChart 构造函数不调 _render()，原代码把 kc.update() 放在 else 分支，导致首次 create 后无数据渲染。6个页面(breakout-failure/volume-divergence/climax-top/railroad-tracks/top-pattern/template)全部中招。修复：create 后无条件调 update()，消除 if-else 分支。</div></div>
 
     <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">38. ROE检测必须用年度数据而非季度，避免季节性Q1陷阱</div><div class="ld">基本面恶化引擎最初用季度roe_single做ROE判定，宁德时代Q1 ROE=5.94%被误判为红灯（<12%阈值）。但制造业Q1天然是淡季，ROE全年最低。改为年度ROE（stock_financials_annual）后，宁德时代23.83%正确显示为绿色。教训：财务比率判读必须考虑行业季节性，同比跨年对比而非环比。阈值从12%调至17%。</div></div>
+
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">39. sqlite3.Row 不支持 .get()，必须用索引访问</div><div class="ld">screener.py 多次出现 `row.get('field')` → AttributeError。sqlite3.Row 是只读映射对象，只支持 `row['field']` 索引。同样 `dict()` 包装可安全转换。教训：所有数据库读取若传给字典操作，先 `dict(row)` 转换。</div></div>
+
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">40. run_all_engines indicators=None 导致 8 个引擎静默崩溃</div><div class="ld">canslim_score.py 和 screener.py 多处调用 run_all_engines(klines=klines, indicators=None)。引擎内部访问 indicators['sma5'] 遇到 NoneType 直接崩溃，被 try/except 静默吞掉，信号检测不全。修复：每个调用点先 compute_indicators(klines) 计算 SMA/BB/ATR 再传入。教训：框架函数的可选参数 ≠ 可用默认值——需确认下游是否真的容忍 None。</div></div>
+
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">41. .pyc 缓存导致修改后代码不生效</div><div class="ld">trades_api.py 修改后 Flask 仍跑旧代码，报错行号与实际文件不符。`__pycache__` 中的 .pyc 文件比 .py 源文件更新时，Python 优先加载缓存。修复：每次代码部署后执行 `del /s /q __pycache__` 清除所有缓存。教训：代码修改后看不到效果，第一反应应该是清除缓存而非怀疑逻辑。</div></div>
+
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">42. K线图信号颜色/样式必须与 pattern-scan 完全一致</div><div class="ld">review-index.html 最初用了自创的颜色方案（PALETTE 轮询），导致指数复核页与股票复核页信号标记颜色完全不同。用户要求必须"完全保持一致"。修复：将 ENGINE_STYLES、getSignalStyle、maColors、tooltip 格式、信号位置（蜡烛下方而非上方）、dataZoom 滑块全部从 review.html 逐行复制。教训：复用已有页面的可视化组件时，不要重新发明颜色/样式——直接复制源文件的完整渲染逻辑。</div></div>
+
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">43. base_breakout 引擎的 buy_point ≠ 信号日收盘价</div><div class="ld">base_breakout 返回 buy_point = prior_high + 0.01（基部前高突破价），而非信号日的 close。301377 买点 137.71 vs 实际收盘 253.68 差 85%。回测页显示买点价应优先取信号日 close（实际可成交价），取值链调整为 close → breakout_close → breakout_price → buy_point。教训：引擎输出的价格字段语义不同，直接展示前需确认其含义。</div></div>
+
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">44. 精选 API 每次刷新重跑完整筛选——极慢，应优先读快照表</div><div class="ld">api_screening 最初直接调用 screener.run()，每次刷新页面都重跑六层筛选（加载 1500+ 股票的 K 线和引擎），耗时数十秒。修复：优先从 discipline_screening_daily 快照表读取（毫秒级），仅当日无数据时才触发实时计算。daily_update.py 已在盘后自动预存快照，次日访问始终秒出。教训：高频访问的 API 前端页面，后端务必加缓存层——预计算落盘 > 每次实时计算。</div></div>
+
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">38. SQLite AVG() 聚合函数忽略 LIMIT，导致 S 维度量比恒为 1.0</div><div class="ld">CAN SLIM v3.0 中 S 维度计算 5 日均量 / 50 日均量。原 SQL 为 `SELECT AVG(volume) FROM t ORDER BY date DESC LIMIT N`，但 AVG() 是聚合函数，先算全表均值再应用 LIMIT（对单行结果无意义），两个查询返回相同的全历史均值，比值恒为 1.0。修复：改为子查询 `SELECT AVG(volume) FROM (SELECT volume FROM t ORDER BY date DESC LIMIT N)`。同理 base_breakout 的 `_sma` 等函数遇到 NULL close/volume 时 `sum()` 崩掉——需全部加 None 过滤。教训：聚合+排序+LIMIT 的组合必须用子查询隔离；任何假定"数据不会为 NULL"的金融计算必须有守卫。</div></div>
 
     <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>

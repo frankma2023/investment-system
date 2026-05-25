@@ -102,7 +102,7 @@ def get_engine_list():
     ]
 
 
-def run_all_engines(klines, indicators=None, silent=False):
+def run_all_engines(klines, indicators=None, silent=False, whitelist=None):
     """
     运行全部已发现的引擎。
 
@@ -110,6 +110,7 @@ def run_all_engines(klines, indicators=None, silent=False):
         klines: 用 OHLCV 列构建的 dict 列表或 pd.DataFrame
         indicators: TA-Lib 指标 dict（由框架统一计算后传入）
         silent: True 时不打印错误日志（批量模式）
+        whitelist: 可选，只运行指定名称的引擎列表
 
     Returns:
         all_signals: List[dict]，每条信号已自动注入 source 字段
@@ -120,6 +121,8 @@ def run_all_engines(klines, indicators=None, silent=False):
     all_signals = []
 
     for name, eng in engines.items():
+        if whitelist and name not in whitelist:
+            continue
         try:
             # 根据函数签名智能传参
             sig = inspect.signature(eng['detect'])

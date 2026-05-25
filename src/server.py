@@ -92,6 +92,11 @@ def init_schema():
         db.execute("ALTER TABLE discipline_trades ADD COLUMN asset_type TEXT DEFAULT 'stock'")
     except sqlite3.OperationalError:
         pass
+    # V2: 添加 buy_signal_date 列到精选快照
+    try:
+        db.execute("ALTER TABLE discipline_screening_daily ADD COLUMN buy_signal_date TEXT")
+    except sqlite3.OperationalError:
+        pass
     db.commit()
     db.close()
 

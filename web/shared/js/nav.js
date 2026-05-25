@@ -63,6 +63,8 @@
     { href: '../breakout-failure/',    icon: '⚠️', label: '突破失败',         page: 'breakout-failure' },
     { href: '../pattern-scan/',         icon: '🔎', label: '形态识别',         page: 'pattern-scan' },
     { href: '../canslim-scorecard/',    icon: '🎯', label: 'CAN SLIM 评分卡',  page: 'canslim-scorecard' },
+    { href: '../discipline/screening-backtest.html', icon: '📊', label: '精选回测', page: 'screening-backtest' },
+    { href: '../discipline/screening-backtest-index.html', icon: '📈', label: '指数回测', page: 'screening-backtest-index' },
   ];
 
   var MAIN_ITEMS = [
@@ -105,6 +107,8 @@
 
     // 仓位管理 → 知行系统
     html += '<a href="../discipline/" class="nav-item' + (cp === 'discipline' ? ' active' : '') + '">知行</a>';
+    // 精选
+    html += '<a href="../discipline/screening.html" class="nav-item' + (cp === 'screening' ? ' active' : '') + '">精选</a>';
     // 主题按钮
     html += '<button class="theme-toggle" onclick="if(typeof toggleTheme==\'function\')toggleTheme();else{document.documentElement.dataset.theme=document.documentElement.dataset.theme===\'dark\'?\'light\':\'dark\'}">🌙</button>';
 
