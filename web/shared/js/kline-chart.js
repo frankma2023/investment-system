@@ -270,7 +270,14 @@
           var di = params[0].dataIndex, d = ck[di];
           if (!d) return '';
           var oo = d.open, cc = d.close, h = d.high, l = d.low, v = d.volume;
-          var chg = oo > 0 ? ((cc - oo) / oo * 100).toFixed(2) : '—';
+          // 优先用理杏仁涨跌幅(当日vs前日收盘)，兼容数据库小数和API百分比两种格式
+          var chg;
+          if (d.change_pct != null) {
+            var raw = d.change_pct;
+            chg = (Math.abs(raw) > 1 ? raw : raw * 100).toFixed(2);
+          } else {
+            chg = oo > 0 ? ((cc - oo) / oo * 100).toFixed(2) : '—';
+          }
           var amp = h > l ? ((h - l) / l * 100).toFixed(2) : '—';
           var vs = fmtVolume(v);
           var ln = '<div style="line-height:1.9;font-size:11px">';

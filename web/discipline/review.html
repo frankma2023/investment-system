@@ -170,7 +170,7 @@
     function renderChart() {
       const d = reviewData;
       const ck = d.klines.map(k => ({
-        date: k.date, open: k.open, close: k.close, high: k.high, low: k.low, volume: k.volume, amount: k.amount
+        date: k.date, open: k.open, close: k.close, high: k.high, low: k.low, volume: k.volume, amount: k.amount, change_pct: k.change_pct
       }));
       const dates = ck.map(k => k.date);
 
@@ -254,9 +254,10 @@
 
       const option = {
         backgroundColor: bg,
+        axisPointer: { link: [{ xAxisIndex: [0, 1] }] },
         tooltip: {
           trigger: 'axis',
-          axisPointer: { type: 'cross', crossStyle: { color: '#999' }, link: [{ xAxisIndex: 'all' }] },
+          axisPointer: { type: 'cross', crossStyle: { color: '#999' }, link: [{ xAxisIndex: [0, 1] }] },
           backgroundColor: 'rgba(255,255,255,0.75)', borderColor: '#ddd',
           textStyle: { fontSize: 10, color: '#333' },
           formatter: function(params) {
@@ -264,13 +265,17 @@
             const ki = params[0].dataIndex;
             const k = ck[ki]; if (!k) return '';
             const chg = k.close - k.open;
-            const chgPct = k.open > 0 ? (chg / k.open * 100).toFixed(2) : '0.00';
+            const raw = k.change_pct != null ? k.change_pct : null;
+            const chgPct = raw != null ? (Math.abs(raw) > 1 ? raw : raw * 100).toFixed(2) : (k.open > 0 ? (chg / k.open * 100).toFixed(2) : '0.00');
             const col = chg >= 0 ? '#E53935' : '#26C6DA';
             let h = `<span style="font-size:12px;font-weight:700">${k.date}</span><br/>`;
-            h += `开盘：<b>${(k.open||0).toFixed(2)}</b> 收盘：<b style="color:${col}">${(k.close||0).toFixed(2)}</b><br/>`;
-            h += `最高：<b>${(k.high||0).toFixed(2)}</b> 最低：<b>${(k.low||0).toFixed(2)}</b><br/>`;
-            h += `涨跌：<b style="color:${col}">${chg>=0?'+':''}${chg.toFixed(2)} (${chg>=0?'+':''}${chgPct}%)</b><br/>`;
-            h += `成交量：<b>${fmtVol(k.volume)}</b>`;
+            h += `开盘：<b>${(k.open||0).toFixed(2)}</b><br/>`;
+            h += `收盘：<b style="color:${col}">${(k.close||0).toFixed(2)}</b><br/>`;
+            h += `最高：<b>${(k.high||0).toFixed(2)}</b><br/>`;
+            h += `最低：<b>${(k.low||0).toFixed(2)}</b><br/>`;
+            h += `涨跌：<b style="color:${col}">${chg>=0?'+':''}${chg.toFixed(2)}（${chg>=0?'+':''}${chgPct}%）</b><br/>`;
+            h += `成交量：<b>${fmtVol(k.volume)}</b><br/>`;
+            h += `成交额：<b>${fmtVol(k.amount)}</b>`;
             const daySigs = signalsByDate[k.date];
             if (daySigs && daySigs.length > 0) {
               h += '<div style="margin-top:4px;padding-top:4px;border-top:1px dashed #ddd;font-weight:700;font-size:10px;">📌 当日信号</div>';

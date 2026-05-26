@@ -464,7 +464,14 @@ function renderChart() {
         var k = ck[params[0].dataIndex];
         if (!k) return '';
         var chg = k.close - k.open;
-        var chgPct = k.open > 0 ? (chg / k.open * 100).toFixed(2) : '0.00';
+        // 优先用理杏仁涨跌幅(昨日vs前日)，兼容数据库小数和API百分比两种格式
+        var chgPct;
+        if (k.change_pct != null) {
+          var raw = k.change_pct;
+          chgPct = (Math.abs(raw) > 1 ? raw : raw * 100).toFixed(2);
+        } else {
+          chgPct = k.open > 0 ? (chg / k.open * 100).toFixed(2) : '0.00';
+        }
         var col = chg >= 0 ? '#E53935' : '#26C6DA';
         var html = '<span style="font-size:12px;font-weight:700">' + k.date + '</span><br/>';
         html += '开盘：<b>' + (k.open != null ? k.open.toFixed(2) : '—') + '</b><br/>';

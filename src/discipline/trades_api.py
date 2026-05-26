@@ -623,6 +623,282 @@ def api_review(stock_code):
 
 
 # ══════════════════════════════════════════════════════
+# 欧奈尔AI分析（桥接 DeepSeek CLI + Skill）
+# ══════════════════════════════════════════════════════
+
+@discipline_bp.route('/oneil-analysis/<stock_code>', methods=['GET', 'OPTIONS'])
+def api_oneil_analysis(stock_code):
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    db = get_db()
+
+    # 1. 收集股票数据（复用 review 的数据采集逻辑）
+    asset_type = 'stock'
+    trade = db.execute(
+        "SELECT asset_type FROM discipline_trades WHERE stock_code = ? ORDER BY buy_date DESC LIMIT 1",
+        (stock_code,)
+    ).fetchone()
+    if trade and trade['asset_type']:
+        asset_type = trade['asset_type']
+
+    kline_rows = _lookup_kline(db, stock_code, asset_type, 200)
+    klines = [dict(r) for r in reversed(kline_rows)]
+    name = _lookup_name(db, stock_code, asset_type)
+
+    # 最近20日信号
+    sig_rows = db.execute("""
+        SELECT date, signals_json FROM pattern_scan_signals
+        WHERE stock_code = ? ORDER BY date DESC LIMIT 20
+    """, (stock_code,)).fetchall()
+    import json
+    all_20d_sigs = []
+    for sr in sig_rows:
+        if sr['signals_json']:
+            try:
+                for s in json.loads(sr['signals_json']):
+                    all_20d_sigs.append(s)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+    # CANSLIM
+    cs = db.execute("SELECT * FROM cansim_scores WHERE stock_code=? ORDER BY date DESC LIMIT 1", (stock_code,)).fetchone()
+    canslim = dict(cs) if cs else {}
+
+    # RS
+    rs = db.execute("SELECT * FROM stock_rs_daily WHERE stock_code=? ORDER BY date DESC LIMIT 1", (stock_code,)).fetchone()
+    rs_data = dict(rs) if rs else {}
+
+    # 行业
+    ind = db.execute("SELECT industry_name FROM stock_sw_industry WHERE stock_code=?", (stock_code,)).fetchone()
+    industry = ind['industry_name'] if ind else ''
+
+    # 大盘
+    mkt = db.execute("SELECT * FROM market_direction_daily ORDER BY date DESC LIMIT 1").fetchone()
+    market = dict(mkt) if mkt else {}
+
+    # 机构
+    inst = db.execute("SELECT * FROM stock_institutional_holdings WHERE stock_code=? ORDER BY date DESC LIMIT 1", (stock_code,)).fetchone()
+    inst_data = dict(inst) if inst else {}
+
+    # 买点
+    ideal_buy = _compute_ideal_buy(all_20d_sigs, klines)
+
+    # 最近K线摘要
+    recent_k = klines[-5:] if len(klines) >= 5 else klines
+    k_summary = []
+    for k in recent_k:
+        chg_pct = k.get('change_pct')
+        if chg_pct is not None and abs(chg_pct) <= 1:
+            chg_pct = chg_pct * 100
+        k_summary.append(f"{k['date']} O={k['open']} C={k['close']} H={k['high']} L={k['low']} V={k['volume']} chg%={chg_pct:.1f}" if chg_pct is not None else f"{k['date']} O={k['open']} C={k['close']} H={k['high']} L={k['low']} V={k['volume']}")
+
+    # 信号摘要
+    sig_sources = {}
+    for s in all_20d_sigs:
+        src = s.get('source', '?')
+        sig_sources[src] = sig_sources.get(src, 0) + 1
+    sig_text = '、'.join(f"{k}({v})" for k, v in sig_sources.items()) if sig_sources else '无'
+
+    # 2. 构建上下文
+    context = f"""股票：{name}（{stock_code}）
+行业：{industry}
+日期：{klines[-1]['date'] if klines else '—'}
+
+【近5日K线】
+{chr(10).join(k_summary)}
+
+【CANSLIM评分】
+总分：{canslim.get('score','—')}，评级：{canslim.get('grade','—')}
+C(当季)：{canslim.get('score_c','—')}，A(年度)：{canslim.get('score_a','—')}
+N(新事物)：{canslim.get('score_n','—')}，S(供需)：{canslim.get('score_s','—')}
+L(领涨)：{canslim.get('score_l','—')}，I(机构)：{canslim.get('score_i','—')}
+
+【RS强度】
+RPS20：{rs_data.get('rps_20','—')}，RPS60：{rs_data.get('rps_60','—')}
+RPS120：{rs_data.get('rps_120','—')}，RPS250：{rs_data.get('rps_250','—')}
+
+【大盘环境】
+阶段：{market.get('market_phase','—')}，健康分：{market.get('market_health_score','—')}
+追盘日：{market.get('ftd_date','无')}，25日抛盘日：{market.get('distribution_days_25d','—')}个
+建议仓位：{market.get('suggested_position_size','—')}
+
+【机构持股】
+基金数：{inst_data.get('fund_count','—')}，机构持股占比：{inst_data.get('top10_inst_proportion','—')}
+
+【近20日信号({len(all_20d_sigs)}个)】
+{sig_text}
+
+【理想买点】
+{json.dumps(ideal_buy, ensure_ascii=False) if ideal_buy else '—'}
+"""
+
+    # 3. 调用 DeepSeek CLI（直接用 exe，避免 cmd 包装的参数截断）
+    import subprocess, os
+    DEEPSEEK_EXE = r'D:\dstui\deepseek-tui-windows-x64.exe'
+
+    prompt = f"""你是欧奈尔交易顾问。请根据以下股票数据，用欧奈尔方法论进行买入决策十二问分析，写一篇连贯的分析文章（不要表格，要叙事风格），引用欧奈尔名言，最后给出综合结论。
+
+{context}
+
+请用HTML格式输出（h3标题、p段落、blockquote引用名言，无需完整HTML文档结构），风格温暖、直接、像一位严师在跟你对话。"""
+
+    try:
+        result = subprocess.run(
+            [DEEPSEEK_EXE, '-p', prompt],
+            capture_output=True, text=True, timeout=120, encoding='utf-8', errors='replace',
+            cwd=r'D:\dstui', shell=False
+        )
+        output = result.stdout.strip()
+        if not output:
+            output = '<p style="color:var(--text-tertiary)">AI 未返回内容，请稍后重试。</p>'
+    except subprocess.TimeoutExpired:
+        output = '<p style="color:#F44336">AI 分析超时（120秒），请稍后重试。</p>'
+    except Exception as e:
+        output = f'<p style="color:#F44336">调用失败：{str(e)}</p>'
+
+    return jsonify({
+        'stock_code': stock_code,
+        'stock_name': name,
+        'industry': industry,
+        'html': output,
+    })
+
+
+# ══════════════════════════════════════════════════════
+# 欧奈尔AI分析 — 指数版
+# ══════════════════════════════════════════════════════
+
+@discipline_bp.route('/oneil-analysis-index/<index_code>', methods=['GET', 'OPTIONS'])
+def api_oneil_analysis_index(index_code):
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    db = get_db()
+    asset_type = 'index'
+
+    kline_rows = _lookup_kline(db, index_code, asset_type, 200)
+    klines = [dict(r) for r in reversed(kline_rows)]
+    name = _lookup_name(db, index_code, asset_type)
+
+    # 最近20日信号
+    sig_rows = db.execute("""
+        SELECT date, signals_json FROM pattern_scan_signals
+        WHERE stock_code = ? ORDER BY date DESC LIMIT 20
+    """, (index_code,)).fetchall()
+    import json
+    all_20d_sigs = []
+    for sr in sig_rows:
+        if sr['signals_json']:
+            try:
+                for s in json.loads(sr['signals_json']):
+                    all_20d_sigs.append(s)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+    # 指数 RS
+    rs = db.execute("SELECT * FROM index_rs_daily WHERE stock_code=? ORDER BY date DESC LIMIT 1", (index_code,)).fetchone()
+    rs_data = dict(rs) if rs else {}
+
+    # 大盘
+    mkt = db.execute("SELECT * FROM market_direction_daily ORDER BY date DESC LIMIT 1").fetchone()
+    market = dict(mkt) if mkt else {}
+
+    # 指数池归属（从 discipline_screening_daily_index 获取）
+    pool_row = db.execute(
+        "SELECT pool_name FROM discipline_screening_daily_index WHERE index_code=? ORDER BY date DESC LIMIT 1",
+        (index_code,)
+    ).fetchone()
+    pool_name = pool_row['pool_name'] if pool_row else ''
+
+    # 精选评分
+    scr_row = db.execute(
+        "SELECT index_score, rps_250, rps_20, signal_count, signal_summary, ideal_buy FROM discipline_screening_daily_index WHERE index_code=? ORDER BY date DESC LIMIT 1",
+        (index_code,)
+    ).fetchone()
+    scr_data = dict(scr_row) if scr_row else {}
+
+    # 最近K线摘要
+    recent_k = klines[-5:] if len(klines) >= 5 else klines
+    k_summary = []
+    for k in recent_k:
+        chg_pct = k.get('change_pct')
+        if chg_pct is not None and abs(chg_pct) <= 1:
+            chg_pct = chg_pct * 100
+        k_summary.append(f"{k['date']} O={k['open']} C={k['close']} H={k['high']} L={k['low']} V={k['volume']} chg%={chg_pct:.1f}" if chg_pct is not None else f"{k['date']} O={k['open']} C={k['close']} H={k['high']} L={k['low']} V={k['volume']}")
+
+    # 信号摘要
+    sig_sources = {}
+    for s in all_20d_sigs:
+        src = s.get('source', '?')
+        sig_sources[src] = sig_sources.get(src, 0) + 1
+    sig_text = '、'.join(f"{k}({v})" for k, v in sig_sources.items()) if sig_sources else '无'
+
+    # 构建上下文
+    context = f"""指数：{name}（{index_code}）
+日期：{klines[-1]['date'] if klines else '—'}
+所属池：{pool_name}
+
+【近5日K线】
+{chr(10).join(k_summary)}
+
+【指数RS强度】
+RPS20：{rs_data.get('rs_20','—')}，RPS60：{rs_data.get('rs_60','—')}
+RPS120：{rs_data.get('rs_120','—')}，RPS250：{rs_data.get('rs_250','—')}
+MA50：{rs_data.get('ma50','—')}，MA150：{rs_data.get('ma150','—')}，MA200：{rs_data.get('ma200','—')}
+AD线斜率20日：{rs_data.get('ad_slope_20d','—')}
+
+【大盘环境】
+阶段：{market.get('market_phase','—')}，健康分：{market.get('market_health_score','—')}
+追盘日：{market.get('ftd_date','无')}，25日抛盘日：{market.get('distribution_days_25d','—')}个
+建议仓位：{market.get('suggested_position_size','—')}
+
+【近20日信号({len(all_20d_sigs)}个)】
+{sig_text}
+
+【精选评分】
+指数精选得分：{scr_data.get('index_score','—')}
+理想买点：{scr_data.get('ideal_buy','—')}
+"""
+
+    # 调用 DeepSeek CLI
+    import subprocess, os
+    DEEPSEEK_EXE = r'D:\dstui\deepseek-tui-windows-x64.exe'
+
+    prompt = f"""你是欧奈尔交易顾问。请根据以下指数数据，用欧奈尔方法论进行指数分析，重点评估：
+1. 大盘环境（欧奈尔强调3/4的股票跟随大盘，指数方向至关重要）
+2. RS动量强度（该指数是否处于领涨地位）
+3. 技术形态信号（基部突破、口袋支点等信号的含义）
+4. 理想买点（如果有的话）
+
+写一篇连贯的分析文章（不要表格，要叙事风格），引用欧奈尔名言。记住欧奈尔对指数的核心观点："首先关注大盘指数，当大盘趋势向下时，不要买入任何股票。"
+
+{context}
+
+请用HTML格式输出（h3标题、p段落、blockquote引用名言，无需完整HTML文档结构），风格温暖、直接、像一位严师在跟你对话。"""
+
+    try:
+        result = subprocess.run(
+            [DEEPSEEK_EXE, '-p', prompt],
+            capture_output=True, text=True, timeout=120, encoding='utf-8', errors='replace',
+            cwd=r'D:\dstui', shell=False
+        )
+        output = result.stdout.strip()
+        if not output:
+            output = '<p style="color:var(--text-tertiary)">AI 未返回内容，请稍后重试。</p>'
+    except subprocess.TimeoutExpired:
+        output = '<p style="color:#F44336">AI 分析超时（120秒），请稍后重试。</p>'
+    except Exception as e:
+        output = f'<p style="color:#F44336">调用失败：{str(e)}</p>'
+
+    return jsonify({
+        'index_code': index_code,
+        'index_name': name,
+        'html': output,
+    })
+
+
+# ══════════════════════════════════════════════════════
 # 自选池
 # ══════════════════════════════════════════════════════
 

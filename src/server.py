@@ -2860,13 +2860,14 @@ def api_pattern_scan():
     kf = "AND kline_type='normal'" if is_index else ''
 
     # 获取足够的历史K线（至少2年）
+    chg_col = 'change' if is_index else 'change_pct'
     if start:
-        rows = db.execute(f"""SELECT date, open, high, low, close, volume
+        rows = db.execute(f"""SELECT date, open, high, low, close, volume, {chg_col} as change_pct
             FROM {table} WHERE stock_code=? {kf}
             AND date>=date(?, '-750 days') AND date<=?
             ORDER BY date""", (code, start, end)).fetchall()
     else:
-        rows = db.execute(f"""SELECT date, open, high, low, close, volume
+        rows = db.execute(f"""SELECT date, open, high, low, close, volume, {chg_col} as change_pct
             FROM {table} WHERE stock_code=? {kf}
             AND date<=?
             ORDER BY date""", (code, end)).fetchall()
