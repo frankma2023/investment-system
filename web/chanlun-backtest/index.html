@@ -48,11 +48,16 @@
       <span id="stock-name" style="font-size:10px;color:var(--muted);white-space:nowrap"></span>
     </div>
   </div>
-  <div class="fld" style="flex:0.4;min-width:80px">
-    <label>周期</label>
-    <select id="freq" onchange="analyze()"><option value="D">日线</option><option value="W">周线</option><option value="M">月线</option></select>
-  </div>
   <button class="btn-run" onclick="analyze()">分析</button>
+</div>
+
+<div class="chart-controls">
+  <div class="ctrl-group">
+    <span class="ctrl-label">周期</span>
+    <button class="ctrl-btn active" id="btn-daily" onclick="switchFreq('D')">日K</button>
+    <button class="ctrl-btn" id="btn-weekly" onclick="switchFreq('W')">周K</button>
+    <button class="ctrl-btn" id="btn-monthly" onclick="switchFreq('M')">月K</button>
+  </div>
 </div>
 
 <div class="stat-row" id="stats"></div>
@@ -77,12 +82,12 @@
 <script src="../shared/js/nav.js"></script>
 <script>Nav.init({brandIcon:"⬤",brandText:"缠论分析",currentPage:"chanlun"})</script>
 <script>
-const API='http://localhost:8788';let mode='index',chartInst;
+const API='http://localhost:8788';let mode='index',freq='D',chartInst;
 function switchMode(m){mode=m;document.getElementById('btn-stock').className='mode-btn'+(m==='stock'?' active':'');document.getElementById('btn-index').className='mode-btn'+(m==='index'?' active':'');document.getElementById('code').value=m==='stock'?'600519':'000985';analyze()}
+function switchFreq(f){freq=f;document.getElementById('btn-daily').className='ctrl-btn'+(f==='D'?' active':'');document.getElementById('btn-weekly').className='ctrl-btn'+(f==='W'?' active':'');document.getElementById('btn-monthly').className='ctrl-btn'+(f==='M'?' active':'');analyze()}
 
 async function analyze(){
   var code=document.getElementById('code').value.trim();if(!code)return;
-  var freq=document.getElementById('freq').value;
   var btn=document.querySelector('.btn-run');btn.disabled=true;btn.textContent='⏳';
   try{var nr=await fetch(API+'/api/stock-name?code='+code+'&mode='+mode);if(nr.ok){var nd=await nr.json();document.getElementById('stock-name').textContent=nd.name||''}}catch(e){}
   try{
