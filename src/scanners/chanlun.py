@@ -209,12 +209,13 @@ def get_echarts_option(code, freq="D", limit=400):
                 ])
         except: pass
     
-    # 成交量颜色
-    vol_colors = []
-    for _, row in df.iterrows():
-        vol_colors.append("#ef4444" if row.close >= row.open else "#10b981")
-    
-    bi_down_color = "rgba(16,185,129,0.08)"
+    # hanako-glass 配色
+    chart_bg = "rgba(26,26,31,.6)"
+    axis_color = "rgba(200,200,200,0.3)"
+    grid_color = "rgba(200,200,200,0.08)"
+    up_color = "#ef4444"
+    down_color = "#10b981"
+    vol_color = "rgba(245,158,11,0.4)"
     
     return {
         "backgroundColor": chart_bg,
