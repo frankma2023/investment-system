@@ -70,3 +70,7 @@ web/*/rebuild*.py
 web/*/fix_*.py
 web/*/insert_*.py
 web/*/add_*.py
+
+# Handoff documents (session-only, not for repo)
+HANDOFF-*.md
+SESSION_HANDOFF_*.md
