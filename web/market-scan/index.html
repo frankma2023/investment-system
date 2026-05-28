@@ -33,6 +33,16 @@
 .layout { max-width:1100px; margin:0 auto; }
     /* Hero */
     .score-hero { display:flex; gap:20px; align-items:center; padding:22px 28px; background:var(--card-bg); border-radius:20px; box-shadow:0 2px 12px rgba(0,0,0,0.06); margin-bottom:14px; }
+    /* 三卡并列 */
+    .score-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+    .score-card,.score-row .score-hero{background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:var(--shadow-card);min-height:160px}
+    .score-card{display:flex;flex-direction:column;gap:8px}
+    .score-card .sc-title{font-size:10px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+    .score-card .sc-val{font-family:var(--font-display);font-size:1.6rem;font-weight:400;color:var(--text-primary);line-height:1.1}
+    .score-card .sc-sub{font-size:11px;color:var(--text-secondary);margin-top:2px}
+    .score-card .sc-chart{flex:1;min-height:70px}
+    .score-row .score-hero{display:flex;gap:16px;align-items:center;margin-bottom:0}
+    @media(max-width:700px){.score-row{grid-template-columns:1fr}}
     /* 主要指数卡片 */
     .idx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:14px}
     .idx-card{background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow-card);transition:all .2s}
@@ -149,9 +159,8 @@
           fetch(API_BASE+'/api/market-panorama').then(r=>r.json())
         ]);
         if(hr.status==='no_data'){div.innerHTML='<div class="no-data">📡 暂无健康度数据</div>';return;}
-        // 并行加载主要指数数据
-        loadMajorIndices();
         render(hr,pr);
+        loadMajorIndices();
       }catch(e){div.innerHTML='<div class="no-data">📡 数据加载失败</div>';}
     }
 
@@ -176,6 +185,9 @@
       }
       idxData=results;
       renderIndexCards();
+      // 也渲染评分卡中的趋势图（依赖刚加载的指数数据）
+      renderScoreCharts();
+      return results;
     }
     function renderIndexCards(){
       var html='<div class="section-hdr">📊 主要指数</div><div class="idx-grid">';
@@ -228,13 +240,28 @@
       const score=h.total_score||0;const rt=rl(score);const rcc=rc(score);
       let html='';
 
-      // ═══ L0: 健康度总分 ═══
+      // ═══ L0: 大盘三卡（评分 + 成交额趋势 + 新高新低趋势）═══
+      const volInd=h.indicators?h.indicators.find(function(i){return i.key==='vol_breakout'}):null;
+      const hlInd=h.indicators?h.indicators.find(function(i){return i.key==='hl_ratio'}):null;
+      html+='<div class="score-row">';
+      // 卡片1: 大盘健康度
       html+=`<div class="score-hero">
         <div class="score-ring" style="background:${rcc}15;border:3px solid ${rcc}30"><div style="text-align:center"><div class="num" style="color:${rcc}">${score}</div></div></div>
-        <div class="score-info"><div class="label">大盘健康度 / 100</div><div class="rating" style="color:${rcc}">${rt.r} · ${rt.label}</div><div class="advice">💡 ${rt.a}</div></div>
-        <div class="score-date">${h.date||'—'}</div>
-        <button onclick="computeSnapshot()" style="font-size:0.62rem;padding:6px 14px;border:1px solid var(--divider);border-radius:10px;background:var(--bg);color:var(--text-secondary);cursor:pointer;font-family:var(--font-display)">🔄 刷新计算</button>
+        <div class="score-info"><div class="label">大盘健康度 / 100</div><div class="rating" style="color:${rcc}">${rt.r} · ${rt.label}</div><div class="advice">${rt.a}</div></div>
       </div>`;
+      // 卡片2: 全市场成交额趋势
+      html+='<div class="score-card"><div class="sc-title">全市场成交额趋势</div>';
+      html+='<div class="sc-val">'+(volInd?volInd.value:'—')+'<span style="font-size:0.6rem;color:var(--muted)"> 只(放量突破)</span></div>';
+      html+='<div class="sc-sub">近20日突破个股数变化</div>';
+      html+='<div class="sc-chart" id="chart-volume-trend"></div></div>';
+      // 卡片3: 新高新低比趋势
+      html+='<div class="score-card"><div class="sc-title">新高新低比趋势</div>';
+      html+='<div class="sc-val">'+(hlInd?hlInd.value.toFixed(2):'—')+'</div>';
+      html+='<div class="sc-sub">>2 多方主导 | <0.5 空方主导</div>';
+      html+='<div class="sc-chart" id="chart-hl-trend"></div></div>';
+      html+='</div>';
+      // 刷新按钮移到下面
+      html+='<div style="text-align:right;margin-bottom:8px"><span style="font-size:10px;color:var(--muted);margin-right:8px">'+h.date+'</span><button onclick="computeSnapshot()" style="font-size:10px;padding:4px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--muted);cursor:pointer;font-family:var(--font-body)">刷新计算</button></div>';
 
       // ═══ L1: 核心信号 ═══
       html+='<div class="section-hdr">📡 核心信号</div><div class="core-grid">';
@@ -328,6 +355,46 @@
         html+='</div></div>';
       }
       document.getElementById('content').innerHTML=html;
+    }
+
+    function renderScoreCharts(){
+      // 卡片2: 用中证全指成交量趋势作为全市场成交额代理
+      var idx000985=idxData.find(function(x){return x.code==='000985'});
+      if(idx000985&&idx000985.klines.length>5){
+        var kl=idx000985.klines.slice(-20);
+        var vols=kl.map(function(k){return Math.round(k.volume/1e8)});
+        var el=document.getElementById('chart-volume-trend');if(el){
+          if(el._echart)el._echart.dispose();
+          var ch=echarts.init(el);el._echart=ch;
+          var isDark=document.documentElement.dataset.theme==='dark';
+          var barColor=isDark?'rgba(245,158,11,.6)':'rgba(217,119,6,.5)';
+          ch.setOption({
+            grid:{left:0,right:4,top:4,bottom:4},
+            xAxis:{show:false,data:kl.map(function(k){return k.date})},
+            yAxis:{show:false},
+            series:[{type:'bar',data:vols,itemStyle:{color:barColor,borderRadius:[2,2,0,0]},barMaxWidth:8}]
+          });
+        }
+      }
+      // 卡片3: 用中证全指收盘价趋势作为市场走势代理
+      if(idx000985&&idx000985.klines.length>5){
+        var kl2=idx000985.klines.slice(-20);
+        var closes=kl2.map(function(k){return k.close});
+        var el2=document.getElementById('chart-hl-trend');if(el2){
+          if(el2._echart)el2._echart.dispose();
+          var ch2=echarts.init(el2);el2._echart=ch2;
+          var isUp=closes[closes.length-1]>=closes[0];
+          var lc=isUp?'#ef4444':'#10b981';
+          var ac=isUp?'rgba(239,68,68,.12)':'rgba(16,185,129,.12)';
+          ch2.setOption({
+            grid:{left:0,right:0,top:4,bottom:4},
+            xAxis:{show:false,data:kl2.map(function(k){return k.date})},
+            yAxis:{show:false,min:Math.min.apply(null,closes)*0.995,max:Math.max.apply(null,closes)*1.005},
+            series:[{type:'line',data:closes,smooth:true,symbol:'none',lineStyle:{color:lc,width:1.5},
+              areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:ac},{offset:1,color:'transparent'}])}}]
+          });
+        }
+      }
     }
 
     async function openBreakoutModal(){
