@@ -33,6 +33,14 @@
 .layout { max-width:1100px; margin:0 auto; }
     /* Hero */
     .score-hero { display:flex; gap:20px; align-items:center; padding:22px 28px; background:var(--card-bg); border-radius:20px; box-shadow:0 2px 12px rgba(0,0,0,0.06); margin-bottom:14px; }
+    /* 主要指数卡片 */
+    .idx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:14px}
+    .idx-card{background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow-card);transition:all .2s}
+    .idx-card:hover{border-color:var(--border-hover);transform:translateY(-1px)}
+    .idx-card .idx-name{font-size:10px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+    .idx-card .idx-price{font-family:var(--font-display);font-size:1.1rem;font-weight:400;color:var(--text-primary)}
+    .idx-card .idx-chg{font-size:11px;font-weight:500;margin-top:2px}
+    .idx-card .idx-spark{width:100%;height:50px;margin-top:6px}
     .score-ring { width:90px; height:90px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     .score-ring .num { font-family:var(--font-display); font-size:2rem; font-weight:900; }
     .score-info .label { font-size:0.6rem; color:var(--muted); letter-spacing:0.06em; }
@@ -141,8 +149,79 @@
           fetch(API_BASE+'/api/market-panorama').then(r=>r.json())
         ]);
         if(hr.status==='no_data'){div.innerHTML='<div class="no-data">📡 暂无健康度数据</div>';return;}
+        // 并行加载主要指数数据
+        loadMajorIndices();
         render(hr,pr);
       }catch(e){div.innerHTML='<div class="no-data">📡 数据加载失败</div>';}
+    }
+
+    // 主要指数数据
+    const MAJOR_INDICES=[
+      {code:'000985',name:'中证全指'},{code:'000001',name:'上证指数'},
+      {code:'399001',name:'深证成指'},{code:'399006',name:'创业板指'},
+      {code:'000688',name:'科创50'},{code:'000300',name:'沪深300'}
+    ];
+    let idxData=[];
+    async function loadMajorIndices(){
+      var end=new Date().toISOString().slice(0,10);
+      var start=new Date(Date.now()-30*86400000).toISOString().slice(0,10);
+      var results=[];
+      for(var i=0;i<MAJOR_INDICES.length;i++){
+        var idx=MAJOR_INDICES[i];
+        try{
+          var r=await fetch(API_BASE+'/api/pattern-scan?code='+idx.code+'&start='+start+'&end='+end+'&period=daily&mode=index');
+          var d=await r.json();
+          results.push({code:idx.code,name:idx.name,klines:d.klines||[]});
+        }catch(e){results.push({code:idx.code,name:idx.name,klines:[]})}
+      }
+      idxData=results;
+      renderIndexCards();
+    }
+    function renderIndexCards(){
+      var html='<div class="section-hdr">📊 主要指数</div><div class="idx-grid">';
+      idxData.forEach(function(idx){
+        var kl=idx.klines;
+        var last=kl.length?kl[kl.length-1]:null;
+        var prev=kl.length>1?kl[kl.length-2]:null;
+        var price=last?last.close:'—';
+        var chg=last&&prev?((last.close-prev.close)/prev.close*100):0;
+        var chgCls=chg>0?'var(--fall)':(chg<0?'var(--rise)':'var(--muted)');
+        html+='<div class="idx-card"><div class="idx-name">'+idx.name+'</div>';
+        html+='<div class="idx-price">'+(typeof price==='number'?price.toFixed(2):price)+'</div>';
+        html+='<div class="idx-chg" style="color:'+chgCls+'">'+(chg>0?'+':'')+chg.toFixed(2)+'%</div>';
+        html+='<div class="idx-spark" id="spark-'+idx.code+'"></div></div>';
+      });
+      html+='</div>';
+      document.getElementById('content').insertAdjacentHTML('afterbegin',html);
+      // 渲染缩略图
+      setTimeout(function(){
+        idxData.forEach(function(idx){
+          var el=document.getElementById('spark-'+idx.code);if(!el)return;
+          var kl=idx.klines.slice(-20);
+          if(kl.length<2)return;
+          if(el._echart)el._echart.dispose();
+          var ch=echarts.init(el);el._echart=ch;
+          var closes=kl.map(function(k){return k.close});
+          var isUp=closes[closes.length-1]>=closes[0];
+          var isDark=document.documentElement.dataset.theme==='dark';
+          var upColor=isDark?'#ef4444':'#dc2626';
+          var downColor=isDark?'#10b981':'#059669';
+          var lineColor=isUp?upColor:downColor;
+          var areaColor=isUp?(isDark?'rgba(239,68,68,.15)':'rgba(220,38,38,.1)'):(isDark?'rgba(16,185,129,.15)':'rgba(5,150,105,.1)');
+          ch.setOption({
+            grid:{left:0,right:0,top:2,bottom:2},
+            xAxis:{show:false,data:kl.map(function(k){return k.date})},
+            yAxis:{show:false,min:Math.min.apply(null,closes)*0.995,max:Math.max.apply(null,closes)*1.005},
+            series:[{type:'line',data:closes,smooth:true,symbol:'none',
+              lineStyle:{color:lineColor,width:1.2},
+              areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[
+                {offset:0,color:areaColor},
+                {offset:1,color:'transparent'}
+              ])}
+            }]
+          });
+        });
+      },300);
     }
 
     function render(h,p){
