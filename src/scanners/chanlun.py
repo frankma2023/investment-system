@@ -239,7 +239,7 @@ def get_echarts_option(code, freq="D", limit=400):
         "yAxis": [{"type": "value", "scale": True, "axisLabel": {"color": axis_color, "fontSize": 9},
                     "splitLine": {"lineStyle": {"color": grid_color}}},
                   {"type": "value", "gridIndex": 1, "axisLabel": {"color": axis_color, "fontSize": 9},
-                    "splitLine": {"show": false}}],
+                    "splitLine": {"show": False}}],
         "dataZoom": [{"type": "inside", "start": 70, "end": 100},
                      {"type": "slider", "start": 70, "end": 100, "height": 16, "bottom": 4}],
         "series": [
