@@ -95,7 +95,7 @@
 <canvas id="bg-canvas"></canvas>
 <script>(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();
 </script>
-<div class="app-container">
+
 TYPE html>
 <html lang="zh-CN" data-theme="light">
 <head>
@@ -107,9 +107,10 @@ TYPE html>
 </head>
 <body class="xhs-body">
 
+<div class="app-container">
 <nav id="top-nav"></nav>
 
-<div class="app-container" style="padding:20px 24px">
+
 
   <div class="bt-layout">
 

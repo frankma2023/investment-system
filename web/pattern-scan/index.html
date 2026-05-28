@@ -144,6 +144,9 @@
   <script src="app.js"></script>
   <script src="../shared/js/nav.js"></script>
   <script>Nav.init({brandIcon:"🔎",brandText:"形态识别",currentPage:"pattern-scan"})</script>
-<script>if(typeof toggleTheme!=='function'){window.toggleTheme=function(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n)}}</script>
+<script>if(typeof toggleTheme!=='function'){window.toggleTheme=function(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n)}}
+function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==="dark"?"light":"dark";h.dataset.theme=n;localStorage.setItem("theme",n)}
+(function(){var s=localStorage.getItem("theme")||"dark";document.documentElement.dataset.theme=s})();
+</script>
 </body>
 </html>
