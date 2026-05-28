@@ -57,3 +57,16 @@ tmp/
 data/backups/
 \".codegraph/\" 
 \"web2/ web4/ web.backup/ batch_migrate.py fix_styles.py audit.py web/*/build.py web/*/rebuild*.py web/*/fix_*.py web/*/insert_*.py web/*/add_*.py\" 
+
+# Dev artifacts (not for repo)
+web2/
+web4/
+web.backup/
+batch_migrate.py
+fix_styles.py
+audit.py
+web/*/build.py
+web/*/rebuild*.py
+web/*/fix_*.py
+web/*/insert_*.py
+web/*/add_*.py
