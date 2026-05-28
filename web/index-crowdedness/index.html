@@ -246,13 +246,15 @@ function toggleTheme() {
   var html = document.documentElement;
   var next = html.dataset.theme === 'dark' ? 'light' : 'dark';
   html.dataset.theme = next;
+  html.classList.toggle('dark', next === 'dark');
   var btn = document.querySelector('.theme-toggle');
   if (btn) btn.textContent = next === 'dark' ? '☀' : '🌙';
   localStorage.setItem('theme', next);
 }
 (function() {
-  var s = localStorage.getItem('theme') || 'light';
+  var s = localStorage.getItem('theme') || 'dark';
   document.documentElement.dataset.theme = s;
+  document.documentElement.classList.toggle('dark', s === 'dark');
   var btn = document.querySelector('.theme-toggle');
   if (btn) btn.textContent = s === 'dark' ? '☀' : '🌙';
 })();

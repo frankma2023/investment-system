@@ -354,7 +354,7 @@
   <script src="../shared/js/nav.js"></script>
   <script>Nav.init({brandIcon:"🏆",brandText:"指数RS强度回测",currentPage:"index-rs-backtest"})
 // Theme toggle
-function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n);if(typeof renderChart==='function')setTimeout(renderChart,200)}
+function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n);if(typeof renderChart==='function')renderChart()}
 (function(){var s=localStorage.getItem('theme')||'dark';document.documentElement.dataset.theme=s})();
 </script>
 </body>
