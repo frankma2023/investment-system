@@ -30,6 +30,11 @@
   html[data-theme="light"] .tab{background:rgba(255,255,255,.6);border-color:var(--divider);color:var(--muted)}
   html[data-theme="light"] .tab:hover{border-color:rgba(0,0,0,.15);color:#374151}
   html[data-theme="light"] .tab.active{background:var(--accent-subtle);color:var(--accent);border-color:var(--accent-border)}
+.top-bar{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px}
+  .top-bar label{font-family:var(--font-display);font-size:0.65rem;font-weight:600;color:var(--text-tertiary);display:block;margin-bottom:4px}
+  .top-bar select,.top-bar input{padding:8px 10px;border:1px solid var(--divider);border-radius:12px;font-family:var(--font-display);font-size:0.8rem;background:var(--card-bg);color:var(--text-primary)}
+  .nav-dropdown:hover .nav-dropdown-menu{display:block}
+  @media(max-width:768px){.stat-cards{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 <body>

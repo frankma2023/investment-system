@@ -18,6 +18,32 @@
   .page-header h1{font-family:var(--font-display);font-size:1.2rem;font-weight:400;color:#d4d4d8;letter-spacing:-.01em}
   html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
   html[data-theme="light"] .page-header h1{color:#374151}
+    .panel-header { padding: 12px 0; display: flex; justify-content: space-between; align-items: center; }
+    .panel-header h1 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 900; margin: 0; }
+    .section-title { font-family: var(--font-display); font-size: 0.85rem; font-weight: 800; margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--divider); }
+    /* K线图容器 */
+    #kline-chart { height: 400px; margin-bottom: 4px; }
+    #rs-chart { height: 140px; margin-bottom: 12px; }
+    #chart-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; font-size: 0.6rem; }
+    .legend-item { display: flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 4px; background: var(--card-bg); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+    /* 体检表 */
+    .health-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+    .health-card { background: var(--card-bg); border-radius: 10px; padding: 12px; text-align: center; }
+    .health-card .label { font-size: 0.6rem; color: var(--text-tertiary); }
+    .health-card .value { font-family: var(--font-display); font-size: 1.2rem; font-weight: 800; margin: 2px 0; }
+    .health-card .sub { font-size: 0.55rem; color: var(--text-tertiary); }
+    /* 风险收益卡 */
+    .risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .risk-card { background: var(--card-bg); border-radius: 12px; padding: 14px; }
+    .risk-card h4 { font-family: var(--font-display); font-size: 0.75rem; font-weight: 800; margin: 0 0 8px; }
+    .risk-card .row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 0.7rem; border-bottom: 1px solid var(--divider); }
+    .risk-card .row .val { font-weight: 700; }
+    .risk-card input { width: 80px; padding: 4px 8px; border: 1px solid var(--divider); border-radius: 6px; font-size: 0.7rem; background: var(--bg); color: var(--text-primary); text-align: right; }
+    .warning-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.6rem; font-weight: 600; background: #FFF3CD; color: #856404; }
+    .good-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.6rem; font-weight: 600; background: #D4EDDA; color: #155724; }
+    .bad-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.6rem; font-weight: 600; background: #F8D7DA; color: #721C24; }
+    .btn-row { display: flex; gap: 10px; margin: 16px 0; }
 </style>
 </head>
 <body>

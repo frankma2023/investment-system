@@ -18,6 +18,21 @@
   .page-header h1{font-family:var(--font-display);font-size:1.2rem;font-weight:400;color:#d4d4d8;letter-spacing:-.01em}
   html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
   html[data-theme="light"] .page-header h1{color:#374151}
+    .panel-header { padding: 16px 0 8px; }
+    .panel-header h1 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 900; margin: 0; }
+    .card { background: var(--card-bg); border-radius: 14px; padding: 18px 22px; margin-bottom: 12px; border: 1px solid var(--divider); }
+    .card h3 { font-size: .8rem; margin: 0 0 8px; }
+    #kline-chart { height: 420px; margin-bottom: 4px; }
+    #chart-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; font-size: 0.6rem; }
+    .legend-item { display: flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 4px; background: var(--card-bg); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .metric { text-align: center; padding: 12px; border-radius: 8px; background: var(--bg); border: 1px solid var(--divider); }
+    .metric .val { font-size: 1.2rem; font-weight: 800; }
+    .metric .lbl { font-size: .55rem; color: var(--text-tertiary); }
+    table { width: 100%; border-collapse: collapse; font-size: .7rem; }
+    th { text-align: left; padding: 6px 8px; border-bottom: 2px solid var(--divider); font-weight: 700; font-size: .6rem; color: var(--text-secondary); }
+    td { padding: 5px 8px; border-bottom: 1px solid var(--divider); }
+    .green { color: #2E7D32; } .red { color: #C62828; } .orange { color: #E65100; }
 </style>
 </head>
 <body>

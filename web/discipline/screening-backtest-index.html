@@ -18,6 +18,22 @@
   .page-header h1{font-family:var(--font-display);font-size:1.2rem;font-weight:400;color:#d4d4d8;letter-spacing:-.01em}
   html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
   html[data-theme="light"] .page-header h1{color:#374151}
+    .panel-header { padding: 16px 0 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .panel-header h1 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 900; margin: 0; }
+    .stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 8px 0; }
+    .green { color: #2E7D32; } .red { color: #C62828; }
+    .bt-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+    .bt-table th { text-align: center; padding: 7px 3px; border-bottom: 2px solid var(--divider); font-size: 0.6rem; font-weight: 700; color: var(--text-secondary); white-space: nowrap; position: sticky; top: 0; background: var(--bg); }
+    .bt-table td { padding: 5px 3px; border-bottom: 1px solid var(--divider); text-align: center; }
+    .bt-table tr:hover { background: var(--card-bg); }
+    .bt-table a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .modal-box { background: var(--card-bg); max-width: 600px; margin: 40px auto; border-radius: 16px; padding: 28px; }
+    .modal-box h3 { font-size: .9rem; margin: 0 0 12px; }
+    .modal-box table { width: 100%; font-size: .7rem; border-collapse: collapse; }
+    .modal-box td { padding: 4px 8px; border-bottom: 1px solid var(--divider); }
+    .modal-box .label { color: var(--text-secondary); font-size: .6rem; }
+    .modal-box .val { font-weight: 700; text-align: right; }
+    .modal-box .ok { color: #2E7D32; } .modal-box .warn { color: #E65100; }
 </style>
 </head>
 <body>

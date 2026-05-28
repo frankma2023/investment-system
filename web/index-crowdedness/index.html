@@ -45,6 +45,24 @@
   html[data-theme="light"] .param-card{background:rgba(255,255,255,.75);border-color:var(--divider)}
   html[data-theme="light"] .param-card-hd{color:#374151}
   html[data-theme="light"] .table-wrapper td{border-bottom-color:rgba(0,0,0,.03)}
+.bt-layout { display:flex; gap:16px; align-items:flex-start; }
+  .bt-left { width:330px; flex-shrink:0; display:flex; flex-direction:column; gap:12px; }
+  .bt-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .date-row { display:flex; gap:8px; }
+  .date-row > div { flex:1; }
+  @media (max-width:900px) { .bt-layout { flex-direction:column; } .bt-left { width:100%; } }
+  /* ── 成分股弹窗 ── */
+  .modal-overlay.active { display:flex; }
+  .modal-dialog { background:var(--bg-card); border-radius:var(--radius-lg); box-shadow:0 8px 40px rgba(0,0,0,0.15); max-width:700px; width:92%; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
+  .modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
+  .modal-title { font-family:var(--font-display); font-size:0.9rem; font-weight:800; color:var(--text-primary); }
+  .modal-subtitle { font-size:0.62rem; color:var(--text-tertiary); font-family:var(--font-display); margin-left:8px; }
+  .modal-close:hover { background:var(--color-up-bg); color:var(--color-up); border-color:var(--color-up-border); }
+  .modal-body { padding:14px 20px 20px; overflow-y:auto; flex:1; }
+  .modal-body .xhs-table { min-width:500px; }
+  .constituent-code { cursor:pointer; color:var(--color-accent); font-weight:600; }
+  .constituent-code:hover { text-decoration:underline; }
+.nav-dropdown:hover .nav-dropdown-menu { display:block; }
 </style>
 </head>
 <body>

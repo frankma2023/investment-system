@@ -45,6 +45,17 @@
   html[data-theme="light"] .param-card{background:rgba(255,255,255,.75);border-color:var(--divider)}
   html[data-theme="light"] .param-card-hd{color:#374151}
   html[data-theme="light"] .table-wrapper td{border-bottom-color:rgba(0,0,0,.03)}
+.chart-wrap{height:480px;margin-bottom:4px}
+  .chart-legend{display:flex;gap:12px;flex-wrap:wrap;padding:4px 0 8px;font-size:0.6rem;align-items:center;color:var(--text-tertiary)}
+  .chart-legend .lg-item{display:inline-flex;align-items:center;gap:4px}
+  .lg-pin{color:#A349A4;font-size:1.1rem}
+  .lg-star-m{color:#FF9800;font-size:1rem}
+  .lg-star-c{color:#9C27B0;font-size:1rem}
+  .lg-star-s{color:#000;font-size:1rem}
+  .severity-mild{color:#FF9800;font-weight:700}
+  .severity-confirmed{color:#9C27B0;font-weight:700}
+  .severity-severe{color:#000;font-weight:700}
+  @media(prefers-color-scheme:dark){ .severity-severe{color:#FF5252} }
 </style>
 </head>
 <body>

@@ -16,6 +16,46 @@
   .top-bar label{font-size:10px;font-weight:500;color:var(--muted);display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.03em}
   .top-bar input,.top-bar select{font-family:var(--font-body);padding:5px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:var(--card);color:var(--text-primary);outline:none;transition:all .2s}
   html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
+.layout { display:flex; gap:16px; align-items:flex-start; }
+    .left { width:320px; flex-shrink:0; display:flex; flex-direction:column; gap:12px; }
+    .right { flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
+    .date-row { display:flex; gap:8px; }
+    .date-row .fld { flex:1; }
+    .fld label { display:block; font-size:0.65rem; font-weight:600; color:var(--text-tertiary); margin-bottom:4px; }
+    .fld input { width:100%; padding:8px 10px; border:1px solid var(--divider); border-radius:12px; font-size:0.8rem; background:var(--card-bg); color:var(--text-primary); box-sizing:border-box; }
+    .btn-run { display:block; width:100%; padding:12px; background:#FE2C55; color:#FFF; border:none; border-radius:14px; font-size:1rem; font-weight:800; cursor:pointer; }
+    .btn-run:hover { opacity:0.88; }
+    .btn-run:disabled { background:#CCC; cursor:not-allowed; }
+    .btn-save { display:block; width:100%; padding:10px; margin-top:8px; background:var(--card-bg); color:var(--text-primary); border:1.5px solid var(--divider); border-radius:14px; font-size:0.9rem; font-weight:700; cursor:pointer; }
+    .btn-save.saved { background:#E8F5E9; border-color:#4CAF50; color:#2E7D32; }
+    .param-card { background:var(--card-bg); border:1px solid var(--divider); border-radius:18px; overflow:hidden; }
+    .param-card-hd { display:flex; align-items:center; padding:12px 16px; cursor:pointer; }
+    .param-card-hd .dot { width:10px; height:10px; border-radius:50%; margin-right:8px; flex-shrink:0; }
+    .param-card-hd .title { font-size:0.82rem; font-weight:800; flex:1; }
+    .param-card-bd { padding:0 16px 14px; }
+    .param-card-bd.collapsed { display:none; }
+    .sr { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+    .sr .sl { width:72px; font-size:0.65rem; font-weight:600; color:var(--text-tertiary); flex-shrink:0; }
+    .sr input[type=range] { flex:1; height:4px; }
+    .sr .sv { width:40px; text-align:right; font-size:0.7rem; font-weight:700; }
+    .tog-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+    .tog-row .sl { width:72px; font-size:0.65rem; font-weight:600; color:var(--text-tertiary); flex-shrink:0; }
+    .tsw { position:relative; width:36px; height:20px; border-radius:10px; border:none; cursor:pointer; flex-shrink:0; }
+    .tsw.on { background:#FE2C55; }
+    .tsw.off { background:#CCC; }
+    .tsw::after { content:''; position:absolute; top:2px; width:16px; height:16px; border-radius:50%; background:#FFF; transition:left 0.2s; }
+    .tsw.on::after { left:18px; }
+    .tsw.off::after { left:2px; }
+    table { width:100%; border-collapse:collapse; font-size:0.72rem; }
+    th, td { padding:4px 8px; text-align:left; border-bottom:1px solid var(--divider); }
+    th { font-weight:700; color:var(--text-secondary); font-size:0.65rem; cursor:pointer; }
+    .pool-section { margin-bottom:16px; }
+    .pool-section h3 { font-size:0.78rem; font-weight:800; margin:0 0 8px; }
+    @media (max-width:900px) { .layout { flex-direction:column; } .left { width:100%; } }
+    .nav-dropdown:hover .nav-dropdown-menu { display:block; }
+    .pool-btn { padding:4px 10px; border:1px solid var(--divider); border-radius:8px; background:var(--bg); color:var(--text-secondary); font-size:0.62rem; cursor:pointer; font-family:var(--font-display); }
+    .pool-btn:hover { border-color:var(--text-tertiary); }
+    .pool-btn.active { background:var(--color-accent); color:#FFF; border-color:var(--color-accent); }
 </style>
 </head>
 <body>

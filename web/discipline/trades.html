@@ -18,6 +18,23 @@
   .page-header h1{font-family:var(--font-display);font-size:1.2rem;font-weight:400;color:#d4d4d8;letter-spacing:-.01em}
   html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
   html[data-theme="light"] .page-header h1{color:#374151}
+    .panel-header { padding: 16px 0 8px; display: flex; justify-content: space-between; align-items: center; }
+    .panel-header h1 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 900; margin: 0; }
+    .filters { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; align-items: center; }
+    .filters button { padding: 4px 12px; border: 1px solid var(--divider); border-radius: 8px; background: var(--card-bg); color: var(--text-primary); font-size: 0.65rem; cursor: pointer; }
+    .filters button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .trades-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+    .trades-table th { text-align: left; padding: 8px 6px; border-bottom: 2px solid var(--divider); font-size: 0.6rem; font-weight: 700; color: var(--text-secondary); }
+    .trades-table td { padding: 8px 6px; border-bottom: 1px solid var(--divider); }
+    .trades-table tr:hover { background: var(--card-bg); }
+    .pnl-pos { color: #F44336; font-weight: 700; }
+    .pnl-neg { color: #4CAF50; font-weight: 700; }
+    .modal { background: var(--card-bg); border-radius: 16px; padding: 24px; max-width: 500px; width: 90%; }
+    .modal h3 { font-family: var(--font-display); font-size: 0.9rem; margin: 0 0 12px; }
+    .modal label { display: block; font-size: 0.65rem; color: var(--text-secondary); margin: 8px 0 2px; }
+    .modal input, .modal select, .modal textarea { width: 100%; padding: 6px 10px; border: 1px solid var(--divider); border-radius: 8px; font-size: 0.7rem; background: var(--bg); color: var(--text-primary); box-sizing: border-box; }
+    .modal textarea { min-height: 60px; resize: vertical; }
+    .modal-row { display: flex; gap: 8px; margin-top: 12px; }
 </style>
 </head>
 <body>
