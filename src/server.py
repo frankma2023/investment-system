@@ -2841,10 +2841,15 @@ def api_chanlun_analyze():
     try:
         from scanners.chanlun import analyze
         result = analyze(code, freq, limit)
+        # Ensure JSON-serializable
+        import json
+        json.dumps(result)  # test serialization
         return jsonify(result)
     except Exception as e:
-        import traceback
-        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+        import traceback, sys
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/chanlun/echarts', methods=['GET'])
 def api_chanlun_echarts():

@@ -90,10 +90,13 @@ def analyze(code, freq="D", limit=500):
     for bi in czsc_obj.bi_list:
         bi_list.append({
             "sdt": str(bi.sdt), "edt": str(bi.edt),
-            "direction": bi.direction,
-            "high": bi.high, "low": bi.low,
-            "power": bi.power, "slope": bi.slope,
-            "angle": bi.angle, "length": bi.length
+            "direction": str(bi.direction),
+            "high": float(bi.high) if bi.high and bi.high == bi.high else 0,
+            "low": float(bi.low) if bi.low and bi.low == bi.low else 0,
+            "power": float(bi.power) if bi.power and bi.power == bi.power else 0,
+            "slope": float(bi.slope) if bi.slope and bi.slope == bi.slope else 0,
+            "angle": float(bi.angle) if bi.angle and bi.angle == bi.angle else 0,
+            "length": int(bi.length) if bi.length else 0
         })
     
     fx_list = []
@@ -102,7 +105,8 @@ def analyze(code, freq="D", limit=500):
         fx_list.append({
             "dt": str(fx.dt),
             "fx_type": str(fx_type),
-            "high": fx.high, "low": fx.low
+            "high": float(fx.high) if fx.high and fx.high == fx.high else 0,
+            "low": float(fx.low) if fx.low and fx.low == fx.low else 0
         })
     
     return {
