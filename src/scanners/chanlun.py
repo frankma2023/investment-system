@@ -4,7 +4,7 @@
 数据持久化到 SQLite: chanlun_bi, chanlun_fx, chanlun_signals
 """
 
-import sqlite3, pandas as pd
+import sqlite3, pandas as pd, math
 from datetime import datetime
 from czsc import CZSC, RawBar, Freq
 
@@ -160,6 +160,7 @@ def get_echarts_option(code, freq="D", limit=400):
         return {"error": "无数据"}
     
     df = df.sort_values("date").reset_index(drop=True)
+    df = df.fillna(0)  # JSON-safe
     dates = df["date"].tolist()
     
     # RawBar for CZSC
@@ -171,7 +172,7 @@ def get_echarts_option(code, freq="D", limit=400):
     czsc_obj = CZSC(bars)
     
     # K线数据
-    ohlc = [[row.open, row.close, row.low, row.high] for _, row in df.iterrows()]
+    ohlc = [[row.open, row.close, row.low, row.high] for _, row in df.iterrows()]; ohlc = [[0 if isinstance(v,float) and math.isnan(v) else v for v in x] for x in ohlc]
     vols = df["volume"].tolist()
     
     # 构建笔的 markLine 数据
