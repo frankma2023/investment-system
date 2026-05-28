@@ -43,16 +43,7 @@
 </script>
 <div class="app-container">
 
-  <nav class="top-nav">
-      <div class="nav-brand"><span class="nav-fox">🦊</span><span>项目进展</span><span class="nav-greeting">Progress</span></div>
-      <div class="nav-links">
-        <a href="./" class="nav-item active">📋 进展</a>
-        <a href="market-scan/" class="nav-item">📊 大盘扫描</a>
-        <a href="daily-pattern-scan/" class="nav-item">📋 形态扫描</a>
-        <a href="canslim-scores/" class="nav-item">🎯 CAN SLIM</a>
-        <button class="theme-toggle" aria-label="切换主题">🌙</button>
-      </div>
-    </nav>
+  <nav id="top-nav"></nav>
 
     <header class="panel-header">
       <h1>📋 欧奈尔投资系统 · 项目进展</h1>
@@ -259,5 +250,7 @@
 
     <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>
+<script src="shared/js/nav.js"></script>
+<script>Nav.init({brandIcon:"⬤",brandText:"项目进展",currentPage:"progress"})</script>
 </body>
 </html>

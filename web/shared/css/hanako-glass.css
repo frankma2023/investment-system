@@ -632,6 +632,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* ═══ 16. Modals ═══ */
 .modal-overlay {
+  display: none;
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -640,6 +641,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   width: 100%; height: 100%;
   z-index: 200;
   overflow-y: auto;
+}
+.modal-overlay.active,
+.modal-overlay.show {
+  display: flex;
 }
 
 .modal-card {
@@ -706,9 +711,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* ═══ 17. Loading State ═══ */
-.loading {
+.loading, .xhs-loading, .loading-row {
   text-align: center;
-  padding: 40px;
+  padding: 24px;
   color: var(--muted);
   font-weight: 300;
 }

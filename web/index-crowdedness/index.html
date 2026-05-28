@@ -10,6 +10,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{colors:{surface:'#0f0f12',card:'#1a1a1f',border:'rgba(255,255,255,.06)',muted:'#8b8b90',accent:'#f59e0b'},fontFamily:{sans:['Inter','system-ui','sans-serif'],display:['Instrument Serif','Georgia','serif'],mono:['JetBrains Mono','Fira Code','monospace']}}}}</script>
 <link rel="stylesheet" href="../shared/css/hanako-glass.css">
+<link rel="stylesheet" href="../shared/themes/xhs-backtest.css">
 <script src="../shared/js/echarts.min.js"></script>
 <style>
   .chart-wrap{height:520px;margin-bottom:4px}
@@ -53,7 +54,7 @@
   .date-row > div { flex:1; }
   @media (max-width:900px) { .bt-layout { flex-direction:column; } .bt-left { width:100%; } }
   /* ── 成分股弹窗 ── */
-  .modal-overlay.active { display:flex; }
+  .modal-overlay.modal-overlay.active { display:flex; }
   .modal-dialog { background:var(--card); border-radius:14px; box-shadow:0 8px 40px rgba(0,0,0,0.15); max-width:700px; width:92%; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
   .modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
   .modal-title { font-family:var(--font-display); font-size:0.9rem; font-weight:800; color:var(--text-primary); }
@@ -74,9 +75,6 @@
 
 
 <!-- ═══════════ NAV ═══════════ -->
-  <div class="journal-dots"></div>
-  <div class="washi-tape washi-1"></div>
-  <div class="washi-tape washi-2"></div>
 
   <nav id="top-nav"></nav>
 

@@ -31,7 +31,8 @@
     { href: '../volume-divergence/',    label: '量价背离',         page: 'volume-divergence' },
     { href: '../breakout-failure/',     label: '突破失败',         page: 'breakout-failure' },
     { href: '../pattern-scan/',         label: '形态识别',         page: 'pattern-scan' },
-  ];
+      { href: '../progress.html',         label: '进展',             page: 'progress' },
+];
 
   var MAIN_ITEMS = [
     { href: '../index-scan/',           label: '指数扫描',         page: 'index-scan' },
