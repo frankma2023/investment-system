@@ -176,7 +176,7 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
     
     czsc_obj = CZSC(bars)
     
-    // 构建K线数据
+    # 构建K线数据
     ohlc_data = []
     for _, row in df.iterrows():
         chg = float(row.get("change", 0)) if pd.notna(row.get("change")) else 0
