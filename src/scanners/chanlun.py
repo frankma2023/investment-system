@@ -209,13 +209,21 @@ def get_echarts_option(code, freq="D", limit=400):
                 ])
         except: pass
     
-    # hanako-glass 配色
+    # hanako-glass 配色 (根据主题动态)
+    is_dark = True  # 默认深色，前端可传参覆盖
     chart_bg = "rgba(26,26,31,.6)"
     axis_color = "rgba(200,200,200,0.3)"
     grid_color = "rgba(200,200,200,0.08)"
     up_color = "#ef4444"
     down_color = "#10b981"
-    vol_color = "rgba(245,158,11,0.4)"
+    vol_color = up_color  # 成交量与K线同色：红涨绿跌
+    vol_color0 = down_color
+    
+    # 成交量数据（红涨绿跌）
+    vol_data = []
+    for _, row in df.iterrows():
+        is_up = row.close >= row.open
+        vol_data.append({"value": int(row.volume), "itemStyle": {"color": up_color if is_up else down_color}})
     
     return {
         "backgroundColor": chart_bg,
@@ -230,7 +238,8 @@ def get_echarts_option(code, freq="D", limit=400):
                     "axisLine": {"lineStyle": {"color": grid_color}}}],
         "yAxis": [{"type": "value", "scale": True, "axisLabel": {"color": axis_color, "fontSize": 9},
                     "splitLine": {"lineStyle": {"color": grid_color}}},
-                  {"type": "value", "gridIndex": 1, "axisLabel": {"color": axis_color, "fontSize": 9}}],
+                  {"type": "value", "gridIndex": 1, "axisLabel": {"color": axis_color, "fontSize": 9},
+                    "splitLine": {"show": false}}],
         "dataZoom": [{"type": "inside", "start": 70, "end": 100},
                      {"type": "slider", "start": 70, "end": 100, "height": 16, "bottom": 4}],
         "series": [
@@ -238,8 +247,7 @@ def get_echarts_option(code, freq="D", limit=400):
              "itemStyle": {"color": up_color, "color0": down_color,
                            "borderColor": up_color, "borderColor0": down_color},
              "markPoint": {"data": mark_points, "symbol": "pin", "symbolSize": 14}},
-            {"name": "成交量", "type": "bar", "xAxisIndex": 1, "yAxisIndex": 1, "data": vols,
-             "itemStyle": {"color": vol_color}}
+            {"name": "成交量", "type": "bar", "xAxisIndex": 1, "yAxisIndex": 1, "data": vol_data}
         ]
     }
 

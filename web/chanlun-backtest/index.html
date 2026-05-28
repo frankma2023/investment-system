@@ -44,7 +44,7 @@
     <div style="display:flex;gap:4px;align-items:center">
       <button class="mode-btn" id="btn-stock" onclick="switchMode('stock')">个股</button>
       <button class="mode-btn active" id="btn-index" onclick="switchMode('index')">指数</button>
-      <input type="text" id="code" value="000985" style="flex:1" onkeydown="if(event.key==='Enter')analyze()">
+      <input type="text" id="code" value="000985" style="width:90px;flex:0" onkeydown="if(event.key==='Enter')analyze()">
       <span id="stock-name" style="font-size:10px;color:var(--muted);white-space:nowrap"></span>
     </div>
   </div>
@@ -126,7 +126,7 @@ function renderStats(data){
   document.getElementById('signals-panel').innerHTML=sigs||'<span style="color:var(--muted);font-size:11px">暂无明确信号</span>';
 }
 
-function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n)}
+function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n);if(chartInst)setTimeout(analyze,100)}
 (function(){var s=localStorage.getItem('theme')||'dark';document.documentElement.dataset.theme=s})();
 analyze();
 </script>
