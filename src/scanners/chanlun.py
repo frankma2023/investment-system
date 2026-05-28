@@ -189,7 +189,7 @@ def get_echarts_option(code, freq="D", limit=400):
                     "value": ("顶" if bi.direction == "down" else "底") + " " + str(round(bi.high if bi.direction == "down" else bi.low, 1)),
                     "symbol": "pin",
                     "symbolSize": 14,
-                    "itemStyle": {"color": "#ef4444" if bi.direction == "down" else "#10b981"}
+                    "itemStyle": {"color": up_color if bi.direction == "down" else down_color}
                 })
         except: pass
     
@@ -214,28 +214,31 @@ def get_echarts_option(code, freq="D", limit=400):
     for _, row in df.iterrows():
         vol_colors.append("#ef4444" if row.close >= row.open else "#10b981")
     
+    bi_down_color = "rgba(16,185,129,0.08)"
+    
     return {
+        "backgroundColor": chart_bg,
         "animation": False,
         "tooltip": {"trigger": "axis", "axisPointer": {"type": "cross"}},
-        "legend": {"data": ["K线", "成交量"], "bottom": 20, "textStyle": {"color": "#8b8b90", "fontSize": 10}, "selectedMode": True},
+        "legend": {"data": ["K线", "成交量"], "bottom": 20, "textStyle": {"color": axis_color, "fontSize": 10}, "selectedMode": True},
         "grid": [{"left": "8%", "right": "4%", "top": 8, "height": "60%"},
                  {"left": "8%", "right": "4%", "top": "75%", "height": "15%"}],
-        "xAxis": [{"type": "category", "data": dates, "axisLabel": {"color": "#8b8b90", "fontSize": 9},
-                    "axisLine": {"lineStyle": {"color": "rgba(255,255,255,0.06)"}}},
+        "xAxis": [{"type": "category", "data": dates, "axisLabel": {"color": axis_color, "fontSize": 9},
+                    "axisLine": {"lineStyle": {"color": grid_color}}},
                   {"type": "category", "gridIndex": 1, "data": dates, "axisLabel": {"show": False},
-                    "axisLine": {"lineStyle": {"color": "rgba(255,255,255,0.06)"}}}],
-        "yAxis": [{"type": "value", "scale": True, "axisLabel": {"color": "#8b8b90", "fontSize": 9},
-                    "splitLine": {"lineStyle": {"color": "rgba(255,255,255,0.04)"}}},
-                  {"type": "value", "gridIndex": 1, "axisLabel": {"color": "#8b8b90", "fontSize": 9}}],
+                    "axisLine": {"lineStyle": {"color": grid_color}}}],
+        "yAxis": [{"type": "value", "scale": True, "axisLabel": {"color": axis_color, "fontSize": 9},
+                    "splitLine": {"lineStyle": {"color": grid_color}}},
+                  {"type": "value", "gridIndex": 1, "axisLabel": {"color": axis_color, "fontSize": 9}}],
         "dataZoom": [{"type": "inside", "start": 70, "end": 100},
                      {"type": "slider", "start": 70, "end": 100, "height": 16, "bottom": 4}],
         "series": [
             {"name": "K线", "type": "candlestick", "data": ohlc,
-             "itemStyle": {"color": "#ef4444", "color0": "#10b981",
-                           "borderColor": "#ef4444", "borderColor0": "#10b981"},
+             "itemStyle": {"color": up_color, "color0": down_color,
+                           "borderColor": up_color, "borderColor0": down_color},
              "markPoint": {"data": mark_points, "symbol": "pin", "symbolSize": 14}},
             {"name": "成交量", "type": "bar", "xAxisIndex": 1, "yAxisIndex": 1, "data": vols,
-             "itemStyle": {"color": "rgba(245,158,11,0.4)"}}
+             "itemStyle": {"color": vol_color}}
         ]
     }
 
