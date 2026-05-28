@@ -383,6 +383,20 @@
     return new KlineChart(options);
   };
 
+  // ─── 旧版兼容包装 ──────────────
+  window.initKlineChart = function (containerId) {
+    return KlineChart.create({ container: document.getElementById(containerId) });
+  };
+  window.renderKlineChart = function (chartInst, klines, signals, opts) {
+    var sm = {}; var sigs = [];
+    if (signals) signals.forEach(function (s) {
+      sigs.push({ signal_date: s.signal_date || s.date, buy_point: s.buy_point, drawdown_pct: 0 });
+      sm[s.signal_date || s.date] = { buy_point: s.buy_point, drawdown_pct: 0, label: s.label || '' };
+    });
+    var sc = (opts && opts.signalConfig) ? opts.signalConfig.color || '#C62828' : '#C62828';
+    chartInst.update(klines, sigs, sm, []);
+  };
+
   // ─── 工具：聚合日线→周线/月线 ──
   KlineChart.aggregate = function (klines, period) {
     if (!klines || !klines.length) return [];
