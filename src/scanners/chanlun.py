@@ -110,7 +110,7 @@ def analyze(code, freq="D", limit=500):
         "kline_count": len(bars),
         "bi_count": len(bi_list),
         "fx_count": len(fx_list),
-        "signals": czsc_obj.signals,
+        "signals": str(czsc_obj.signals),  # JSON-safe string
         "bi_list": bi_list,
         "fx_list": fx_list
     }
