@@ -244,12 +244,18 @@ var allIndices = [];
 
 function toggleTheme() {
   var html = document.documentElement;
+  html.setAttribute('data-theme-switching', '');
   var next = html.dataset.theme === 'dark' ? 'light' : 'dark';
   html.dataset.theme = next;
   html.classList.toggle('dark', next === 'dark');
   var btn = document.querySelector('.theme-toggle');
   if (btn) btn.textContent = next === 'dark' ? '☀' : '🌙';
   localStorage.setItem('theme', next);
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      html.removeAttribute('data-theme-switching');
+    });
+  });
 }
 (function() {
   var s = localStorage.getItem('theme') || 'dark';
