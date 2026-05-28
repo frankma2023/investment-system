@@ -31,6 +31,7 @@
     { href: '../volume-divergence/',    label: '量价背离',         page: 'volume-divergence' },
     { href: '../breakout-failure/',     label: '突破失败',         page: 'breakout-failure' },
     { href: '../pattern-scan/',         label: '形态识别',         page: 'pattern-scan' },
+    { href: '../chanlun-backtest/',     label: '缠论分析',         page: 'chanlun' },
       { href: '../progress.html',         label: '进展',             page: 'progress' },
 ];
 
@@ -42,6 +43,7 @@
     { href: '../daily-pattern-scan/',   label: '形态扫描',         page: 'daily-pattern-scan' },
     { href: '../canslim-scores/',       label: 'CAN SLIM',          page: 'canslim-scores' },
     { href: '../pattern-scan/',         label: '形态识别',         page: 'pattern-scan' },
+    { href: '../chanlun-backtest/',     label: '缠论分析',         page: 'chanlun' },
   ];
 
   function render() {

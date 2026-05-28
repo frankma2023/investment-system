@@ -2829,6 +2829,37 @@ def compute_advance_ratios(db, index_codes, as_of_date):
     return advance_map
 
 # ═══════════════════════════════════════════════
+# 缠论分析 API — /api/chanlun
+# ═══════════════════════════════════════════════
+
+@app.route('/api/chanlun/analyze', methods=['GET'])
+def api_chanlun_analyze():
+    """缠论分析：分型→笔→中枢→信号"""
+    code = request.args.get('code', '000985')
+    freq = request.args.get('freq', 'D')
+    limit = int(request.args.get('limit', 300))
+    try:
+        from scanners.chanlun import analyze
+        result = analyze(code, freq, limit)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/chanlun/echarts', methods=['GET'])
+def api_chanlun_echarts():
+    """缠论 ECharts 图表配置（可直接用于前端渲染）"""
+    code = request.args.get('code', '000985')
+    freq = request.args.get('freq', 'D')
+    limit = int(request.args.get('limit', 300))
+    try:
+        from scanners.chanlun import get_echarts_option
+        option = get_echarts_option(code, freq, limit)
+        return jsonify(option)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ═══════════════════════════════════════════════
 # 统一形态扫描 API — /api/pattern-scan
 # ═══════════════════════════════════════════════
 

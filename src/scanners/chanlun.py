@@ -1,0 +1,178 @@
+"""缠论分析引擎 - 基于 CZSC 库
+
+计算流程: K线 → 分型 → 笔 → 中枢 → 买卖信号
+数据持久化到 SQLite: chanlun_bi, chanlun_fx, chanlun_signals
+"""
+
+import sqlite3, pandas as pd
+from datetime import datetime
+from czsc import CZSC, RawBar, Freq
+
+DB_PATH = r"D:\hanako\investment-system\data\lixinger.db"
+SUPPORTED_FREQ = {"D": Freq.D, "W": Freq.W, "M": Freq.M}
+
+def _connect():
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA journal_mode=WAL")
+    return conn
+
+def _ensure_tables(conn):
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS chanlun_bi (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            stock_code TEXT NOT NULL,
+            freq TEXT NOT NULL,
+            sdt TEXT NOT NULL,
+            edt TEXT NOT NULL,
+            direction TEXT NOT NULL,
+            high REAL, low REAL,
+            power REAL, slope REAL, angle REAL, length INTEGER,
+            created_at TEXT DEFAULT (datetime('now', 'localtime'))
+        );
+        CREATE TABLE IF NOT EXISTS chanlun_fx (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            stock_code TEXT NOT NULL,
+            freq TEXT NOT NULL,
+            dt TEXT NOT NULL,
+            fx_type TEXT NOT NULL,
+            high REAL, low REAL,
+            created_at TEXT DEFAULT (datetime('now', 'localtime'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_chanlun_bi_code ON chanlun_bi(stock_code, freq);
+        CREATE INDEX IF NOT EXISTS idx_chanlun_fx_code ON chanlun_fx(stock_code, freq);
+    """)
+    conn.commit()
+
+def analyze(code, freq="D", limit=500):
+    """分析单只股票/指数的缠论结构
+    
+    Args:
+        code: 股票代码 (如 000985)
+        freq: K线周期 (D/W/M)
+        limit: 读取K线数量
+    
+    Returns:
+        dict: {bi_count, fx_count, signals, bi_list, fx_list}
+    """
+    freq_enum = SUPPORTED_FREQ.get(freq, Freq.D)
+    table = "index_daily_kline" if code.startswith("000") or code.startswith("399") else "daily_kline"
+    
+    conn = _connect()
+    df = pd.read_sql(f"""
+        SELECT date, open, high, low, close, volume, amount
+        FROM {table}
+        WHERE stock_code = ?
+        ORDER BY date DESC
+        LIMIT ?
+    """, conn, params=(code, limit))
+    conn.close()
+    
+    if df.empty:
+        return {"error": f"无K线数据: {code}"}
+    
+    df = df.sort_values("date").reset_index(drop=True)
+    
+    # 转换为 RawBar
+    df["dt"] = pd.to_datetime(df["date"])
+    bars = []
+    for _, row in df.iterrows():
+        bars.append(RawBar(
+            symbol=code, dt=row["dt"].to_pydatetime(), freq=freq_enum,
+            open=row.open, close=row.close, high=row.high, low=row.low,
+            vol=row.volume, amount=row.amount
+        ))
+    
+    # CZSC 计算
+    czsc_obj = CZSC(bars)
+    
+    # 提取结果
+    bi_list = []
+    for bi in czsc_obj.bi_list:
+        bi_list.append({
+            "sdt": str(bi.sdt), "edt": str(bi.edt),
+            "direction": bi.direction,
+            "high": bi.high, "low": bi.low,
+            "power": bi.power, "slope": bi.slope,
+            "angle": bi.angle, "length": bi.length
+        })
+    
+    fx_list = []
+    for fx in czsc_obj.fx_list:
+        fx_list.append({
+            "dt": str(fx.dt),
+            "fx_type": fx.fx_type,
+            "high": fx.high, "low": fx.low
+        })
+    
+    return {
+        "code": code, "freq": freq,
+        "kline_count": len(bars),
+        "bi_count": len(bi_list),
+        "fx_count": len(fx_list),
+        "signals": czsc_obj.signals,
+        "bi_list": bi_list,
+        "fx_list": fx_list
+    }
+
+def save_to_db(code, freq, result):
+    """将分析结果持久化到数据库"""
+    conn = _connect()
+    _ensure_tables(conn)
+    
+    # 清空旧数据
+    conn.execute("DELETE FROM chanlun_bi WHERE stock_code=? AND freq=?", (code, freq))
+    conn.execute("DELETE FROM chanlun_fx WHERE stock_code=? AND freq=?", (code, freq))
+    
+    # 写入笔
+    for bi in result.get("bi_list", []):
+        conn.execute("""
+            INSERT INTO chanlun_bi (stock_code, freq, sdt, edt, direction, high, low, power, slope, angle, length)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (code, freq, bi["sdt"], bi["edt"], bi["direction"],
+              bi["high"], bi["low"], bi["power"], bi["slope"], bi["angle"], bi["length"]))
+    
+    # 写入分型
+    for fx in result.get("fx_list", []):
+        conn.execute("""
+            INSERT INTO chanlun_fx (stock_code, freq, dt, fx_type, high, low)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (code, freq, fx["dt"], fx["fx_type"], fx["high"], fx["low"]))
+    
+    conn.commit()
+    conn.close()
+    return True
+
+def get_echarts_option(code, freq="D", limit=500):
+    """获取可直接用于 ECharts 的 option 配置"""
+    freq_enum = SUPPORTED_FREQ.get(freq, Freq.D)
+    table = "index_daily_kline" if code.startswith("000") or code.startswith("399") else "daily_kline"
+    
+    conn = _connect()
+    df = pd.read_sql(f"""
+        SELECT date, open, high, low, close, volume, amount
+        FROM {table}
+        WHERE stock_code = ?
+        ORDER BY date DESC LIMIT ?
+    """, conn, params=(code, limit))
+    conn.close()
+    
+    if df.empty:
+        return {"error": "无数据"}
+    
+    df = df.sort_values("date")
+    df["dt"] = pd.to_datetime(df["date"])
+    bars = [RawBar(symbol=code, dt=row["dt"].to_pydatetime(), freq=freq_enum,
+                   open=row.open, close=row.close, high=row.high, low=row.low,
+                   vol=row.volume, amount=row.amount) for _, row in df.iterrows()]
+    
+    czsc_obj = CZSC(bars)
+    return czsc_obj.to_echarts()
+
+
+if __name__ == "__main__":
+    # 快速测试
+    r = analyze("000985", "D", 300)
+    print(f"笔: {r['bi_count']}, 分型: {r['fx_count']}")
+    if r["bi_list"]:
+        last = r["bi_list"][-1]
+        print(f"最新笔: {last['direction']} {last['sdt'][:10]}→{last['edt'][:10]} {last['low']:.1f}~{last['high']:.1f}")
