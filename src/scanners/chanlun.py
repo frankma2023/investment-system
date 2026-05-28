@@ -142,8 +142,8 @@ def save_to_db(code, freq, result):
     conn.close()
     return True
 
-def get_echarts_option(code, freq="D", limit=500):
-    """获取可直接用于 ECharts 的 option 配置"""
+def get_echarts_option(code, freq="D", limit=400):
+    """手动构建 ECharts option（CZSC Rust版暂不支持 to_echarts）"""
     freq_enum = SUPPORTED_FREQ.get(freq, Freq.D)
     table = "index_daily_kline" if code.startswith("000") or code.startswith("399") else "daily_kline"
     
@@ -159,14 +159,84 @@ def get_echarts_option(code, freq="D", limit=500):
     if df.empty:
         return {"error": "无数据"}
     
-    df = df.sort_values("date")
+    df = df.sort_values("date").reset_index(drop=True)
+    dates = df["date"].tolist()
+    
+    # RawBar for CZSC
     df["dt"] = pd.to_datetime(df["date"])
     bars = [RawBar(symbol=code, dt=row["dt"].to_pydatetime(), freq=freq_enum,
                    open=row.open, close=row.close, high=row.high, low=row.low,
                    vol=row.volume, amount=row.amount) for _, row in df.iterrows()]
     
     czsc_obj = CZSC(bars)
-    return czsc_obj.to_echarts()
+    
+    # K线数据
+    ohlc = [[row.open, row.close, row.low, row.high] for _, row in df.iterrows()]
+    vols = df["volume"].tolist()
+    
+    # 构建笔的 markLine 数据
+    mark_points = []
+    for bi in czsc_obj.bi_list:
+        try:
+            sdt_str = str(bi.sdt)[:10]
+            edt_str = str(bi.edt)[:10]
+            if sdt_str in dates:
+                idx = dates.index(sdt_str)
+                mark_points.append({
+                    "name": "笔" + ("顶" if bi.direction == "down" else "底"),
+                    "coord": [idx, bi.high if bi.direction == "down" else bi.low],
+                    "value": ("顶" if bi.direction == "down" else "底") + " " + str(round(bi.high if bi.direction == "down" else bi.low, 1)),
+                    "symbol": "pin",
+                    "symbolSize": 14,
+                    "itemStyle": {"color": "#ef4444" if bi.direction == "down" else "#10b981"}
+                })
+        except: pass
+    
+    # 构建笔的 markArea
+    mark_areas = []
+    for bi in czsc_obj.bi_list:
+        try:
+            s = str(bi.sdt)[:10]
+            e = str(bi.edt)[:10]
+            if s in dates and e in dates:
+                si = dates.index(s)
+                ei = dates.index(e)
+                is_up = bi.direction == "up"
+                mark_areas.append([
+                    {"xAxis": si, "yAxis": bi.low, "itemStyle": {"color": "rgba(239,68,68,0.05)" if is_up else "rgba(16,185,129,0.05)"}},
+                    {"xAxis": ei, "yAxis": bi.high}
+                ])
+        except: pass
+    
+    # 成交量颜色
+    vol_colors = []
+    for _, row in df.iterrows():
+        vol_colors.append("#ef4444" if row.close >= row.open else "#10b981")
+    
+    return {
+        "animation": False,
+        "tooltip": {"trigger": "axis", "axisPointer": {"type": "cross"}},
+        "legend": {"data": ["K线", "成交量"], "bottom": 20, "textStyle": {"color": "#8b8b90", "fontSize": 10}, "selectedMode": True},
+        "grid": [{"left": "8%", "right": "4%", "top": 8, "height": "60%"},
+                 {"left": "8%", "right": "4%", "top": "75%", "height": "15%"}],
+        "xAxis": [{"type": "category", "data": dates, "axisLabel": {"color": "#8b8b90", "fontSize": 9},
+                    "axisLine": {"lineStyle": {"color": "rgba(255,255,255,0.06)"}}},
+                  {"type": "category", "gridIndex": 1, "data": dates, "axisLabel": {"show": False},
+                    "axisLine": {"lineStyle": {"color": "rgba(255,255,255,0.06)"}}}],
+        "yAxis": [{"type": "value", "scale": True, "axisLabel": {"color": "#8b8b90", "fontSize": 9},
+                    "splitLine": {"lineStyle": {"color": "rgba(255,255,255,0.04)"}}},
+                  {"type": "value", "gridIndex": 1, "axisLabel": {"color": "#8b8b90", "fontSize": 9}}],
+        "dataZoom": [{"type": "inside", "start": 70, "end": 100},
+                     {"type": "slider", "start": 70, "end": 100, "height": 16, "bottom": 4}],
+        "series": [
+            {"name": "K线", "type": "candlestick", "data": ohlc,
+             "itemStyle": {"color": "#ef4444", "color0": "#10b981",
+                           "borderColor": "#ef4444", "borderColor0": "#10b981"},
+             "markPoint": {"data": mark_points, "symbol": "pin", "symbolSize": 14}},
+            {"name": "成交量", "type": "bar", "xAxisIndex": 1, "yAxisIndex": 1, "data": vols,
+             "itemStyle": {"color": "rgba(245,158,11,0.4)"}}
+        ]
+    }
 
 
 if __name__ == "__main__":
