@@ -154,7 +154,7 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
     
     conn = _connect()
     df = pd.read_sql(f"""
-        SELECT date, open, high, low, close, volume, amount
+        SELECT date, open, high, low, close, volume, amount, change
         FROM {table}
         WHERE stock_code = ?
         ORDER BY date DESC LIMIT ?
@@ -178,10 +178,9 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
     
     // 构建K线数据
     ohlc_data = []
-    closes = []
     for _, row in df.iterrows():
-        ohlc_data.append([row.open, row.close, row.low, row.high])
-        closes.append(row.close)
+        chg = float(row.get("change", 0)) if pd.notna(row.get("change")) else 0
+        ohlc_data.append([row.open, row.close, row.low, row.high, chg])
     volumes = df["volume"].tolist()
     
     # 构建笔的 markLine 数据
