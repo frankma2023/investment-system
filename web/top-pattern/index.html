@@ -116,7 +116,7 @@
     <div class="bottom-right">
       <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 头部形态信号</span></div><div class="table-wrapper" id="table"></div></div>
       <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">🔎 单日排查</span></div>
-        <div style="padding:12px 16px;display:flex;gap:8px;align-items:center"><input type="date" id="diag-date" style="padding:6px 10px;border:1px solid var(--divider);border-radius:10px;font-size:0.72rem;background:var(--card-bg);color:var(--text-primary);flex:1"><button onclick="runDiag()" style="padding:7px 16px;background:var(--color-accent);color:#FFF;border:none;border-radius:10px;font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button></div>
+        <div style="padding:12px 16px;display:flex;gap:8px;align-items:center"><input type="date" id="diag-date" style="padding:6px 10px;border:1px solid var(--divider);border-radius:10px;font-size:0.72rem;background:var(--card-bg);color:var(--text-primary);flex:1"><button onclick="runDiag()" style="padding:7px 16px;background:var(--accent);color:#FFF;border:none;border-radius:10px;font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button></div>
         <div id="diag-result" style="padding:0 16px 14px;display:none"></div>
       </div>
     </div>
@@ -270,7 +270,7 @@
     var date=document.getElementById('diag-date').value,div=document.getElementById('diag-result');
     if(!date){div.style.display='none';return}
     var code=document.getElementById('stock-code').value.trim(),mode=document.getElementById('mode').value;
-    div.innerHTML='<div style="font-size:0.68rem;color:var(--text-tertiary);padding:6px 0">⏳ 检测中...</div>';div.style.display='block';
+    div.innerHTML='<div style="font-size:0.68rem;color:var(--muted);padding:6px 0">⏳ 检测中...</div>';div.style.display='block';
     try{var freq=document.getElementById('freq').value;var resp=await fetch(API_URL+'/api/top-pattern/diag?stock='+code+'&date='+date+'&mode='+mode+'&freq='+freq);var d=await resp.json();
     if(d.error){div.innerHTML='<div style="font-size:0.68rem;color:#FF6B6B">'+d.error+'</div>';return}
     var h='<table style="margin:0;font-size:0.62rem"><thead><tr><th>项目</th><th>值</th></tr></thead><tbody>';

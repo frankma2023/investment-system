@@ -35,10 +35,10 @@
     .score-hero { display:flex; gap:20px; align-items:center; padding:22px 28px; background:var(--card-bg); border-radius:20px; box-shadow:0 2px 12px rgba(0,0,0,0.06); margin-bottom:14px; }
     .score-ring { width:90px; height:90px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     .score-ring .num { font-family:var(--font-display); font-size:2rem; font-weight:900; }
-    .score-info .label { font-size:0.6rem; color:var(--text-tertiary); letter-spacing:0.06em; }
+    .score-info .label { font-size:0.6rem; color:var(--muted); letter-spacing:0.06em; }
     .score-info .rating { font-family:var(--font-display); font-size:1.4rem; font-weight:900; }
     .score-info .advice { font-size:0.72rem; color:var(--text-secondary); margin-top:4px; }
-    .score-date { font-size:0.6rem; color:var(--text-tertiary); margin-left:auto; }
+    .score-date { font-size:0.6rem; color:var(--muted); margin-left:auto; }
     /* Section header */
     .section-hdr { font-family:var(--font-display); font-size:0.75rem; font-weight:800; color:var(--text-secondary); margin:16px 0 10px; letter-spacing:0.04em; }
     /* Core signal cards */
@@ -57,15 +57,15 @@
     .ind-card { background:var(--card-bg); border-radius:16px; padding:16px; box-shadow:0 1px 6px rgba(0,0,0,0.05); display:flex; flex-direction:column; }
     .ind-card .ih { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; }
     .ind-card .in { font-family:var(--font-display); font-size:0.76rem; font-weight:800; }
-    .ind-card .it { font-size:0.52rem; color:var(--text-tertiary); background:var(--bg); padding:2px 8px; border-radius:10px; }
+    .ind-card .it { font-size:0.52rem; color:var(--muted); background:var(--bg); padding:2px 8px; border-radius:10px; }
     .ind-card .iv { font-family:var(--font-display); font-size:1.3rem; font-weight:900; }
-    .ind-card .iu { font-size:0.55rem; color:var(--text-tertiary); font-weight:400; }
+    .ind-card .iu { font-size:0.55rem; color:var(--muted); font-weight:400; }
     .ind-card .ibar { height:5px; background:var(--bg); border-radius:3px; margin-top:6px; overflow:hidden; }
     .ind-card .ibar-fill { height:100%; border-radius:3px; }
-    .ind-card .is { font-size:0.58rem; color:var(--text-tertiary); margin-top:3px; text-align:right; }
-    .ind-card .id { font-size:0.6rem; color:var(--text-tertiary); margin-top:8px; line-height:1.5; border-top:1px solid var(--divider); padding-top:8px; }
+    .ind-card .is { font-size:0.58rem; color:var(--muted); margin-top:3px; text-align:right; }
+    .ind-card .id { font-size:0.6rem; color:var(--muted); margin-top:8px; line-height:1.5; border-top:1px solid var(--divider); padding-top:8px; }
     .clickable { cursor:pointer; text-decoration:underline; text-decoration-style:dotted; text-underline-offset:3px; }
-    .clickable:hover { color:var(--color-accent); }
+    .clickable:hover { color:var(--accent); }
     /* Panorama */
     .pano-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
     .pano-card { background:var(--card-bg); border-radius:16px; padding:16px; box-shadow:0 1px 6px rgba(0,0,0,0.05); }
@@ -73,31 +73,31 @@
     .pano-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
     .pano-item { text-align:center; padding:10px 8px; background:var(--bg); border-radius:12px; }
     .pano-item .pv { font-family:var(--font-display); font-size:1.3rem; font-weight:900; }
-    .pano-item .pl { font-size:0.58rem; color:var(--text-tertiary); margin-top:2px; }
-    .pano-item .pd { font-size:0.55rem; color:var(--text-tertiary); margin-top:6px; line-height:1.4; }
+    .pano-item .pl { font-size:0.58rem; color:var(--muted); margin-top:2px; }
+    .pano-item .pd { font-size:0.55rem; color:var(--muted); margin-top:6px; line-height:1.4; }
     /* Rotation */
     .rot-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .rot-card { background:var(--card-bg); border-radius:14px; padding:14px; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
     .rot-card h4 { font-family:var(--font-display); font-size:0.68rem; font-weight:800; margin:0 0 6px; }
     .rot-card .rm { font-family:var(--font-display); font-size:1rem; font-weight:900; }
-    .rot-card .rd { font-size:0.55rem; color:var(--text-tertiary); margin-top:2px; }
+    .rot-card .rd { font-size:0.55rem; color:var(--muted); margin-top:2px; }
     .rot-card .tl { display:flex; flex-wrap:wrap; gap:3px; margin-top:8px; }
     .rt { font-size:0.54rem; padding:2px 7px; border-radius:7px; font-weight:600; }
-    .rt.tw { background:var(--color-accent); color:#FFF; }
-    .rt.lw { background:var(--bg); color:var(--text-tertiary); }
-    .rt.bo { background:var(--color-accent-subtle); color:var(--color-accent); }
+    .rt.tw { background:var(--accent); color:#FFF; }
+    .rt.lw { background:var(--bg); color:var(--muted); }
+    .rt.bo { background:var(--color-accent-subtle); color:var(--accent); }
     /* Modal */
     .modal-overlay.show { display:flex; }
     .modal-box { background:var(--card-bg); border-radius:20px; padding:24px; max-width:800px; width:90%; max-height:80vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,0.15); }
     .modal-box h2 { font-family:var(--font-display); font-size:1rem; font-weight:800; margin:0 0 4px; }
-    .modal-sub { font-size:0.65rem; color:var(--text-tertiary); margin-bottom:14px; }
+    .modal-sub { font-size:0.65rem; color:var(--muted); margin-bottom:14px; }
     .bt { width:100%; border-collapse:collapse; font-size:0.7rem; }
-    .bt th { text-align:left; padding:5px 8px; border-bottom:1px solid var(--divider); font-size:0.62rem; color:var(--text-tertiary); font-weight:700; }
+    .bt th { text-align:left; padding:5px 8px; border-bottom:1px solid var(--divider); font-size:0.62rem; color:var(--muted); font-weight:700; }
     .bt td { padding:5px 8px; border-bottom:1px solid var(--divider); }
     .tu { color:#E53935; font-weight:700; } .td { color:#26C6DA; font-weight:700; }
     @media (max-width:700px) { .core-grid,.rot-grid,.pano-row { grid-template-columns:1fr; } .pano-grid { grid-template-columns:1fr 1fr; } }
     .nav-dropdown:hover .nav-dropdown-menu { display:block; }
-    .no-data { text-align:center; padding:48px; color:var(--text-tertiary); font-size:0.8rem; }
+    .no-data { text-align:center; padding:48px; color:var(--muted); font-size:0.8rem; }
 </style>
 </head>
 <body>
@@ -164,11 +164,11 @@
       let distCls='core-ok',distIcon='📉';
       if(dist.level==='danger')distCls='core-danger';
       else if(dist.level==='warning')distCls='core-warning';
-      html+=`<div class="core-card ${distCls}"><div class="icon">${distIcon}</div><div class="label">抛盘日</div><div class="val">${dist.label||'—'}<span style="font-size:0.6rem;color:var(--text-tertiary)"> /30天</span></div>${dist.dates?'<div style="font-size:0.55rem;color:var(--text-tertiary);margin-top:2px">'+dist.dates+'</div>':''}<div class="desc">${dist.desc||''}</div></div>`;
+      html+=`<div class="core-card ${distCls}"><div class="icon">${distIcon}</div><div class="label">抛盘日</div><div class="val">${dist.label||'—'}<span style="font-size:0.6rem;color:var(--muted)"> /30天</span></div>${dist.dates?'<div style="font-size:0.55rem;color:var(--muted);margin-top:2px">'+dist.dates+'</div>':''}<div class="desc">${dist.desc||''}</div></div>`;
       // 追盘日
       const ftd=p?.core?.ftd||{};
       const ftdCls=(ftd.count||0)>0?'core-ok':'core-'+((ftd.level||'')||'unknown');
-      html+=`<div class="core-card ${ftdCls}"><div class="icon">📈</div><div class="label">追盘日</div><div class="val">${ftd.label||'—'}<span style="font-size:0.6rem;color:var(--text-tertiary)"> /30天</span></div>${ftd.dates?'<div style="font-size:0.55rem;color:var(--text-tertiary);margin-top:2px">'+ftd.dates+'</div>':''}<div class="desc">${ftd.desc||''}</div></div>`;
+      html+=`<div class="core-card ${ftdCls}"><div class="icon">📈</div><div class="label">追盘日</div><div class="val">${ftd.label||'—'}<span style="font-size:0.6rem;color:var(--muted)"> /30天</span></div>${ftd.dates?'<div style="font-size:0.55rem;color:var(--muted);margin-top:2px">'+ftd.dates+'</div>':''}<div class="desc">${ftd.desc||''}</div></div>`;
       // 吸筹日
       const acc=p?.core?.accumulation||{};
       const accCls=(acc.count||0)>0?'core-ok':'core-'+((acc.level||'')||'unknown');
@@ -204,13 +204,13 @@
       // 指数维度
       html+='<div class="pano-row"><div class="pano-card"><h3>📊 指数维度</h3><div class="pano-grid">';
       const crowd=p?.crowding||{};
-      html+=`<div class="pano-item"><div class="pv clickable" onclick="openDetailModal('crowding')">${crowd.high_count||0}</div><div class="pl">拥挤指数<span style="font-size:0.55rem;color:var(--text-tertiary)"> · <span class="clickable" style="text-decoration:underline dotted" onclick="event.stopPropagation();openDetailModal('crowding',true)">共检${crowd.total||0}个</span></span></div><div class="pd">${crowd.desc||''}</div></div>`;
+      html+=`<div class="pano-item"><div class="pv clickable" onclick="openDetailModal('crowding')">${crowd.high_count||0}</div><div class="pl">拥挤指数<span style="font-size:0.55rem;color:var(--muted)"> · <span class="clickable" style="text-decoration:underline dotted" onclick="event.stopPropagation();openDetailModal('crowding',true)">共检${crowd.total||0}个</span></span></div><div class="pd">${crowd.desc||''}</div></div>`;
       const ad=p?.ad||{};
       const adVal=(ad.positive||0)>=0?`<span class="clickable" onclick="openDetailModal('ad')">${ad.positive||0}</span>`:'—';
-      html+=`<div class="pano-item"><div class="pv">${adVal}</div><div class="pl">机构吸筹出货<span style="font-size:0.55rem;color:var(--text-tertiary)"> · <span class="clickable" style="text-decoration:underline dotted" onclick="openDetailModal('ad',true)">共检${ad.total||0}个</span></span></div><div class="pd">${ad.desc||'暂无数据'}</div></div>`;
+      html+=`<div class="pano-item"><div class="pv">${adVal}</div><div class="pl">机构吸筹出货<span style="font-size:0.55rem;color:var(--muted)"> · <span class="clickable" style="text-decoration:underline dotted" onclick="openDetailModal('ad',true)">共检${ad.total||0}个</span></span></div><div class="pd">${ad.desc||'暂无数据'}</div></div>`;
       const divg=p?.divergence||{};
       const divVal=(divg.count||0)>=0?`<span class="clickable" onclick="openDetailModal('divergence')">${divg.count||0}</span>`:'—';
-      html+=`<div class="pano-item"><div class="pv">${divVal}</div><div class="pl">指数背离<span style="font-size:0.55rem;color:var(--text-tertiary)"> · <span class="clickable" style="text-decoration:underline dotted" onclick="openDetailModal('divergence',true)">共检11个</span></span></div><div class="pd">${divg.desc||'暂无数据'}</div></div>`;
+      html+=`<div class="pano-item"><div class="pv">${divVal}</div><div class="pl">指数背离<span style="font-size:0.55rem;color:var(--muted)"> · <span class="clickable" style="text-decoration:underline dotted" onclick="openDetailModal('divergence',true)">共检11个</span></span></div><div class="pd">${divg.desc||'暂无数据'}</div></div>`;
       html+='</div></div>';
 
       // 个股维度
@@ -230,8 +230,8 @@
           let mc='#4CAF50',ml='健康';
           if(isS){mc=mv>=.7?'#4CAF50':mv>=.3?'#F9A825':'#E53935';ml=mv>=.7?'格局稳定':mv>=.3?'正常轮动':'无序洗牌';}
           else{mc=mv>=4?'#4CAF50':mv>=2?'#F9A825':'#E53935';ml=mv>=4?'板块稳定':mv>=2?'正常轮动':'快速轮动';}
-          html+=`<div class="rot-card"><h4>${rot.icon||'📦'} ${rot.name} <span style="font-size:0.5rem;color:var(--text-tertiary);font-weight:400">${rot.count||''}个 · ${isS?'Spearman':'Top5重叠'}</span></h4>
-            <div class="rm" style="color:${mc}">${isS?mv.toFixed(3):mv}<span style="font-size:0.55rem;color:var(--text-tertiary);font-weight:400">${isS?' (ρ)':' 个重叠'}</span></div>
+          html+=`<div class="rot-card"><h4>${rot.icon||'📦'} ${rot.name} <span style="font-size:0.5rem;color:var(--muted);font-weight:400">${rot.count||''}个 · ${isS?'Spearman':'Top5重叠'}</span></h4>
+            <div class="rm" style="color:${mc}">${isS?mv.toFixed(3):mv}<span style="font-size:0.55rem;color:var(--muted);font-weight:400">${isS?' (ρ)':' 个重叠'}</span></div>
             <div class="rd">${ml}${rot.participates?' · 参与评分':' · 仅展示'}</div>`;
           if(rot.top5_current&&rot.top5_current.length){
             const both=rot.top5_overlap||[];
@@ -239,7 +239,7 @@
             rot.top5_current.forEach(n=>{html+=`<span class="rt ${both.includes(n)?'bo':'tw'}">${n}</span>`;});
             html+='</div>';
             if(rot.top5_last&&rot.top5_last.length){
-              html+='<div class="tl" style="margin-top:3px"><span style="font-size:0.5rem;color:var(--text-tertiary);margin-right:3px">上周:</span>';
+              html+='<div class="tl" style="margin-top:3px"><span style="font-size:0.5rem;color:var(--muted);margin-right:3px">上周:</span>';
               rot.top5_last.forEach(n=>{html+=`<span class="rt ${both.includes(n)?'bo':'lw'}">${n}</span>`;});
               html+='</div>';
             }
@@ -257,7 +257,7 @@
       try{
         const r=await fetch(API_BASE+'/api/market-health/breakouts?date=latest');const d=await r.json();
         document.getElementById('breakout-meta').textContent=`${d.date} · 共${d.count}只个股放量突破20日高点`;
-        if(!d.stocks||!d.stocks.length){document.getElementById('breakout-table').innerHTML='<div style="padding:24px;text-align:center;color:var(--text-tertiary)">暂无突破个股</div>';return;}
+        if(!d.stocks||!d.stocks.length){document.getElementById('breakout-table').innerHTML='<div style="padding:24px;text-align:center;color:var(--muted)">暂无突破个股</div>';return;}
         let t='<table class="bt"><thead><tr><th>代码</th><th>名称</th><th>收盘</th><th>涨跌幅</th><th>成交量</th><th>成交额</th></tr></thead><tbody>';
         d.stocks.forEach(s=>{const cl=(s.change_pct||0)>=0?'tu':'td';t+=`<tr><td style="font-family:var(--font-display);font-weight:700">${s.stock_code}</td><td>${s.name||'—'}</td><td>${s.close?.toFixed(2)||'—'}</td><td class="${cl}">${(s.change_pct||0)>=0?'+':''}${(s.change_pct||0).toFixed(2)}%</td><td>${fm(s.volume)}</td><td>${fm(s.amount)}</td></tr>`;});
         t+='</tbody></table>';document.getElementById('breakout-table').innerHTML=t;

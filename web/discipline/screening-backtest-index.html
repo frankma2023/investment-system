@@ -102,7 +102,7 @@
       }).join(' / ');
 
       let h = '<h3>📊 ' + (it.index_name || it.index_code) + ' 得分拆解</h3>';
-      h += '<p style="font-size:.6rem;color:var(--text-tertiary);margin:0 0 12px;">总分 = RPS250 × 0.50 + 信号分 × 0.50</p>';
+      h += '<p style="font-size:.6rem;color:var(--muted);margin:0 0 12px;">总分 = RPS250 × 0.50 + 信号分 × 0.50</p>';
 
       // Layer 1
       const mkt = it.market_phase || '—';
@@ -149,7 +149,7 @@
         const r = s[tag] || {};
         const cls = (r.avg_return||0) >= 0 ? 'green' : 'red';
         st += `<div class="stat-card"><div class="val ${cls}">${r.avg_return!=null?r.avg_return+'%':'—'}</div><div class="lbl">${label} · 均收益</div>`;
-        st += `<div style="font-size:0.55rem;color:var(--text-tertiary)">胜率 ${r.win_rate!=null?r.win_rate+'%':'—'} · 有效 ${r.valid||0}`;
+        st += `<div style="font-size:0.55rem;color:var(--muted)">胜率 ${r.win_rate!=null?r.win_rate+'%':'—'} · 有效 ${r.valid||0}`;
         if (r.best) st += `<br>最佳 ${r.best.index_code}`;
         if (r.worst) st += `<br>最差 ${r.worst.index_code}`;
         st += `</div></div>`;
@@ -175,7 +175,7 @@
         h += `<td>${fmtPct(it.return_5d)}</td>`;
         h += `<td>${fmtPct(it.return_10d)}</td>`;
         h += `<td>${fmtPct(it.return_20d)}</td>`;
-        h += `<td style="font-size:0.6rem;color:var(--text-tertiary)">${it.holding_days||0}d</td>`;
+        h += `<td style="font-size:0.6rem;color:var(--muted)">${it.holding_days||0}d</td>`;
         h += '</tr>';
       }
       h += '</tbody></table>';

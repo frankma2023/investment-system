@@ -31,11 +31,11 @@
     .alert-light.green { background: #E8F5E9; color: #4CAF50; }
     .holding-info { min-width: 0; }
     .holding-info .name { font-family: var(--font-display); font-size: 0.95rem; font-weight: 800; margin-bottom: 4px; }
-    .holding-info .code { font-size: 0.65rem; color: var(--text-tertiary); }
+    .holding-info .code { font-size: 0.65rem; color: var(--muted); }
     .holding-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px; font-size: 0.7rem; }
     .holding-stats .stat { text-align: center; }
     .holding-stats .stat .val { font-family: var(--font-display); font-weight: 700; font-size: 0.85rem; }
-    .holding-stats .stat .lbl { font-size: 0.55rem; color: var(--text-tertiary); }
+    .holding-stats .stat .lbl { font-size: 0.55rem; color: var(--muted); }
     .pnl-up { color: #F44336; }
     .pnl-down { color: #4CAF50; }
     .holding-actions { display: flex; flex-direction: column; gap: 6px; }
@@ -45,8 +45,8 @@
     .alerts-list { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--divider); }
     .alert-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 0.65rem; border-bottom: 1px solid var(--divider); }
     .alert-item .ack-btn { font-size: 0.55rem; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--divider); background: var(--bg); color: var(--text-secondary); cursor: pointer; }
-    .alert-item .ack-btn.acked { color: var(--text-tertiary); cursor: default; opacity: 0.5; }
-    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-tertiary); }
+    .alert-item .ack-btn.acked { color: var(--muted); cursor: default; opacity: 0.5; }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
     .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 </style>
 </head>
@@ -64,7 +64,7 @@
     </div>
 
     <div class="toolbar">
-      <span style="font-size:0.65rem;color:var(--text-tertiary);" id="scan-status">加载中...</span>
+      <span style="font-size:0.65rem;color:var(--muted);" id="scan-status">加载中...</span>
     </div>
 
     <div id="content"><div class="loading">加载中...</div></div>
@@ -73,7 +73,7 @@
     <div class="modal-overlay" id="price-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:100;justify-content:center;align-items:center;">
       <div style="background:var(--card-bg);border-radius:16px;padding:24px;max-width:360px;width:90%;">
         <h3 style="font-family:var(--font-display);font-size:0.9rem;margin:0 0 12px;">💵 手工更新现价</h3>
-        <p style="font-size:0.65rem;color:var(--text-tertiary);margin:0 0 8px;" id="price-stock-label"></p>
+        <p style="font-size:0.65rem;color:var(--muted);margin:0 0 8px;" id="price-stock-label"></p>
         <label style="display:block;font-size:0.65rem;color:var(--text-secondary);margin:8px 0 2px;">当日价格</label>
         <input type="number" id="price-input" step="0.01" style="width:100%;padding:6px 10px;border:1px solid var(--divider);border-radius:8px;font-size:0.75rem;background:var(--bg);color:var(--text-primary);box-sizing:border-box;">
         <div style="display:flex;gap:8px;margin-top:14px;">

@@ -31,7 +31,7 @@
   .mkt-cor{color:var(--accent);background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.2)}
   .mkt-bear{color:var(--fall);background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.2)}
 
-  .table-shell{background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-card)}
+  .table-shell{background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-card)}
   .scr-table{width:100%;border-collapse:collapse;font-size:12px}
   .scr-table thead{position:sticky;top:0;z-index:5}
   .scr-table th{text-align:center;padding:9px 4px;border-bottom:1px solid var(--border);font-size:10px;font-weight:500;color:var(--muted);cursor:pointer;user-select:none;white-space:nowrap;background:var(--card-solid);backdrop-filter:blur(10px);text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0;z-index:5}
@@ -335,7 +335,7 @@ function renderTable(){
 
       h+=`<td>${(it.rps_20||0).toFixed(0)}</td>`;
 
-      h+=`<td>${it.signal_count||0} <span style="font-size:.5rem;color:var(--text-tertiary)">${(it.signal_summary||'').split('/').map(cn).join('/')}</span></td>`;
+      h+=`<td>${it.signal_count||0} <span style="font-size:.5rem;color:var(--muted)">${(it.signal_summary||'').split('/').map(cn).join('/')}</span></td>`;
 
       h+=`<td>${it.ideal_buy?'¥'+it.ideal_buy.toFixed(2):'—'}</td>`;
       h+=`<td style="display:flex;gap:3px;justify-content:center;"><button class="btn-xs add" onclick="addWL('${it.index_code||''}','${it.index_name||''}')">+自选</button><a class="btn-xs" href="javascript:void(0)" onclick="showIndexRec('${it.index_code||''}','${it.index_name||''}')"> 精选理由</a><a class="btn-xs" href="javascript:void(0)" onclick="showIndexOneil('${it.index_code||''}','${it.index_name||''}')"> 欧奈尔说</a></td>`;
@@ -358,11 +358,11 @@ function renderTable(){
 
       h+=`<td>${it.canslim_total!=null?it.canslim_total.toFixed(0):'-'}</td>`;
 
-      h+=`<td>${it.signal_count||0} <span style="font-size:.5rem;color:var(--text-tertiary)">${it.signal_summary.split('/').map(cn).join('/')}</span></td>`;
+      h+=`<td>${it.signal_count||0} <span style="font-size:.5rem;color:var(--muted)">${it.signal_summary.split('/').map(cn).join('/')}</span></td>`;
 
       h+=`<td>${it.ideal_buy?'¥'+it.ideal_buy.toFixed(2):'—'}</td>`;
 
-      h+=`<td>${it.resonance_name?`<span style="color:#E65100;font-weight:600">${it.resonance_name}</span><br><span style="font-size:.5rem;color:var(--text-tertiary)">${it.resonance_pool||''}</span>`:'—'}</td>`;
+      h+=`<td>${it.resonance_name?`<span style="color:#E65100;font-weight:600">${it.resonance_name}</span><br><span style="font-size:.5rem;color:var(--muted)">${it.resonance_pool||''}</span>`:'—'}</td>`;
 
       h+=`<td style="display:flex;gap:3px;justify-content:center;">`;
 
@@ -419,7 +419,7 @@ async function showRec(code,name){
 
     let html=`<h2 style="margin:0 0 4px;font-size:1.1rem;">📝 ${d.stock_name}（${d.stock_code}）· 欧奈尔精选推荐</h2>`;
 
-    html+=`<p style="color:var(--text-tertiary);font-size:.7rem;margin:0 0 20px;">${d.industry||''} · 生成时间 ${new Date().toLocaleString()}</p>`;
+    html+=`<p style="color:var(--muted);font-size:.7rem;margin:0 0 20px;">${d.industry||''} · 生成时间 ${new Date().toLocaleString()}</p>`;
 
     html+=`<p style="font-size:.85rem;line-height:2;">亲爱的投资者，</p>`;
 
@@ -499,9 +499,9 @@ async function showRec(code,name){
 
     html+=`<hr style="border:0;border-top:1px solid var(--divider);margin:24px 0;">`;
 
-    html+=`<p style="font-size:.65rem;color:var(--text-tertiary);">📖 扩展阅读：<a href="https://xueqiu.com/k?q=${d.stock_code}" target="_blank" style="color:var(--accent)">雪球搜索</a> · <a href="https://guba.eastmoney.com/list,${d.stock_code}.html" target="_blank" style="color:var(--accent)">东方财富股吧</a></p>`;
+    html+=`<p style="font-size:.65rem;color:var(--muted);">📖 扩展阅读：<a href="https://xueqiu.com/k?q=${d.stock_code}" target="_blank" style="color:var(--accent)">雪球搜索</a> · <a href="https://guba.eastmoney.com/list,${d.stock_code}.html" target="_blank" style="color:var(--accent)">东方财富股吧</a></p>`;
 
-    html+=`<p style="font-size:.6rem;color:var(--text-tertiary);">⚠ 以上为系统自动生成的量化评估，不构成投资建议。投资有风险，入市需谨慎。</p>`;
+    html+=`<p style="font-size:.6rem;color:var(--muted);">⚠ 以上为系统自动生成的量化评估，不构成投资建议。投资有风险，入市需谨慎。</p>`;
 
 
 
@@ -532,7 +532,7 @@ async function showIndexRec(code,name){
     const item=allItems.find(i=>(i.index_code||'')===code);
     if(!item){document.getElementById('rec-content').innerHTML='<div class="loading">未找到该指数的精选数据</div>';return;}
     let html=`<h2 style="margin:0 0 4px;font-size:1.1rem;">📝 ${item.index_name||''}（${item.index_code||''}）· 指数精选推荐</h2>`;
-    html+=`<p style="color:var(--text-tertiary);font-size:.7rem;margin:0 0 20px;">生成时间 ${new Date().toLocaleString()}</p>`;
+    html+=`<p style="color:var(--muted);font-size:.7rem;margin:0 0 20px;">生成时间 ${new Date().toLocaleString()}</p>`;
     html+=`<p style="font-size:.85rem;line-height:2;">基于欧奈尔指数精选四层筛选体系，对该指数评估如下：</p>`;
     // 第一层：RS 强度
     html+=`<h3 style="color:#C62828;margin:20px 0 8px;">第一层 · 指数 RS 动量强度</h3>`;
@@ -554,7 +554,7 @@ async function showIndexRec(code,name){
     html+=`<hr style="border:0;border-top:1px solid var(--divider);margin:24px 0;">`;
     html+=`<h3 style="color:#FE2C55;margin:20px 0 8px;">📌 O'Neil 总结</h3>`;
     html+=`<p style="text-indent:2em;">${item.index_name||''}${(item.rps_250||0)>=80?'在RS动量和信号层面表现优秀，':'值得持续关注，'}建议结合指数复核页面（K线图+信号标注）进行更深入的形态分析。</p>`;
-    html+=`<p style="font-size:.6rem;color:var(--text-tertiary);">⚠ 以上为基于指数精选四层筛选数据的量化评估，不构成投资建议。</p>`;
+    html+=`<p style="font-size:.6rem;color:var(--muted);">⚠ 以上为基于指数精选四层筛选数据的量化评估，不构成投资建议。</p>`;
     document.getElementById('rec-content').innerHTML=html;
   }catch(e){document.getElementById('rec-content').innerHTML='<div class="loading">加载失败: '+e.message+'</div>'}
 }
@@ -563,18 +563,18 @@ async function showOneil(code,name){
   const modal=document.getElementById('oneil-modal');
   const content=document.getElementById('oneil-content');
   modal.style.display='block';
-  content.innerHTML='<div class="loading">🧭 欧奈尔正在深度审视这只股票...<br><span style="font-size:.65rem;color:var(--text-tertiary);">AI 正在调用欧奈尔 Skill 推理，可能需要 30–60 秒...</span></div>';
+  content.innerHTML='<div class="loading">🧭 欧奈尔正在深度审视这只股票...<br><span style="font-size:.65rem;color:var(--muted);">AI 正在调用欧奈尔 Skill 推理，可能需要 30–60 秒...</span></div>';
   try{
     const r=await fetch('/api/discipline/oneil-analysis/'+code);
     const d=await r.json();
     if(d.html){
-      content.innerHTML='<h2 style="margin:0 0 2px;font-size:1.15rem;">🧭 欧奈尔说：'+(name||code)+'（'+code+'）<button id="oneil-save-btn" style="float:right;padding:4px 12px;border-radius:6px;border:1px solid var(--divider);background:var(--card-bg);color:var(--accent);cursor:pointer;font-size:.7rem;">💾 保存</button></h2><p style="color:var(--text-tertiary);font-size:.65rem;margin:0 0 20px;">'+(d.industry||'')+' · AI 深度分析 · 基于《像欧奈尔信徒一样交易》</p>'+d.html+'<p style="font-size:.55rem;color:var(--text-tertiary);margin-top:16px;"><i>"意见观点无所谓，只有事实以及量价同市场运行一样真实。" —— 比尔·欧奈尔</i></p>';
+      content.innerHTML='<h2 style="margin:0 0 2px;font-size:1.15rem;">🧭 欧奈尔说：'+(name||code)+'（'+code+'）<button id="oneil-save-btn" style="float:right;padding:4px 12px;border-radius:6px;border:1px solid var(--divider);background:var(--card-bg);color:var(--accent);cursor:pointer;font-size:.7rem;">💾 保存</button></h2><p style="color:var(--muted);font-size:.65rem;margin:0 0 20px;">'+(d.industry||'')+' · AI 深度分析 · 基于《像欧奈尔信徒一样交易》</p>'+d.html+'<p style="font-size:.55rem;color:var(--muted);margin-top:16px;"><i>"意见观点无所谓，只有事实以及量价同市场运行一样真实。" —— 比尔·欧奈尔</i></p>';
       document.getElementById('oneil-save-btn').onclick=function(){saveOneilReport(code,name);};
     }else{
       content.innerHTML='<div class="loading">AI 未返回内容，请稍后重试</div>';
     }
   }catch(e){
-    content.innerHTML='<div class="loading">❌ 分析失败: '+e.message+'<br><span style="font-size:.7rem;color:var(--text-tertiary);">请确认 Flask 服务(8788)已启动，且 deepseek CLI 可用</span></div>';
+    content.innerHTML='<div class="loading">❌ 分析失败: '+e.message+'<br><span style="font-size:.7rem;color:var(--muted);">请确认 Flask 服务(8788)已启动，且 deepseek CLI 可用</span></div>';
   }
 }
 
@@ -582,18 +582,18 @@ async function showIndexOneil(code,name){
   const modal=document.getElementById('oneil-modal');
   const content=document.getElementById('oneil-content');
   modal.style.display='block';
-  content.innerHTML='<div class="loading">🧭 欧奈尔正在深度审视这个指数...<br><span style="font-size:.65rem;color:var(--text-tertiary);">AI 正在调用欧奈尔 Skill 推理，可能需要 30–60 秒...</span></div>';
+  content.innerHTML='<div class="loading">🧭 欧奈尔正在深度审视这个指数...<br><span style="font-size:.65rem;color:var(--muted);">AI 正在调用欧奈尔 Skill 推理，可能需要 30–60 秒...</span></div>';
   try{
     const r=await fetch('/api/discipline/oneil-analysis-index/'+code);
     const d=await r.json();
     if(d.html){
-      content.innerHTML='<h2 style="margin:0 0 2px;font-size:1.15rem;">🧭 欧奈尔说：'+(name||code)+'（'+code+'）<button id="oneil-save-btn" style="float:right;padding:4px 12px;border-radius:6px;border:1px solid var(--divider);background:var(--card-bg);color:var(--accent);cursor:pointer;font-size:.7rem;">💾 保存</button></h2><p style="color:var(--text-tertiary);font-size:.65rem;margin:0 0 20px;">指数深度分析 · 基于《像欧奈尔信徒一样交易》</p>'+d.html+'<p style="font-size:.55rem;color:var(--text-tertiary);margin-top:16px;"><i>"意见观点无所谓，只有事实以及量价同市场运行一样真实。" —— 比尔·欧奈尔</i></p>';
+      content.innerHTML='<h2 style="margin:0 0 2px;font-size:1.15rem;">🧭 欧奈尔说：'+(name||code)+'（'+code+'）<button id="oneil-save-btn" style="float:right;padding:4px 12px;border-radius:6px;border:1px solid var(--divider);background:var(--card-bg);color:var(--accent);cursor:pointer;font-size:.7rem;">💾 保存</button></h2><p style="color:var(--muted);font-size:.65rem;margin:0 0 20px;">指数深度分析 · 基于《像欧奈尔信徒一样交易》</p>'+d.html+'<p style="font-size:.55rem;color:var(--muted);margin-top:16px;"><i>"意见观点无所谓，只有事实以及量价同市场运行一样真实。" —— 比尔·欧奈尔</i></p>';
       document.getElementById('oneil-save-btn').onclick=function(){saveOneilReport(code,name);};
     }else{
       content.innerHTML='<div class="loading">AI 未返回内容，请稍后重试</div>';
     }
   }catch(e){
-    content.innerHTML='<div class="loading">❌ 分析失败: '+e.message+'<br><span style="font-size:.7rem;color:var(--text-tertiary);">请确认 Flask 服务(8788)已启动，且 deepseek CLI 可用</span></div>';
+    content.innerHTML='<div class="loading">❌ 分析失败: '+e.message+'<br><span style="font-size:.7rem;color:var(--muted);">请确认 Flask 服务(8788)已启动，且 deepseek CLI 可用</span></div>';
   }
 }
 

@@ -106,10 +106,10 @@
     <div class="chart-card"><div class="chart-title">📈 RS强度走势</div><div id="chart-strength" style="height:380px"></div></div>
     <div class="chart-card"><div class="chart-title">⚠ 股价与RS线背离信号</div><div id="chart-diverge" style="height:360px"></div><div id="diverge-list" style="font-size:0.68rem;color:var(--text-secondary);margin-top:8px"></div></div>
     <div class="chart-card">
-      <div class="chart-title">⚔ 双股RS对比 <span style="font-size:0.6rem;color:var(--text-tertiary)">输入另一只股票代码进行对比</span></div>
+      <div class="chart-title">⚔ 双股RS对比 <span style="font-size:0.6rem;color:var(--muted)">输入另一只股票代码进行对比</span></div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
         <input type="text" id="compare-code" placeholder="对比代码 如000858" style="padding:6px 10px;border:1px solid var(--divider);border-radius:10px;font-family:var(--font-display);font-size:0.72rem;background:var(--card-bg);color:var(--text-primary);width:130px">
-        <button onclick="loadCompare()" style="padding:6px 14px;background:var(--color-accent);color:#FFF;border:none;border-radius:10px;font-family:var(--font-display);font-size:0.7rem;cursor:pointer;font-weight:700">对比</button>
+        <button onclick="loadCompare()" style="padding:6px 14px;background:var(--accent);color:#FFF;border:none;border-radius:10px;font-family:var(--font-display);font-size:0.7rem;cursor:pointer;font-weight:700">对比</button>
       </div>
       <div id="chart-compare" style="height:340px"></div>
     </div>
@@ -117,12 +117,12 @@
 
   <!-- Tab5: 财务评估 -->
   <div class="tab-content" id="tab-eval">
-    <div id="eval-loading" style="text-align:center;padding:40px;color:var(--text-tertiary);font-family:var(--font-display);display:none">⏳ 计算中...</div>
+    <div id="eval-loading" style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-display);display:none">⏳ 计算中...</div>
     <div id="eval-results"></div>
   </div>
 
   <div class="tab-content" id="tab-fund">
-    <div id="fund-loading" style="text-align:center;padding:40px;color:var(--text-tertiary);font-family:var(--font-display);display:none">⏳ 检测中...</div>
+    <div id="fund-loading" style="text-align:center;padding:40px;color:var(--muted);font-family:var(--font-display);display:none">⏳ 检测中...</div>
     <div id="fund-results"></div>
   </div>
 
@@ -406,7 +406,7 @@ async function loadStrength(code){
     tbl+='<tr><td>'+d.dates[s.xAxis]+'</td><td style="color:'+(s.name==='顶背离'?'#FF6B6B':'#4ECDC4')+';font-weight:700">'+s.name+'</td><td>'+close[s.xAxis].toFixed(2)+'</td><td>'+rs[s.xAxis].toFixed(2)+'</td></tr>';
   });
   tbl+='</table>';
-  document.getElementById('diverge-list').innerHTML='<span style="font-size:0.6rem;color:var(--text-tertiary)">共'+allSigs.length+'个信号</span>'+tbl;
+  document.getElementById('diverge-list').innerHTML='<span style="font-size:0.6rem;color:var(--muted)">共'+allSigs.length+'个信号</span>'+tbl;
 }
 
 var _compareCache={};
@@ -446,9 +446,9 @@ async function loadEval(code){
   try{
     var resp=await fetch(API+'/api/stock-analysis?code='+code);
     var data=await resp.json();
-    if(data.error){document.getElementById('eval-results').innerHTML='<div class="xhs-card"><div style="padding:16px;color:var(--color-up)">'+data.error+'</div></div>';return}
+    if(data.error){document.getElementById('eval-results').innerHTML='<div class="xhs-card"><div style="padding:16px;color:var(--rise)">'+data.error+'</div></div>';return}
     renderEval(data);
-  }catch(e){document.getElementById('eval-results').innerHTML='<div style="padding:16px;color:var(--color-up)">请求失败: '+e.message+'</div>'}
+  }catch(e){document.getElementById('eval-results').innerHTML='<div style="padding:16px;color:var(--rise)">请求失败: '+e.message+'</div>'}
   finally{el.style.display='none'}
 }
 
@@ -472,12 +472,12 @@ function renderEval(data){
   h+='<div class="metric-item"><div class="val">'+d.wacc+'</div><div class="lbl">WACC</div></div>';
   h+='</div>';
   if(d.projections){h+='<table class="mini-table"><tr><th>年份</th><th>营收</th><th>FCF</th><th>现值</th></tr>';d.projections.forEach(function(p){h+='<tr><td>'+p.year+'年</td><td class="mono">'+fmtNum(p.revenue)+'</td><td class="mono">'+fmtNum(p.ufcf)+'</td><td class="mono">'+fmtNum(p.pv)+'</td></tr>'});h+='</table>'}
-  if(d.sensitivity){h+='<div style="font-size:0.6rem;color:var(--text-tertiary);margin-top:6px">敏感性(WACC→目标价): ';d.sensitivity.forEach(function(s){h+=s.wacc+':'+s.target_price+' '});h+='</div>'}
+  if(d.sensitivity){h+='<div style="font-size:0.6rem;color:var(--muted);margin-top:6px">敏感性(WACC→目标价): ';d.sensitivity.forEach(function(s){h+=s.wacc+':'+s.target_price+' '});h+='</div>'}
   h+='</div>';
 
   // ═══ Comps ═══
   var mm=c.median_multiples||{};
-  h+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📊 可比公司分析</span><span style="font-size:0.65rem;color:var(--text-tertiary)">'+c.industry+' · '+c.peer_count+'家可比</span><button class="btn-analysis" data-type="comps" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.62rem;font-family:var(--font-display)">📖 详解</button></div>';
+  h+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📊 可比公司分析</span><span style="font-size:0.65rem;color:var(--muted)">'+c.industry+' · '+c.peer_count+'家可比</span><button class="btn-analysis" data-type="comps" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.62rem;font-family:var(--font-display)">📖 详解</button></div>';
   h+='<div class="metric-row">';
   h+='<div class="metric-item"><div class="val">'+(mm.pe||'—')+'x</div><div class="lbl">中位PE</div></div>';
   h+='<div class="metric-item"><div class="val">'+(mm.pb||'—')+'x</div><div class="lbl">中位PB</div></div>';
@@ -499,7 +499,7 @@ function renderEval(data){
   h+='</div>';
 
   // ═══ 3-Statement ═══
-  h+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 三表预测</span><span style="font-size:0.65rem;color:var(--text-tertiary)">基准年:'+(m.base_year||'—')+' · '+m.base_gross_margin+'</span><button class="btn-analysis" data-type="model" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.62rem;font-family:var(--font-display)">📖 详解</button></div>';
+  h+='<div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 三表预测</span><span style="font-size:0.65rem;color:var(--muted)">基准年:'+(m.base_year||'—')+' · '+m.base_gross_margin+'</span><button class="btn-analysis" data-type="model" style="margin-left:auto;padding:3px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.62rem;font-family:var(--font-display)">📖 详解</button></div>';
   if(m.projections){h+='<table class="mini-table"><tr><th>年份</th><th>营收</th><th>毛利</th><th>净利</th><th>经营CF</th><th>自由CF</th></tr>';m.projections.forEach(function(p){var i=p.income_statement||{},cf=p.cash_flow||{};h+='<tr><td>'+p.year+'年</td><td class="mono">'+fmtNum(i.revenue)+'</td><td class="mono">'+fmtNum(i.gross_profit)+'</td><td class="mono">'+fmtNum(i.net_income)+'</td><td class="mono">'+fmtNum(cf.operating_cf)+'</td><td class="mono">'+fmtNum(cf.free_cf)+'</td></tr>'});h+='</table>'}
   h+='</div>';
 
@@ -507,7 +507,7 @@ function renderEval(data){
 
   // 分析面板
   h+='<div class="xhs-card" id="analysis-panel" style="display:none;margin-top:16px">';
-  h+='<div class="xhs-card-header"><span class="xhs-card-label">📖 详细分析</span><span id="analysis-title" style="font-size:0.7rem;color:var(--text-tertiary);margin-left:8px"></span></div>';
+  h+='<div class="xhs-card-header"><span class="xhs-card-label">📖 详细分析</span><span id="analysis-title" style="font-size:0.7rem;color:var(--muted);margin-left:8px"></span></div>';
   h+='<div id="analysis-body" style="padding:16px;font-size:0.8rem;line-height:1.8;color:var(--text-primary);max-height:60vh;overflow-y:auto"></div>';
   h+='</div>';
 
@@ -571,11 +571,11 @@ function dcfAnalysis(d){
   h+='<p><strong>Step 1 · 营收</strong> = 基准'+fmtNum(rev)+' × (1+增长率) = <strong>'+fmtNum(rev_y)+'</strong></p>';
   h+='<p><strong>Step 2 · EBITDA</strong> = 营收 × EBITDA利润率 = '+fmtNum(rev_y)+' × '+ebitda_m+' = <strong>'+fmtNum(ebitda_y)+'</strong></p>';
   h+='<p><strong>Step 3 · EBIT</strong> = EBITDA − 折旧 = '+fmtNum(ebitda_y)+' − '+fmtNum(da_y)+' = <strong>'+fmtNum(ebit_y)+'</strong></p>';
-  h+='<p style="color:var(--text-tertiary);font-size:0.75rem">折旧是怎么来的？公司建厂房花80亿，会计上分多年摊销——每年'+da_m+'相当于把80亿"分期付款"记在利润表上。但现金当年就已经全部付掉了，所以后面算现金流时要加回来。</p>';
+  h+='<p style="color:var(--muted);font-size:0.75rem">折旧是怎么来的？公司建厂房花80亿，会计上分多年摊销——每年'+da_m+'相当于把80亿"分期付款"记在利润表上。但现金当年就已经全部付掉了，所以后面算现金流时要加回来。</p>';
   h+='<p><strong>Step 4 · NOPAT(税后净营业利润)</strong> = EBIT × (1−税率25%) = '+fmtNum(ebit_y)+' × 0.75 = <strong>'+fmtNum(nopat_y)+'</strong></p>';
   h+='<p><strong>Step 5 · 自由现金流</strong> = NOPAT + 折旧 − CapEx − 营运资本变动</p>';
   h+='<p>= '+fmtNum(nopat_y)+' + '+fmtNum(da_y)+' − '+fmtNum(capex_y)+' − '+fmtNum(dnwc_y)+' = <strong>'+fmtNum(ufcf_y)+'</strong></p>';
-  h+='<p style="color:var(--text-tertiary);font-size:0.75rem">为什么加回折旧？因为折旧只是会计上的"纸面亏损"，并不是当年真实花出去的现金。公司在银行里的存款没有因为折旧而减少。所以算"实际赚了多少"时必须加回。CapEx（'+fmtNum(capex_y)+'）是真实的现金流出——买设备、建厂房——必须扣除。FCF='+fmtNum(ufcf_y)+'，意味着'+fmtNum(rev_y)+'的营收最终只留下这点可自由支配的现金——重资产制造业的典型特征。</p>';
+  h+='<p style="color:var(--muted);font-size:0.75rem">为什么加回折旧？因为折旧只是会计上的"纸面亏损"，并不是当年真实花出去的现金。公司在银行里的存款没有因为折旧而减少。所以算"实际赚了多少"时必须加回。CapEx（'+fmtNum(capex_y)+'）是真实的现金流出——买设备、建厂房——必须扣除。FCF='+fmtNum(ufcf_y)+'，意味着'+fmtNum(rev_y)+'的营收最终只留下这点可自由支配的现金——重资产制造业的典型特征。</p>';
   h+='</div>';
 
   // ═══ 第4章 ═══
@@ -782,29 +782,29 @@ function modelAnalysis(m){
 
   h+='<p><strong>Step 1 · 营收预测</strong><br>';
   h+='基准营收 '+baseRev+' × (1 + 增长率) = <strong>'+fmtNum(rev1)+'</strong><br>';
-  h+='<span style="color:var(--text-tertiary);font-size:0.75rem">这是整个模型的起点。营收预测错了，后面全错。所以我们花了整个第二章讨论增长率的来龙去脉。</span></p>';
+  h+='<span style="color:var(--muted);font-size:0.75rem">这是整个模型的起点。营收预测错了，后面全错。所以我们花了整个第二章讨论增长率的来龙去脉。</span></p>';
 
   h+='<p><strong>Step 2 · 毛利润</strong><br>';
   h+='营收 '+fmtNum(rev1)+' × 毛利率 '+gm+' = <strong>'+fmtNum(gp1)+'</strong><br>';
-  h+='<span style="color:var(--text-tertiary);font-size:0.75rem">毛利率('+gm+')来自2025年报——东方电气每卖100元产品，扣除原材料和制造成本后剩15.9元。这个15.9元要支付后面的所有费用。</span></p>';
+  h+='<span style="color:var(--muted);font-size:0.75rem">毛利率('+gm+')来自2025年报——东方电气每卖100元产品，扣除原材料和制造成本后剩15.9元。这个15.9元要支付后面的所有费用。</span></p>';
 
   h+='<p><strong>Step 3 · 扣除营业费用</strong><br>';
   h+='SG&A(销售+管理费) = '+fmtNum(rev1)+' × '+sga+' = <strong>−'+fmtNum(sga1)+'</strong><br>';
   h+='折旧摊销 = '+fmtNum(rev1)+' × '+da+' = <strong>−'+fmtNum(da1)+'</strong><br>';
   h+='EBIT(息税前利润) = '+fmtNum(gp1)+' − '+fmtNum(sga1)+' − '+fmtNum(da1)+' = <strong>'+fmtNum(ebit1)+'</strong><br>';
-  h+='<span style="color:var(--text-tertiary);font-size:0.75rem">SG&A='+sga1.toFixed(0)+'亿，其中销售费用'+fmtNum(rev1*0.011)+'、管理费用'+fmtNum(rev1*0.048)+'。注意管理费用是销售费用的4.5倍——东方电气是研发和管理密集型而非销售驱动型企业。折旧'+fmtNum(da1)+'亿是"会计成本"——现金早已付过，但利润表上需要分摊。所以后续算现金流时要加回来。</span></p>';
+  h+='<span style="color:var(--muted);font-size:0.75rem">SG&A='+sga1.toFixed(0)+'亿，其中销售费用'+fmtNum(rev1*0.011)+'、管理费用'+fmtNum(rev1*0.048)+'。注意管理费用是销售费用的4.5倍——东方电气是研发和管理密集型而非销售驱动型企业。折旧'+fmtNum(da1)+'亿是"会计成本"——现金早已付过，但利润表上需要分摊。所以后续算现金流时要加回来。</span></p>';
 
   h+='<p><strong>Step 4 · 净利润</strong><br>';
   h+='EBIT '+fmtNum(ebit1)+' × (1 − 所得税率25%) = <strong>'+fmtNum(ni1)+'</strong><br>';
-  h+='<span style="color:var(--text-tertiary);font-size:0.75rem">税率25%是法定企业所得税率。实际中企业可能有税收优惠，所以这个假设偏保守。</span></p>';
+  h+='<span style="color:var(--muted);font-size:0.75rem">税率25%是法定企业所得税率。实际中企业可能有税收优惠，所以这个假设偏保守。</span></p>';
 
   h+='<p><strong>Step 5 · 经营现金流</strong><br>';
   h+='净利润 '+fmtNum(ni1)+' + 折旧 '+fmtNum(da1)+' = <strong>'+fmtNum(ocf1)+'</strong><br>';
-  h+='<span style="color:var(--text-tertiary);font-size:0.75rem">这是整个模型中最反直觉的一步——为什么要把折旧加回来？因为折旧是"纸面亏损"。三年前公司花80亿建了厂房，当时现金已经付出去了。现在的折旧只是在利润表上逐年分摊这个80亿（每年'+fmtNum(da1)+'亿），并没有新的现金流出。而公司的银行存款并不会因为折旧减少——它只是会计规则。所以在算"公司今年实际赚了多少现金"时，必须把折旧加回净利润。</span></p>';
+  h+='<span style="color:var(--muted);font-size:0.75rem">这是整个模型中最反直觉的一步——为什么要把折旧加回来？因为折旧是"纸面亏损"。三年前公司花80亿建了厂房，当时现金已经付出去了。现在的折旧只是在利润表上逐年分摊这个80亿（每年'+fmtNum(da1)+'亿），并没有新的现金流出。而公司的银行存款并不会因为折旧减少——它只是会计规则。所以在算"公司今年实际赚了多少现金"时，必须把折旧加回净利润。</span></p>';
 
   h+='<p><strong>Step 6 · 自由现金流</strong><br>';
   h+='经营CF '+fmtNum(ocf1)+' − CapEx(资本开支) '+fmtNum(capex1)+' = <strong>'+fmtNum(fcf1)+'</strong><br>';
-  h+='<span style="color:var(--text-tertiary);font-size:0.75rem">CapEx='+fmtNum(capex1)+'亿——这是东方电气为维持和扩大生产必须花出去的钱：买新设备、扩建厂房、升级产线。不花这笔钱，明年的产能就保不住。所以经营现金流虽然看起来还行（'+fmtNum(ocf1)+'），但扣除必需的资本开支后，真正自由可分配给股东的钱只有'+fmtNum(fcf1)+'。这就是重资产工业企业的宿命——赚钱机器本身就需要不断喂钱。</span></p>';
+  h+='<span style="color:var(--muted);font-size:0.75rem">CapEx='+fmtNum(capex1)+'亿——这是东方电气为维持和扩大生产必须花出去的钱：买新设备、扩建厂房、升级产线。不花这笔钱，明年的产能就保不住。所以经营现金流虽然看起来还行（'+fmtNum(ocf1)+'），但扣除必需的资本开支后，真正自由可分配给股东的钱只有'+fmtNum(fcf1)+'。这就是重资产工业企业的宿命——赚钱机器本身就需要不断喂钱。</span></p>';
 
   h+='</div>';
 
@@ -845,10 +845,10 @@ async function loadFund(){
   try{
     var resp=await fetch(API+'/api/fundamental-deterioration?code='+code);
     var data=await resp.json();
-    if(data.error){document.getElementById('fund-results').innerHTML='<div class="xhs-card"><div style="padding:16px;color:var(--color-up)">'+data.error+'</div></div>';return}
-    if(data.verdict==='insufficient_data'){document.getElementById('fund-results').innerHTML='<div class="xhs-card"><div style="padding:16px;color:var(--text-tertiary)">📋 '+ (data.reason || '数据不足，需积累更多财报') +'</div></div>';return}
+    if(data.error){document.getElementById('fund-results').innerHTML='<div class="xhs-card"><div style="padding:16px;color:var(--rise)">'+data.error+'</div></div>';return}
+    if(data.verdict==='insufficient_data'){document.getElementById('fund-results').innerHTML='<div class="xhs-card"><div style="padding:16px;color:var(--muted)">📋 '+ (data.reason || '数据不足，需积累更多财报') +'</div></div>';return}
     renderFund(data);
-  }catch(e){document.getElementById('fund-results').innerHTML='<div style="padding:16px;color:var(--color-up)">请求失败: '+e.message+'</div>'}
+  }catch(e){document.getElementById('fund-results').innerHTML='<div style="padding:16px;color:var(--rise)">请求失败: '+e.message+'</div>'}
   finally{el.style.display='none'}
 }
 
@@ -862,7 +862,7 @@ function renderFund(data){
   h+='<div style="padding:12px 16px;display:flex;align-items:flex-start;gap:10px">';
   h+='<span style="font-size:1.5rem">'+v.icon+'</span>';
   h+='<div style="flex:1"><div style="font-weight:800;font-size:0.9rem;color:'+v.color+'">'+v.label+'</div>';
-  h+='<div style="font-size:0.62rem;color:var(--text-tertiary)">最新财报: '+data.latest_report_date+'</div>';
+  h+='<div style="font-size:0.62rem;color:var(--muted)">最新财报: '+data.latest_report_date+'</div>';
   // 列出红灯项
   var redItems=[];
   order.forEach(function(key){

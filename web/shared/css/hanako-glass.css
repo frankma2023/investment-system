@@ -38,6 +38,8 @@
   --divider: rgba(255, 255, 255, 0.06);
   --bg-surface: rgba(255, 255, 255, 0.02);
   --card-bg: rgba(26, 26, 31, 0.6);
+  --bg-card: rgba(26, 26, 31, 0.6);  /* legacy alias */
+  --radius-lg: 14px;  /* legacy alias */
 
   /* Typography */
   --font-display: 'Instrument Serif', Georgia, serif;
@@ -777,6 +779,7 @@ html[data-theme="light"] {
   --divider: rgba(0, 0, 0, 0.08);
   --bg-surface: rgba(0, 0, 0, 0.02);
   --card-bg: rgba(255, 255, 255, 0.8);
+  --bg-card: rgba(255, 255, 255, 0.8);  /* legacy alias */
   --chart-bg: rgba(255, 255, 255, 0.75);
   --chart-axis: rgba(128, 128, 128, 0.3);
   --chart-grid: rgba(128, 128, 128, 0.1);

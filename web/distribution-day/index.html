@@ -174,10 +174,10 @@
   async function runDiag(){
     var date=document.getElementById('diag-date').value,div=document.getElementById('diag-result');
     if(!date){div.style.display='none';return}var idx=document.getElementById('index-code').value;
-    div.innerHTML='<div style="font-size:0.68rem;color:var(--text-tertiary);padding:6px 0">⏳ 检测中...</div>';div.style.display='block';
+    div.innerHTML='<div style="font-size:0.68rem;color:var(--muted);padding:6px 0">⏳ 检测中...</div>';div.style.display='block';
     try{var resp=await fetch(API_URL+'/api/distribution-day/diag?index='+idx+'&date='+date);var d=await resp.json();
     var h='<div style="font-size:0.65rem">'+date+' | 25日计数: <b style="color:'+(d.level==='confirmed'?'#C62828':'#E65100')+'">'+d.count_25d+'</b> ('+d.level+')</div>';
-    if(d.recent_dist_days&&d.recent_dist_days.length){h+='<table style="margin:4px 0 0;font-size:0.6rem"><thead><tr><th>日期</th><th>类型</th></tr></thead><tbody>';d.recent_dist_days.forEach(function(r){h+='<tr><td>'+r.date+'</td><td>'+r.dist_label+'</td></tr>'});h+='</tbody></table>';}else{h+='<div style="font-size:0.62rem;color:var(--text-tertiary)">最近无抛盘日</div>'}
+    if(d.recent_dist_days&&d.recent_dist_days.length){h+='<table style="margin:4px 0 0;font-size:0.6rem"><thead><tr><th>日期</th><th>类型</th></tr></thead><tbody>';d.recent_dist_days.forEach(function(r){h+='<tr><td>'+r.date+'</td><td>'+r.dist_label+'</td></tr>'});h+='</tbody></table>';}else{h+='<div style="font-size:0.62rem;color:var(--muted)">最近无抛盘日</div>'}
     div.innerHTML=h;}catch(e){div.innerHTML='<div style="font-size:0.68rem;color:#FF6B6B">请求失败</div>'}}
 
   function renderTable(){

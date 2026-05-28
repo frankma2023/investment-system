@@ -55,17 +55,17 @@
     .param-card-body { padding:0 16px 14px; }
     .param-card-body.collapsed { display:none; }
     .slider-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-    .slider-row .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--text-tertiary); flex-shrink:0; }
+    .slider-row .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--muted); flex-shrink:0; }
     .slider-row input[type=range] { flex:1; height:4px; }
     .slider-row .s-val { width:44px; text-align:right; font-size:0.7rem; font-weight:700; flex-shrink:0; }
-    .pool-select-wrap label, .date-field label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--text-tertiary); margin-bottom:4px; }
+    .pool-select-wrap label, .date-field label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
     .pool-select-wrap select, .date-field input { width:100%; padding:8px 10px; border:1px solid var(--divider); border-radius:12px; font-family:var(--font-display); font-size:0.8rem; background:var(--card-bg); color:var(--text-primary); box-sizing:border-box; }
     .btn-run { display:block; width:100%; padding:12px; background:#FE2C55; color:#FFF; border:none; border-radius:14px; font-family:var(--font-display); font-size:1rem; font-weight:800; cursor:pointer; box-shadow:0 2px 8px rgba(254,44,85,0.18); }
     .btn-run:hover { opacity:0.88; }
     .btn-run:disabled { background:#CCC; box-shadow:none; cursor:not-allowed; }
     .btn-save { display:block; width:100%; padding:10px; background:var(--card-bg); color:#FE2C55; border:1px solid rgba(254,44,85,0.2); border-radius:14px; font-family:var(--font-display); font-size:0.85rem; font-weight:700; cursor:pointer; }
     .stat-value { font-family:var(--font-display); font-size:1.4rem; font-weight:900; }
-    .stat-label { font-size:0.65rem; font-weight:600; color:var(--text-tertiary); }
+    .stat-label { font-size:0.65rem; font-weight:600; color:var(--muted); }
     .stat-value.inflow { color:#FE2C55; }
     .stat-value.outflow { color:#4CAF50; }
     th.sortable { cursor:pointer; user-select:none; position:relative; padding-right:18px !important; }
@@ -166,16 +166,16 @@
       </div>
       <div class="param-card-body" id="card2-body">
         <table class="ref-table">
-          <tr><td class="ref-grade"><span class="rating-badge rating-aplus">A+</span></td><td>≥ 90%</td><td style="font-size:0.55rem;color:var(--text-tertiary)">强烈吸筹</td></tr>
-          <tr><td class="ref-grade"><span class="rating-badge rating-a">A</span></td><td>80~89%</td><td style="font-size:0.55rem;color:var(--text-tertiary)">强烈吸筹</td></tr>
-          <tr><td class="ref-grade"><span class="rating-badge rating-bplus">B+</span></td><td>70~79%</td><td style="font-size:0.55rem;color:var(--text-tertiary)">较强吸筹</td></tr>
-          <tr><td class="ref-grade"><span class="rating-badge rating-b">B</span></td><td>60~69%</td><td style="font-size:0.55rem;color:var(--text-tertiary)">温和吸筹</td></tr>
-          <tr><td class="ref-grade"><span class="rating-badge rating-cplus">C+</span></td><td>50~59%</td><td style="font-size:0.55rem;color:var(--text-tertiary)">买入稍多</td></tr>
-          <tr><td class="ref-grade"><span class="rating-badge rating-c">C</span></td><td>40~49%</td><td style="font-size:0.55rem;color:var(--text-tertiary)">大致平衡</td></tr>
-          <tr><td class="ref-grade"><span class="rating-badge rating-dplus">D+</span></td><td>30~39%</td><td style="font-size:0.55rem;color:var(--text-tertiary)">温和出货</td></tr>
-          <tr><td class="ref-grade"><span class="rating-badge rating-d">D</span></td><td>20~29%</td><td style="font-size:0.55rem;color:var(--text-tertiary)">大力出货</td></tr>
-          <tr><td class="ref-grade"><span class="rating-badge rating-e">E</span></td><td>10~19%</td><td style="font-size:0.55rem;color:var(--text-tertiary)">强烈出货</td></tr>
-          <tr><td class="ref-grade"><span class="rating-badge rating-eminus">E-</span></td><td>&lt; 10%</td><td style="font-size:0.55rem;color:var(--text-tertiary)">强烈出货</td></tr>
+          <tr><td class="ref-grade"><span class="rating-badge rating-aplus">A+</span></td><td>≥ 90%</td><td style="font-size:0.55rem;color:var(--muted)">强烈吸筹</td></tr>
+          <tr><td class="ref-grade"><span class="rating-badge rating-a">A</span></td><td>80~89%</td><td style="font-size:0.55rem;color:var(--muted)">强烈吸筹</td></tr>
+          <tr><td class="ref-grade"><span class="rating-badge rating-bplus">B+</span></td><td>70~79%</td><td style="font-size:0.55rem;color:var(--muted)">较强吸筹</td></tr>
+          <tr><td class="ref-grade"><span class="rating-badge rating-b">B</span></td><td>60~69%</td><td style="font-size:0.55rem;color:var(--muted)">温和吸筹</td></tr>
+          <tr><td class="ref-grade"><span class="rating-badge rating-cplus">C+</span></td><td>50~59%</td><td style="font-size:0.55rem;color:var(--muted)">买入稍多</td></tr>
+          <tr><td class="ref-grade"><span class="rating-badge rating-c">C</span></td><td>40~49%</td><td style="font-size:0.55rem;color:var(--muted)">大致平衡</td></tr>
+          <tr><td class="ref-grade"><span class="rating-badge rating-dplus">D+</span></td><td>30~39%</td><td style="font-size:0.55rem;color:var(--muted)">温和出货</td></tr>
+          <tr><td class="ref-grade"><span class="rating-badge rating-d">D</span></td><td>20~29%</td><td style="font-size:0.55rem;color:var(--muted)">大力出货</td></tr>
+          <tr><td class="ref-grade"><span class="rating-badge rating-e">E</span></td><td>10~19%</td><td style="font-size:0.55rem;color:var(--muted)">强烈出货</td></tr>
+          <tr><td class="ref-grade"><span class="rating-badge rating-eminus">E-</span></td><td>&lt; 10%</td><td style="font-size:0.55rem;color:var(--muted)">强烈出货</td></tr>
         </table>
       </div>
     </div>
@@ -194,7 +194,7 @@
     </div>
 
     <div class="xhs-card">
-      <div class="xhs-card-header"><span class="xhs-card-label">📋 A/D评级结果</span><span id="table-info" style="font-size:0.7rem;color:var(--text-tertiary);margin-left:8px;"></span></div>
+      <div class="xhs-card-header"><span class="xhs-card-label">📋 A/D评级结果</span><span id="table-info" style="font-size:0.7rem;color:var(--muted);margin-left:8px;"></span></div>
       <div class="table-wrapper" id="results-table"></div>
     </div>
   </div>
@@ -344,7 +344,7 @@ function renderTable() {
     html += '<td class="mono">' + pct + '</td>';
     html += '<td><span class="rating-badge ' + ratingClass(grade) + '">' + grade + '</span></td>';
     html += '<td class="mono">' + score + '</td>';
-    html += '<td style="font-size:0.65rem;color:var(--text-tertiary)">' + (r.meaning || '') + '</td>';
+    html += '<td style="font-size:0.65rem;color:var(--muted)">' + (r.meaning || '') + '</td>';
     html += '</tr>';
   });
   html += '</tbody></table>';
@@ -386,17 +386,17 @@ async function showConstituents(indexCode, indexName) {
   var title = document.getElementById('modal-title');
 
   title.textContent = (indexName || indexCode) + ' (' + indexCode + ')';
-  body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary);">⏳ 加载中...</div>';
+  body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);">⏳ 加载中...</div>';
   modal.style.display = 'flex';
 
   try {
     var resp = await fetch(API + '/api/index-constituents?index_code=' + indexCode);
     var data = await resp.json();
     if (!data.constituents || !data.constituents.length) {
-      body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary);">该指数暂无成分股数据</div>';
+      body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);">该指数暂无成分股数据</div>';
       return;
     }
-    var html = '<div style="margin-bottom:8px;font-size:0.7rem;color:var(--text-tertiary);">快照: ' + (data.snapshot_date || '—') + ' · ' + data.count + ' 只</div>';
+    var html = '<div style="margin-bottom:8px;font-size:0.7rem;color:var(--muted);">快照: ' + (data.snapshot_date || '—') + ' · ' + data.count + ' 只</div>';
     html += '<table class="data-table"><thead><tr><th>#</th><th>代码</th><th>名称</th><th>权重(%)</th></tr></thead><tbody>';
     data.constituents.forEach(function(c, i) {
       var w = (c.weighting != null) ? (c.weighting * 100).toFixed(2) : '—';

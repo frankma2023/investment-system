@@ -29,7 +29,7 @@
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .metric { text-align: center; padding: 12px; border-radius: 8px; background: var(--bg); border: 1px solid var(--divider); }
     .metric .val { font-size: 1.2rem; font-weight: 800; }
-    .metric .lbl { font-size: .55rem; color: var(--text-tertiary); }
+    .metric .lbl { font-size: .55rem; color: var(--muted); }
     table { width: 100%; border-collapse: collapse; font-size: .7rem; }
     th { text-align: left; padding: 6px 8px; border-bottom: 2px solid var(--divider); font-weight: 700; font-size: .6rem; color: var(--text-secondary); }
     td { padding: 5px 8px; border-bottom: 1px solid var(--divider); }
@@ -186,7 +186,7 @@
         const st = getSignalStyle({ source: src });
         legendHtml += `<span class="legend-item"><span style="color:${st.color};font-size:0.75rem;">${symChars[st.symbol]||'●'}</span> ${getDisplayName(src)}</span>`;
       }
-      document.getElementById('chart-legend').innerHTML = legendHtml || '<span style="font-size:0.6rem;color:var(--text-tertiary)">无形态信号</span>';
+      document.getElementById('chart-legend').innerHTML = legendHtml || '<span style="font-size:0.6rem;color:var(--muted)">无形态信号</span>';
 
       function fmtVol(v) {
         if (v == null) return '—';

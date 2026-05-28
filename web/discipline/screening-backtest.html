@@ -101,7 +101,7 @@
         st += `<div class="stat-card">`;
         st += `<div class="val ${cls}">${r.avg_return!=null?r.avg_return+'%':'—'}</div>`;
         st += `<div class="lbl">${label} · 均收益</div>`;
-        st += `<div style="font-size:0.55rem;color:var(--text-tertiary)">`;
+        st += `<div style="font-size:0.55rem;color:var(--muted)">`;
         st += `胜率 ${r.win_rate!=null?r.win_rate+'%':'—'} · 有效 ${r.valid||0}`;
         if (r.best) st += `<br>最佳 ${r.best.stock_code} ${fmtPct(r.best[tag])}`;
         if (r.worst) st += `<br>最差 ${r.worst.stock_code} ${fmtPct(r.worst[tag])}`;
@@ -130,7 +130,7 @@
         h += `<td>${fmtPct(it.return_5d)}</td>`;
         h += `<td>${fmtPct(it.return_10d)}</td>`;
         h += `<td>${fmtPct(it.return_20d)}</td>`;
-        h += `<td style="font-size:0.6rem;color:var(--text-tertiary)">${it.holding_days||0}d</td>`;
+        h += `<td style="font-size:0.6rem;color:var(--muted)">${it.holding_days||0}d</td>`;
         h += '</tr>';
       }
       h += '</tbody></table>';

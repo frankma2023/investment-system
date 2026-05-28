@@ -55,17 +55,17 @@
 .param-card-body { padding:0 16px 14px; }
 .param-card-body.collapsed { display:none; }
 .slider-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-.slider-row .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--text-tertiary); flex-shrink:0; }
+.slider-row .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--muted); flex-shrink:0; }
 .slider-row input[type=range] { flex:1; height:4px; }
 .slider-row .s-val { width:44px; text-align:right; font-size:0.7rem; font-weight:700; flex-shrink:0; }
-.pool-select-wrap label,.date-field label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--text-tertiary); margin-bottom:4px; }
+.pool-select-wrap label,.date-field label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
 .pool-select-wrap select,.date-field input { width:100%; padding:8px 10px; border:1px solid var(--divider); border-radius:12px; font-family:var(--font-display); font-size:0.8rem; background:var(--card-bg); color:var(--text-primary); box-sizing:border-box; }
 .btn-run { display:block; width:100%; padding:12px; background:#FE2C55; color:#FFF; border:none; border-radius:14px; font-family:var(--font-display); font-size:1rem; font-weight:800; cursor:pointer; box-shadow:0 2px 8px rgba(254,44,85,0.18); }
 .btn-run:hover { opacity:0.88; }
 .btn-run:disabled { background:#CCC; box-shadow:none; cursor:not-allowed; }
 .btn-save { display:block; width:100%; padding:10px; background:var(--card-bg); color:#FE2C55; border:1px solid rgba(254,44,85,0.2); border-radius:14px; font-family:var(--font-display); font-size:0.85rem; font-weight:700; cursor:pointer; }
 .stat-value { font-family:var(--font-display); font-size:1.4rem; font-weight:900; }
-.stat-label { font-size:0.65rem; font-weight:600; color:var(--text-tertiary); }
+.stat-label { font-size:0.65rem; font-weight:600; color:var(--muted); }
 .stat-value.top { color:#FE2C55; } .stat-value.bot { color:#4CAF50; }
 th.sortable { cursor:pointer; user-select:none; position:relative; padding-right:18px !important; }
 th.sortable:hover { color:#FE2C55; }
@@ -169,7 +169,7 @@ th.sortable[data-indicator="desc"]::after { content:'↓'; opacity:1; color:#FE2
     <div class="stat-card"><div class="stat-value" id="stat-none">—</div><div class="stat-label">无背离</div></div>
   </div>
   <div class="xhs-card">
-    <div class="xhs-card-header"><span class="xhs-card-label">⚠️ 背离信号汇总</span><span id="table-info" style="font-size:0.7rem;color:var(--text-tertiary);margin-left:8px;"></span></div>
+    <div class="xhs-card-header"><span class="xhs-card-label">⚠️ 背离信号汇总</span><span id="table-info" style="font-size:0.7rem;color:var(--muted);margin-left:8px;"></span></div>
     <div class="table-wrapper" id="results-table"></div>
   </div>
 </div>
@@ -249,7 +249,7 @@ function updateStats(){
   document.getElementById('stat-none').textContent=hasNone;
 }
 function divBadge(div){
-  if(!div)return '<span style="color:var(--text-tertiary)">—</span>';
+  if(!div)return '<span style="color:var(--muted)">—</span>';
   var cls=div.type==='top'?'div-top-':'div-bot-';
   return '<span class="div-badge '+cls+div.level+'">'+(div.type==='top'?'顶':'底')+'·'+(div.level===3?'强':div.level===2?'确':'潜')+'</span>';
 }
@@ -284,7 +284,7 @@ function renderTable(){
     else if(res==='中')resCls='resonance-mid';
     else if(res==='低')resCls='resonance-low';
     html+='<td><span class="'+resCls+'">'+res+'</span></td>';
-    html+='<td style="font-size:0.65rem;color:var(--text-tertiary)">'+(r.alert_text||'')+'</td>';
+    html+='<td style="font-size:0.65rem;color:var(--muted)">'+(r.alert_text||'')+'</td>';
     html+='</tr>';
   });
   html+='</tbody></table>';
@@ -314,11 +314,11 @@ function closeModal(){document.getElementById('constituent-modal').style.display
 document.addEventListener('DOMContentLoaded',function(){document.getElementById('constituent-modal').addEventListener('click',function(e){if(e.target===this)closeModal()})});
 async function showConstituents(code){
   var modal=document.getElementById('constituent-modal'),body=document.getElementById('modal-body'),title=document.getElementById('modal-title');
-  title.textContent=code; body.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-tertiary);">⏳ 加载中...</div>'; modal.style.display='flex';
+  title.textContent=code; body.innerHTML='<div style="text-align:center;padding:32px;color:var(--muted);">⏳ 加载中...</div>'; modal.style.display='flex';
   try{
     var resp=await fetch(API+'/api/index-constituents?index_code='+code); var data=await resp.json();
-    if(!data.constituents||!data.constituents.length){body.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-tertiary);">暂无成分股数据</div>';return}
-    var html='<div style="margin-bottom:8px;font-size:0.7rem;color:var(--text-tertiary);">快照: '+data.snapshot_date+' · '+data.count+' 只</div><table class="data-table"><thead><tr><th>#</th><th>代码</th><th>名称</th><th>权重(%)</th></tr></thead><tbody>';
+    if(!data.constituents||!data.constituents.length){body.innerHTML='<div style="text-align:center;padding:32px;color:var(--muted);">暂无成分股数据</div>';return}
+    var html='<div style="margin-bottom:8px;font-size:0.7rem;color:var(--muted);">快照: '+data.snapshot_date+' · '+data.count+' 只</div><table class="data-table"><thead><tr><th>#</th><th>代码</th><th>名称</th><th>权重(%)</th></tr></thead><tbody>';
     data.constituents.forEach(function(c,i){var w=c.weighting!=null?(c.weighting*100).toFixed(2):'—';html+='<tr><td>'+(i+1)+'</td><td class="mono">'+c.stock_code+'</td><td>'+(c.name||'—')+'</td><td class="mono">'+w+'</td></tr>'});
     html+='</tbody></table>'; body.innerHTML=html;
   }catch(e){body.innerHTML='<div style="text-align:center;padding:32px;color:#FE2C55;">❌ 加载失败</div>'}

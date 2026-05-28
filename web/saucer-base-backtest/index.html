@@ -18,7 +18,7 @@
   html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
 .top-bar { display:flex; gap:12px; align-items:flex-end; padding:16px 20px; background:var(--card-bg); border-radius:18px; margin-bottom:12px; box-shadow:0 1px 6px rgba(0,0,0,0.04); flex-wrap:wrap; }
     .top-bar .fld { min-width:100px; }
-    .top-bar label { display:block; font-size:0.6rem; font-weight:600; color:var(--text-tertiary); margin-bottom:3px; }
+    .top-bar label { display:block; font-size:0.6rem; font-weight:600; color:var(--muted); margin-bottom:3px; }
     .top-bar input,.top-bar select { width:100%; padding:7px 10px; border:1px solid var(--divider); border-radius:10px; font-size:0.75rem; background:var(--card-bg); color:var(--text-primary); box-sizing:border-box; }
     .top-bar .code-wrap { flex:1.5; display:flex; gap:6px; }
     .top-bar .code-wrap input { flex:1; }
@@ -35,11 +35,11 @@
     .param-card-hd .dot { width:8px; height:8px; border-radius:50%; margin-right:8px; }
     .param-card-bd { padding:0 14px 10px; } .param-card-bd.collapsed { display:none; }
     .sr { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
-    .sr .sl { width:78px; font-size:0.58rem; font-weight:600; color:var(--text-tertiary); flex-shrink:0; }
+    .sr .sl { width:78px; font-size:0.58rem; font-weight:600; color:var(--muted); flex-shrink:0; }
     .sr input[type=range] { flex:1; height:3px; }
     .sr .sv { width:44px; text-align:right; font-size:0.62rem; font-weight:700; }
     .tog-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
-    .tog-row .sl { width:78px; font-size:0.58rem; font-weight:600; color:var(--text-tertiary); }
+    .tog-row .sl { width:78px; font-size:0.58rem; font-weight:600; color:var(--muted); }
     .tsw { position:relative; width:32px; height:16px; border-radius:8px; border:none; cursor:pointer; }
     .tsw.on { background:#FE2C55; } .tsw.off { background:#CCC; }
     .tsw::after { content:''; position:absolute; top:2px; width:12px; height:12px; border-radius:50%; background:#FFF; transition:left 0.2s; }
@@ -63,14 +63,14 @@
 
     <!-- 扫描设置 -->
     <div class="top-bar">
-      <div class="code-wrap"><div class="fld"><label>股票代码</label><input type="text" id="stock-code" value="601318" style="width:100px" onkeydown="if(event.key==='Enter')run()"><span id="stock-name" style="font-size:0.65rem;color:var(--text-tertiary);padding:7px 6px;flex-shrink:0"></span></div></div>
+      <div class="code-wrap"><div class="fld"><label>股票代码</label><input type="text" id="stock-code" value="601318" style="width:100px" onkeydown="if(event.key==='Enter')run()"><span id="stock-name" style="font-size:0.65rem;color:var(--muted);padding:7px 6px;flex-shrink:0"></span></div></div>
       <div class="fld"><label>开始</label><input type="date" id="date-start"></div>
       <div class="fld"><label>结束</label><input type="date" id="date-end"></div>
     </div>
 
     <!-- K线图 -->
     <div class="chart-wrap" id="chart"></div>
-    <div style="font-size:0.6rem;color:var(--text-tertiary);margin-top:4px;margin-bottom:8px">
+    <div style="font-size:0.6rem;color:var(--muted);margin-top:4px;margin-bottom:8px">
       <span class="anno-dot" style="background:#E91E63"></span>碟形突破 · 
       <span class="anno-dot" style="background:#FF9800"></span>前高 · 
       <span class="anno-dot" style="background:#4CAF50"></span>碟底
@@ -303,7 +303,7 @@
 
     function renderTable() {
       const div = document.getElementById('table');
-      if (!cs.length) { div.innerHTML = '<div style=padding:24px;text-align:center;color:var(--text-tertiary)>无碟形基部突破信号</div>'; return; }
+      if (!cs.length) { div.innerHTML = '<div style=padding:24px;text-align:center;color:var(--muted)>无碟形基部突破信号</div>'; return; }
       let h = '<table><thead><tr><th>#</th><th>日期</th><th>类型</th><th>前高</th><th>碟底</th><th>回调</th><th>碟底振幅5d</th><th>碟底振幅10d</th><th>量比</th><th>买点</th></tr></thead><tbody>';
       [...cs].reverse().forEach((s, i) => {
         h += `<tr><td>${cs.length - i}</td><td style="font-weight:700">${s.signal_date}</td>
@@ -317,7 +317,7 @@
 
     function renderSummary() {
       const div = document.getElementById('summary-box');
-      if (!cs.length) { div.innerHTML = '<div style=font-size:0.72rem;color:var(--text-tertiary)>无突破信号。碟形基部是欧奈尔七种基部中较为罕见的形态，通常出现在大盘股机构重仓标的。</div>'; return; }
+      if (!cs.length) { div.innerHTML = '<div style=font-size:0.72rem;color:var(--muted)>无突破信号。碟形基部是欧奈尔七种基部中较为罕见的形态，通常出现在大盘股机构重仓标的。</div>'; return; }
       const s = cs[cs.length - 1];
       div.innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.68rem">

@@ -54,14 +54,14 @@
   @media (max-width:900px) { .bt-layout { flex-direction:column; } .bt-left { width:100%; } }
   /* ── 成分股弹窗 ── */
   .modal-overlay.active { display:flex; }
-  .modal-dialog { background:var(--bg-card); border-radius:var(--radius-lg); box-shadow:0 8px 40px rgba(0,0,0,0.15); max-width:700px; width:92%; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
+  .modal-dialog { background:var(--card); border-radius:14px; box-shadow:0 8px 40px rgba(0,0,0,0.15); max-width:700px; width:92%; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
   .modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
   .modal-title { font-family:var(--font-display); font-size:0.9rem; font-weight:800; color:var(--text-primary); }
-  .modal-subtitle { font-size:0.62rem; color:var(--text-tertiary); font-family:var(--font-display); margin-left:8px; }
-  .modal-close:hover { background:var(--color-up-bg); color:var(--color-up); border-color:var(--color-up-border); }
+  .modal-subtitle { font-size:0.62rem; color:var(--muted); font-family:var(--font-display); margin-left:8px; }
+  .modal-close:hover { background:rgba(16,185,129,.08); color:var(--rise); border-color:rgba(16,185,129,.2); }
   .modal-body { padding:14px 20px 20px; overflow-y:auto; flex:1; }
   .modal-body .xhs-table { min-width:500px; }
-  .constituent-code { cursor:pointer; color:var(--color-accent); font-weight:600; }
+  .constituent-code { cursor:pointer; color:var(--accent); font-weight:600; }
   .constituent-code:hover { text-decoration:underline; }
 .nav-dropdown:hover .nav-dropdown-menu { display:block; }
 </style>
@@ -108,7 +108,7 @@
       <!-- 卡片1: 交易热度 -->
       <div class="xhs-param" id="card1">
         <div class="xhs-param-header" onclick="toggleCard('card1')">
-          <span class="xhs-param-dot" style="background:var(--color-up)"></span>
+          <span class="xhs-param-dot" style="background:var(--rise)"></span>
           <span class="xhs-param-title">🔴 交易热度</span>
         </div>
         <div class="xhs-param-body" id="card1-body">
@@ -128,7 +128,7 @@
       <!-- 卡片2: 资金流向 -->
       <div class="xhs-param" id="card2">
         <div class="xhs-param-header" onclick="toggleCard('card2')">
-          <span class="xhs-param-dot" style="background:var(--color-neutral)"></span>
+          <span class="xhs-param-dot" style="background:var(--muted)"></span>
           <span class="xhs-param-title">🟡 资金流向</span>
         </div>
         <div class="xhs-param-body" id="card2-body">
@@ -148,7 +148,7 @@
       <!-- 卡片3: 估值水位 -->
       <div class="xhs-param" id="card3">
         <div class="xhs-param-header" onclick="toggleCard('card3')">
-          <span class="xhs-param-dot" style="background:var(--color-down)"></span>
+          <span class="xhs-param-dot" style="background:var(--fall)"></span>
           <span class="xhs-param-title">🟢 估值水位</span>
         </div>
         <div class="xhs-param-body" id="card3-body">
@@ -173,7 +173,7 @@
       <!-- 卡片4: 机构行为 -->
       <div class="xhs-param" id="card4">
         <div class="xhs-param-header" onclick="toggleCard('card4')">
-          <span class="xhs-param-dot" style="background:var(--text-tertiary)"></span>
+          <span class="xhs-param-dot" style="background:var(--muted)"></span>
           <span class="xhs-param-title">⚫ 机构行为</span>
         </div>
         <div class="xhs-param-body" id="card4-body">
@@ -182,7 +182,7 @@
             <input type="range" class="xhs-slider-input" id="w-fund_holding" min="0" max="50" step="1" value="15" oninput="syncSlider('w-fund_holding')">
             <span class="xhs-slider-val" id="w-fund_holding-v">15%</span>
           </div>
-          <div style="font-size:0.6rem;color:var(--text-tertiary);margin-top:4px">暂无数据，权重将按比例重分配</div>
+          <div style="font-size:0.6rem;color:var(--muted);margin-top:4px">暂无数据，权重将按比例重分配</div>
         </div>
       </div>
 
@@ -206,7 +206,7 @@
       <div class="xhs-card">
         <div class="xhs-card-header">
           <span class="xhs-card-label">📊 拥挤度计算结果</span>
-          <span style="font-size:0.62rem;color:var(--text-tertiary)">点击表头排序</span>
+          <span style="font-size:0.62rem;color:var(--muted)">点击表头排序</span>
         </div>
         <div class="xhs-table-wrap" id="results-table"></div>
       </div>
@@ -287,7 +287,7 @@ function renderTableData(data, sortKey, sortDir) {
   var html = '<table class="xhs-table"><thead><tr>';
   cols.forEach(function(c, i) {
     var keys = ['stock_code','name','composite_score','crowd_level','heat_score','flow_score','valuation_score','pe_pct','pb_pct','turnover_ratio_pct','turnover_rate_pct'];
-    var cls = sortKey === keys[i] ? (sortDir === 'asc' ? ' style="color:var(--color-up)"' : ' style="color:var(--color-down)"') : '';
+    var cls = sortKey === keys[i] ? (sortDir === 'asc' ? ' style="color:var(--rise)"' : ' style="color:var(--fall)"') : '';
     html += '<th' + cls + ' onclick="sortTable(\'' + keys[i] + '\')">' + c + '</th>';
   });
   html += '</tr></thead><tbody>';
@@ -403,7 +403,7 @@ async function showConstituents(indexCode, indexName) {
     renderConstituentTable(data.constituents || []);
   } catch (e) {
     loading.classList.remove('active');
-    table.innerHTML = '<div style="padding:20px;text-align:center;color:var(--color-up)">加载失败</div>';
+    table.innerHTML = '<div style="padding:20px;text-align:center;color:var(--rise)">加载失败</div>';
   }
 }
 

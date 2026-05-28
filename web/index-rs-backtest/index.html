@@ -67,15 +67,15 @@
     .param-card-body.disabled-body { opacity:0.4; pointer-events:none; }
     /* slider 行 */
     .slider-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-    .slider-row .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--text-tertiary); flex-shrink:0; }
+    .slider-row .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--muted); flex-shrink:0; }
     .slider-row input[type=range] { flex:1; height:4px; }
     .slider-row .s-val { width:44px; text-align:right; font-size:0.7rem; font-weight:700; color:var(--text-primary); flex-shrink:0; }
     /* pool selector */
     .pool-select-wrap { margin-bottom:12px; }
-    .pool-select-wrap label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--text-tertiary); margin-bottom:4px; }
+    .pool-select-wrap label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
     .pool-select-wrap select { width:100%; padding:8px 10px; border:1px solid var(--divider); border-radius:12px; font-family:var(--font-display); font-size:0.82rem; background:var(--card-bg); color:var(--text-primary); }
     .date-field { margin-bottom:12px; }
-    .date-field label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--text-tertiary); margin-bottom:4px; }
+    .date-field label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
     .date-field input { width:100%; padding:8px 10px; border:1px solid var(--divider); border-radius:12px; font-family:var(--font-display); font-size:0.8rem; background:var(--card-bg); color:var(--text-primary); box-sizing:border-box; }
     .btn-run { display:block; width:100%; padding:12px; background:#FE2C55; color:#FFF; border:none; border-radius:14px; font-family:var(--font-display); font-size:1rem; font-weight:800; cursor:pointer; box-shadow:0 2px 8px rgba(254,44,85,0.18); transition:opacity 0.2s; }
     .btn-run:hover { opacity:0.88; }
@@ -88,7 +88,7 @@
     .pool-tab:hover:not(.active) { border-color:#FE2C55; color:#FE2C55; }
     /* stat cards */
     .stat-value { font-family:var(--font-display); font-size:1.4rem; font-weight:900; color:var(--text-primary); }
-    .stat-label { font-size:0.65rem; font-weight:600; color:var(--text-tertiary); letter-spacing:0.04em; }
+    .stat-label { font-size:0.65rem; font-weight:600; color:var(--muted); letter-spacing:0.04em; }
     .stat-value.l1 { color:#FE2C55; }
     .stat-value.l2 { color:#F5A623; }
     .stat-value.l3 { color:#7B1FA2; }
@@ -103,7 +103,7 @@
     .rs-mid { color:#F5A623; font-weight:700; }
     /* placeholder card */
     .placeholder-card { opacity:0.55; }
-    .placeholder-card .xhs-card-header::after { content:'🔒 待个股RS就绪'; font-size:0.6rem; color:var(--text-tertiary); margin-left:auto; }
+    .placeholder-card .xhs-card-header::after { content:'🔒 待个股RS就绪'; font-size:0.6rem; color:var(--muted); margin-left:auto; }
     /* Sortable headers */
     th.sortable { cursor:pointer; user-select:none; position:relative; padding-right:18px !important; }
     th.sortable:hover { color:#FE2C55; }
@@ -259,7 +259,7 @@
               <input type="range" disabled min="50" max="99" value="75">
               <span class="s-val">75</span>
             </div>
-            <div style="font-size:0.6rem;color:var(--text-tertiary);margin-top:6px;">⏳ 待个股RS引擎就绪后启用</div>
+            <div style="font-size:0.6rem;color:var(--muted);margin-top:6px;">⏳ 待个股RS引擎就绪后启用</div>
           </div>
         </div>
 
@@ -297,14 +297,14 @@
 
         <!-- TOP10 Table -->
         <div class="xhs-card">
-          <div class="xhs-card-header"><span class="xhs-card-label">📋 TOP10 排名</span><span id="table-pool-name" style="font-size:0.7rem;color:var(--text-tertiary);margin-left:8px;"></span></div>
+          <div class="xhs-card-header"><span class="xhs-card-label">📋 TOP10 排名</span><span id="table-pool-name" style="font-size:0.7rem;color:var(--muted);margin-left:8px;"></span></div>
           <div class="table-wrapper" id="table-top10"></div>
         </div>
 
         <!-- Resonance placeholder -->
         <div class="xhs-card placeholder-card">
           <div class="xhs-card-header"><span class="xhs-card-label">🔬 共振验证</span></div>
-          <div style="padding:24px;text-align:center;color:var(--text-tertiary);font-size:0.8rem;">
+          <div style="padding:24px;text-align:center;color:var(--muted);font-size:0.8rem;">
             ⏳ 待个股RS引擎就绪后启用<br>
             <span style="font-size:0.65rem;">届时对 L1/L2 中的行业指数自动验证内部共振强度</span>
           </div>

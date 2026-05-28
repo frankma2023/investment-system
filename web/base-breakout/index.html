@@ -48,7 +48,7 @@
   html[data-theme="light"] .table-wrapper td{border-bottom-color:rgba(0,0,0,.03)}
 .top-bar{display:flex;gap:12px;align-items:flex-end;padding:16px 20px;background:var(--card-bg);border-radius:18px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,0.04);flex-wrap:wrap}
   .top-bar .fld{flex:1;min-width:100px}
-  .top-bar label{display:block;font-size:0.6rem;font-weight:600;color:var(--text-tertiary);margin-bottom:3px}
+  .top-bar label{display:block;font-size:0.6rem;font-weight:600;color:var(--muted);margin-bottom:3px}
   .top-bar input,.top-bar select{width:100%;padding:7px 10px;border:1px solid var(--divider);border-radius:10px;font-size:0.75rem;background:var(--card-bg);color:var(--text-primary);box-sizing:border-box}
   .top-bar .code-wrap{flex:1.5;display:flex;gap:6px}
   .top-bar .code-wrap input{flex:1}
@@ -64,18 +64,18 @@
   .param-card-hd .dot{width:8px;height:8px;border-radius:50%;margin-right:8px}
   .param-card-bd{padding:0 14px 10px}.param-card-bd.collapsed{display:none}
   .sr{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-  .sr .sl{width:78px;font-size:0.58rem;font-weight:600;color:var(--text-tertiary);flex-shrink:0}
+  .sr .sl{width:78px;font-size:0.58rem;font-weight:600;color:var(--muted);flex-shrink:0}
   .sr input[type=range]{flex:1;height:3px}
   .sr .sv{width:44px;text-align:right;font-size:0.62rem;font-weight:700}
   .tog-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-  .tog-row .sl{width:78px;font-size:0.58rem;font-weight:600;color:var(--text-tertiary)}
+  .tog-row .sl{width:78px;font-size:0.58rem;font-weight:600;color:var(--muted)}
   .tsw{position:relative;width:32px;height:16px;border-radius:8px;border:none;cursor:pointer}
   .tsw.on{background:#FE2C55}.tsw.off{background:#CCC}
   .tsw::after{content:'';position:absolute;top:2px;width:12px;height:12px;border-radius:50%;background:#FFF;transition:left 0.2s}
   .tsw.on::after{left:18px}.tsw.off::after{left:2px}
   .nav-dropdown:hover .nav-dropdown-menu{display:block}
   @media(max-width:900px){.bottom-layout{flex-direction:column}.bottom-left{width:100%}}
-  .loading-row{text-align:center;padding:24px;color:var(--text-tertiary)}
+  .loading-row{text-align:center;padding:24px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -132,7 +132,7 @@
     <div class="bottom-right">
       <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 信号明细</span></div><div class="table-wrapper" id="table"></div></div>
       <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">🔎 单日排查</span></div>
-        <div style="padding:12px 16px;display:flex;gap:8px;align-items:center"><input type="date" id="diag-date" style="padding:6px 10px;border:1px solid var(--divider);border-radius:10px;font-size:0.72rem;background:var(--card-bg);color:var(--text-primary);flex:1"><button onclick="runDiag()" style="padding:7px 16px;background:var(--color-accent);color:#FFF;border:none;border-radius:10px;font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button></div>
+        <div style="padding:12px 16px;display:flex;gap:8px;align-items:center"><input type="date" id="diag-date" style="padding:6px 10px;border:1px solid var(--divider);border-radius:10px;font-size:0.72rem;background:var(--card-bg);color:var(--text-primary);flex:1"><button onclick="runDiag()" style="padding:7px 16px;background:var(--accent);color:#FFF;border:none;border-radius:10px;font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button></div>
         <div id="diag-result" style="padding:0 16px 14px;display:none"></div>
       </div>
     </div>
@@ -281,7 +281,7 @@
     var div=document.getElementById('table');
     if(!cs.length){div.innerHTML='<div class="loading-row">无基部突破信号。可尝试放宽参数（增大回调上限、降低回升比例）</div>';return}
     var h='<table><thead><tr><th>#</th><th>日期</th><th>前高</th><th>前高日期</th><th>谷</th><th>谷日期</th><th>回调</th><th>回升</th><th>买点</th><th>量比</th><th>基部天数</th><th>形态</th></tr></thead><tbody>';
-    [].concat(cs).reverse().forEach(function(s,i){var v=s.tags&&s.tags.vcp?s.tags.vcp:null,vc=v?v.score.toFixed(2):'—',sx=v&&v.score>=0.60?'style="color:#A349A4;font-weight:700"':'';h+='<tr><td>'+(cs.length-i)+'</td><td style="font-weight:700">'+s.signal_date+'</td><td class="t-up">'+s.prior_high_price+'</td><td style="font-size:0.62rem;color:var(--text-tertiary)">'+s.prior_high_date+'</td><td>'+s.trough_price+'</td><td style="font-size:0.62rem;color:var(--text-tertiary)">'+s.trough_date+'</td><td>'+s.drawdown_pct+'%</td><td>'+s.recovery_pct+'%</td><td>'+s.buy_point+'</td><td>'+s.breakout_vol_ratio+'</td><td>'+s.base_days+'d</td><td '+sx+'>'+vc+(v&&v.toc_count?' ('+v.toc_count+'C)':'')+'</td></tr>'});
+    [].concat(cs).reverse().forEach(function(s,i){var v=s.tags&&s.tags.vcp?s.tags.vcp:null,vc=v?v.score.toFixed(2):'—',sx=v&&v.score>=0.60?'style="color:#A349A4;font-weight:700"':'';h+='<tr><td>'+(cs.length-i)+'</td><td style="font-weight:700">'+s.signal_date+'</td><td class="t-up">'+s.prior_high_price+'</td><td style="font-size:0.62rem;color:var(--muted)">'+s.prior_high_date+'</td><td>'+s.trough_price+'</td><td style="font-size:0.62rem;color:var(--muted)">'+s.trough_date+'</td><td>'+s.drawdown_pct+'%</td><td>'+s.recovery_pct+'%</td><td>'+s.buy_point+'</td><td>'+s.breakout_vol_ratio+'</td><td>'+s.base_days+'d</td><td '+sx+'>'+vc+(v&&v.toc_count?' ('+v.toc_count+'C)':'')+'</td></tr>'});
     div.innerHTML=h+'</tbody></table>';
   }
 
@@ -289,16 +289,16 @@
     var date=document.getElementById('diag-date').value,div=document.getElementById('diag-result');
     if(!date){div.style.display='none';return}
     var code=document.getElementById('stock-code').value.trim(),mode=document.getElementById('mode').value;
-    div.innerHTML='<div style="font-size:0.7rem;color:var(--text-tertiary);padding:8px 0">⏳ 检测中...</div>';div.style.display='block';
+    div.innerHTML='<div style="font-size:0.7rem;color:var(--muted);padding:8px 0">⏳ 检测中...</div>';div.style.display='block';
     try{
       var resp=await fetch(API_URL+'/api/base-breakout/diag?stock='+code+'&date='+date+'&mode='+mode);
       var d=await resp.json();
       if(d.error){div.innerHTML='<div style="font-size:0.7rem;color:#FF6B6B">'+d.error+'</div>';return}
       var all=d.all_pass,r=d.results,bd=all?'#4CAF50':'#FF9800';
-      var h='<div style="font-size:0.6rem;color:var(--text-tertiary);margin-bottom:6px">'+date;
+      var h='<div style="font-size:0.6rem;color:var(--muted);margin-bottom:6px">'+date;
       if(d.ohlc)h+=' O='+d.ohlc.open.toFixed(2)+' H='+d.ohlc.high.toFixed(2)+' L='+d.ohlc.low.toFixed(2)+' C='+d.ohlc.close.toFixed(2);
       h+='</div>';
-      if(d.prior_high)h+='<div style="font-size:0.58rem;color:var(--text-tertiary);margin-bottom:4px">前高='+d.prior_high.toFixed(2)+'('+d.prior_high_date+') 谷='+d.trough.toFixed(2)+'('+d.trough_date+') 回调='+d.drawdown_pct+'%</div>';
+      if(d.prior_high)h+='<div style="font-size:0.58rem;color:var(--muted);margin-bottom:4px">前高='+d.prior_high.toFixed(2)+'('+d.prior_high_date+') 谷='+d.trough.toFixed(2)+'('+d.trough_date+') 回调='+d.drawdown_pct+'%</div>';
       else if(d.prior_high===null)h+='<div style="font-size:0.58rem;color:#FF6B6B;margin-bottom:4px">前高未找到（谷底驱动法无法定位局部高点）</div>';
       h+='<table style="margin:0;font-size:0.68rem"><thead><tr><th>条件</th><th>实际值</th><th>阈值</th><th>判定</th></tr></thead><tbody>';
       r.forEach(function(c){var cc=c.pass?'<td style="color:#4CAF50">✅ '+(c.note||'')+'</td>':'<td style="color:#FF6B6B">❌ '+(c.note||'')+'</td>';h+='<tr><td>'+c.condition+'</td><td>'+c.value+'</td><td>'+c.threshold+'</td>'+cc+'</tr>'});

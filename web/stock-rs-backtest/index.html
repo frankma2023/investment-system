@@ -50,32 +50,32 @@
   .bt-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:14px; }
   /* 筛选按钮 */
   .filter-btns { display:flex; gap:6px; flex-wrap:wrap; }
-  .filter-btn { padding:5px 14px; border:1px solid var(--border); border-radius:20px; background:var(--bg-card); color:var(--text-secondary); cursor:pointer; font-family:var(--font-display); font-size:0.65rem; font-weight:600; transition:all 0.15s; }
-  .filter-btn:hover { border-color:var(--color-accent); color:var(--color-accent); }
-  .filter-btn.active { background:var(--color-accent); color:#FFF; border-color:var(--color-accent); }
+  .filter-btn { padding:5px 14px; border:1px solid var(--border); border-radius:20px; background:var(--card); color:var(--text-secondary); cursor:pointer; font-family:var(--font-display); font-size:0.65rem; font-weight:600; transition:all 0.15s; }
+  .filter-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .filter-btn.active { background:var(--accent); color:#FFF; border-color:var(--accent); }
   /* 日期行 */
   .date-row { display:flex; gap:8px; }
   .date-row > div { flex:1; }
   /* 统计条 */
   .stat-value { font-family:var(--font-display); font-size:1.15rem; font-weight:900; color:var(--text-primary); }
-  .stat-label { font-size:0.55rem; color:var(--text-tertiary); margin-top:2px; letter-spacing:0.04em; font-weight:600; }
-  .stat-red { color:var(--color-up); } .stat-gold { color:var(--color-neutral); }
+  .stat-label { font-size:0.55rem; color:var(--muted); margin-top:2px; letter-spacing:0.04em; font-weight:600; }
+  .stat-red { color:var(--rise); } .stat-gold { color:var(--muted); }
   /* 开关 */
   .switch-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
   .switch-row span { font-size:0.62rem; color:var(--text-secondary); font-family:var(--font-display); }
   .switch { position:relative; width:40px; height:22px; border-radius:11px; border:none; cursor:pointer; transition:background 0.2s; }
-  .switch.on { background:var(--color-accent); }
+  .switch.on { background:var(--accent); }
   .switch.off { background:#CCC; }
   .switch::after { content:''; position:absolute; top:2px; width:18px; height:18px; border-radius:50%; background:#FFF; transition:left 0.2s; }
   .switch.on::after { left:20px; }
   .switch.off::after { left:2px; }
   /* 双强色块 */
-  .badge-robust { background:var(--color-up-bg); color:var(--color-up); border:1px solid var(--color-up-border); padding:2px 8px; border-radius:8px; font-size:0.58rem; font-weight:700; }
-  .badge-burst { background:var(--color-neutral-bg); color:var(--color-neutral); border:1px solid var(--color-neutral-border); padding:2px 8px; border-radius:8px; font-size:0.58rem; font-weight:700; }
+  .badge-robust { background:rgba(16,185,129,.08); color:var(--rise); border:1px solid rgba(16,185,129,.2); padding:2px 8px; border-radius:8px; font-size:0.58rem; font-weight:700; }
+  .badge-burst { background:var(--color-neutral-bg); color:var(--muted); border:1px solid var(--color-neutral-border); padding:2px 8px; border-radius:8px; font-size:0.58rem; font-weight:700; }
   /* 表格 */
   .result-table { min-width:auto; table-layout:auto; }
   .result-table td { font-size:0.6rem; padding:5px 4px; white-space:nowrap; }
-  .rps-high { color:var(--color-up); font-weight:700; }
+  .rps-high { color:var(--rise); font-weight:700; }
   .tr-ds { background:rgba(254,44,85,0.03); }
   @media (max-width:900px) { .bt-layout{flex-direction:column} .bt-left{width:100%} .stat-cards{grid-template-columns:repeat(3,1fr)} }
   /* ── 导航下拉菜单 ── */
@@ -128,7 +128,7 @@ TYPE html>
       <!-- 卡片1: 稳健龙头 -->
       <div class="xhs-param" id="card1">
         <div class="xhs-param-header" onclick="toggleCard('card1')">
-          <span class="xhs-param-dot" style="background:var(--color-up)"></span>
+          <span class="xhs-param-dot" style="background:var(--rise)"></span>
           <span class="xhs-param-title">🔴 稳健龙头</span>
         </div>
         <div class="xhs-param-body" id="card1-body">
@@ -148,7 +148,7 @@ TYPE html>
       <!-- 卡片2: 加速爆发 -->
       <div class="xhs-param" id="card2">
         <div class="xhs-param-header" onclick="toggleCard('card2')">
-          <span class="xhs-param-dot" style="background:var(--color-neutral)"></span>
+          <span class="xhs-param-dot" style="background:var(--muted)"></span>
           <span class="xhs-param-title">🟡 加速爆发</span>
         </div>
         <div class="xhs-param-body" id="card2-body">
@@ -168,7 +168,7 @@ TYPE html>
       <!-- 卡片3: 过滤 -->
       <div class="xhs-param" id="card3">
         <div class="xhs-param-header" onclick="toggleCard('card3')">
-          <span class="xhs-param-dot" style="background:var(--color-down)"></span>
+          <span class="xhs-param-dot" style="background:var(--fall)"></span>
           <span class="xhs-param-title">🟢 过滤条件</span>
         </div>
         <div class="xhs-param-body" id="card3-body">
@@ -187,7 +187,7 @@ TYPE html>
       <!-- 卡片4: 展示 -->
       <div class="xhs-param" id="card4">
         <div class="xhs-param-header" onclick="toggleCard('card4')">
-          <span class="xhs-param-dot" style="background:var(--text-tertiary)"></span>
+          <span class="xhs-param-dot" style="background:var(--muted)"></span>
           <span class="xhs-param-title">⚫ 展示配置</span>
         </div>
         <div class="xhs-param-body" id="card4-body">
@@ -367,7 +367,7 @@ function applyFilter(){
 function renderTable(data,curPg,totalPg,itemStart,itemEnd,totalItems){
   curPg=curPg||1;totalPg=totalPg||1;
   if(!data.length){
-    document.getElementById('results-table').innerHTML='<div style="padding:32px;text-align:center;color:var(--text-tertiary)">暂无匹配结果</div>';
+    document.getElementById('results-table').innerHTML='<div style="padding:32px;text-align:center;color:var(--muted)">暂无匹配结果</div>';
     return;
   }
   var cols=[
@@ -394,7 +394,7 @@ function renderTable(data,curPg,totalPg,itemStart,itemEnd,totalItems){
 
   var h='<table class="xhs-table result-table"><thead><tr>';
   cols.forEach(function(c){
-    var cls=sortCol===c.k?' style="color:var(--color-accent);font-weight:700"':' style="color:var(--text-tertiary)"';
+    var cls=sortCol===c.k?' style="color:var(--accent);font-weight:700"':' style="color:var(--muted)"';
     var arrow=sortCol===c.k?(sortDir==='asc'?' ▲':' ▼'):'';
     h+='<th style="padding:3px 4px;font-size:0.55rem"'+cls+' onclick="sortBy(\''+c.k+'\')">'+c.l+arrow+'</th>';
   });
@@ -404,7 +404,7 @@ function renderTable(data,curPg,totalPg,itemStart,itemEnd,totalItems){
     var rps250=r.rps_250!=null?r.rps_250:'—';
     var rps250Cls=rps250>=90?'rps-high':'';
     h+='<tr class="'+dsCls+'">';
-    h+='<td style="color:var(--color-accent);font-weight:600;cursor:pointer;padding-right:6px">'+r.stock_code+'</td>';
+    h+='<td style="color:var(--accent);font-weight:600;cursor:pointer;padding-right:6px">'+r.stock_code+'</td>';
     h+='<td style="padding-right:6px">'+r.name+'</td>';
     h+='<td style="padding-right:6px">'+(r.close?r.close.toFixed(2):'—')+'</td>';
     h+='<td class="'+rps250Cls+'" style="font-weight:700;padding-right:6px">'+rps250+'</td>';
@@ -423,11 +423,11 @@ function renderTable(data,curPg,totalPg,itemStart,itemEnd,totalItems){
   pg+='<button onclick="goPage('+Math.max(1,curPg-1)+')" style="padding:4px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.6rem;font-family:var(--font-display)">◀</button>';
   var ps=Math.max(1,curPg-2),pe=Math.min(totalPg,curPg+2);
   for(var i=ps;i<=pe;i++){
-    pg+='<button onclick="goPage('+i+')" style="padding:4px 8px;border:1px solid '+(i===curPg?'var(--color-accent)':'var(--divider)')+';border-radius:8px;background:'+(i===curPg?'var(--color-accent)':'var(--card-bg)')+';color:'+(i===curPg?'#FFF':'var(--text-secondary)')+';cursor:pointer;font-size:0.6rem;font-family:var(--font-display);font-weight:700;min-width:26px">'+i+'</button>';
+    pg+='<button onclick="goPage('+i+')" style="padding:4px 8px;border:1px solid '+(i===curPg?'var(--accent)':'var(--divider)')+';border-radius:8px;background:'+(i===curPg?'var(--accent)':'var(--card-bg)')+';color:'+(i===curPg?'#FFF':'var(--text-secondary)')+';cursor:pointer;font-size:0.6rem;font-family:var(--font-display);font-weight:700;min-width:26px">'+i+'</button>';
   }
   pg+='<button onclick="goPage('+Math.min(totalPg,curPg+1)+')" style="padding:4px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.6rem;font-family:var(--font-display)">▶</button>';
   pg+='<button onclick="goPage('+totalPg+')" style="padding:4px 10px;border:1px solid var(--divider);border-radius:8px;background:var(--card-bg);cursor:pointer;font-size:0.6rem;font-family:var(--font-display)">⏭</button>';
-  pg+='</div><span style="font-size:0.6rem;color:var(--text-tertiary)">'+itemStart+'-'+itemEnd+' / '+totalItems+'</span></div>';
+  pg+='</div><span style="font-size:0.6rem;color:var(--muted)">'+itemStart+'-'+itemEnd+' / '+totalItems+'</span></div>';
   document.getElementById('results-table').innerHTML=pg+h+pg;
 }
 

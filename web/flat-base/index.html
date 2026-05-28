@@ -48,7 +48,7 @@
   html[data-theme="light"] .table-wrapper td{border-bottom-color:rgba(0,0,0,.03)}
 .top-bar{display:flex;gap:12px;align-items:flex-end;padding:16px 20px;background:var(--card-bg);border-radius:18px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,0.04)}
     .top-bar .fld{flex:1;min-width:90px}
-    .top-bar label{display:block;font-size:0.6rem;font-weight:600;color:var(--text-tertiary);margin-bottom:3px}
+    .top-bar label{display:block;font-size:0.6rem;font-weight:600;color:var(--muted);margin-bottom:3px}
     .top-bar input,.top-bar select{width:100%;padding:7px 10px;border:1px solid var(--divider);border-radius:10px;font-size:0.75rem;background:var(--card-bg);color:var(--text-primary);box-sizing:border-box}
     .chart-wrap{width:100%;height:520px;margin-bottom:12px}
     .bottom-layout{display:flex;gap:14px;align-items:flex-start}
@@ -63,11 +63,11 @@
     .param-card-hd .dot{width:8px;height:8px;border-radius:50%;margin-right:8px}
     .param-card-bd{padding:0 14px 10px}.param-card-bd.collapsed{display:none}
     .sr{display:flex;align-items:center;gap:8px;margin-bottom:9px}
-    .sr .sl{width:68px;font-size:0.58rem;font-weight:600;color:var(--text-tertiary);flex-shrink:0}
+    .sr .sl{width:68px;font-size:0.58rem;font-weight:600;color:var(--muted);flex-shrink:0}
     .sr input[type=range]{flex:1;height:3px}
     .sr .sv{width:40px;text-align:right;font-size:0.62rem;font-weight:700}
     .tog-row{display:flex;align-items:center;gap:8px;margin-bottom:9px}
-    .tog-row .sl{width:68px;font-size:0.58rem;font-weight:600;color:var(--text-tertiary)}
+    .tog-row .sl{width:68px;font-size:0.58rem;font-weight:600;color:var(--muted)}
     .tsw{position:relative;width:32px;height:16px;border-radius:8px;border:none;cursor:pointer}
     .tsw.on{background:#FE2C55}.tsw.off{background:#CCC}
     .tsw::after{content:'';position:absolute;top:2px;width:12px;height:12px;border-radius:50%;background:#FFF;transition:left 0.2s}
@@ -89,7 +89,7 @@
   <nav id="top-nav"></nav>
     <div class="top-bar">
       <div class="fld" style="flex:0.5;min-width:80px"><label>周期</label><select id="period" style="width:100%" onchange="run()"><option value="day">日线</option><option value="week">周线</option><option value="month">月线</option></select></div>
-      <div class="fld" style="flex:0.5"><label>代码</label><div style="display:flex;gap:4px"><input type="text" id="stock-code" value="600519" style="width:100px" onkeydown="if(event.key==='Enter')run()" onchange="run()"><span id="stock-name" style="font-size:0.65rem;color:var(--text-tertiary);padding:7px 6px"></span></div></div>
+      <div class="fld" style="flex:0.5"><label>代码</label><div style="display:flex;gap:4px"><input type="text" id="stock-code" value="600519" style="width:100px" onkeydown="if(event.key==='Enter')run()" onchange="run()"><span id="stock-name" style="font-size:0.65rem;color:var(--muted);padding:7px 6px"></span></div></div>
       <div class="fld"><label>开始</label><input type="date" id="date-start" onchange="run()"></div>
       <div class="fld"><label>结束</label><input type="date" id="date-end" onchange="run()"></div>
     </div>
@@ -116,7 +116,7 @@
       <div class="bottom-right">
         <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">📋 扁平基部信号</span></div><div class="table-wrapper" id="table"></div></div>
         <div class="xhs-card"><div class="xhs-card-header"><span class="xhs-card-label">🔎 区间排查</span></div>
-          <div style="padding:12px 16px;display:flex;gap:8px;align-items:center"><span style="font-size:0.62rem;color:var(--text-tertiary);flex-shrink:0">区间</span><input type="date" id="diag-start" style="padding:6px 8px;border:1px solid var(--divider);border-radius:10px;font-size:0.7rem;background:var(--card-bg);color:var(--text-primary);flex:1"><span style="font-size:0.62rem;color:var(--text-tertiary);flex-shrink:0">至</span><input type="date" id="diag-end" style="padding:6px 8px;border:1px solid var(--divider);border-radius:10px;font-size:0.7rem;background:var(--card-bg);color:var(--text-primary);flex:1"><button onclick="runDiag()" style="padding:7px 16px;background:var(--color-accent);color:#FFF;border:none;border-radius:10px;font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button></div>
+          <div style="padding:12px 16px;display:flex;gap:8px;align-items:center"><span style="font-size:0.62rem;color:var(--muted);flex-shrink:0">区间</span><input type="date" id="diag-start" style="padding:6px 8px;border:1px solid var(--divider);border-radius:10px;font-size:0.7rem;background:var(--card-bg);color:var(--text-primary);flex:1"><span style="font-size:0.62rem;color:var(--muted);flex-shrink:0">至</span><input type="date" id="diag-end" style="padding:6px 8px;border:1px solid var(--divider);border-radius:10px;font-size:0.7rem;background:var(--card-bg);color:var(--text-primary);flex:1"><button onclick="runDiag()" style="padding:7px 16px;background:var(--accent);color:#FFF;border:none;border-radius:10px;font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button></div>
           <div id="diag-result" style="padding:0 16px 14px;display:none"></div>
         </div>
       </div>
@@ -176,7 +176,7 @@
         series:[{name:'K线',type:'candlestick',data:ck.map(k=>[k.open,k.close,k.low,k.high]),itemStyle:{color:'#E53935',color0:'#26C6DA',borderColor:'#E53935',borderColor0:'#26C6DA'}},{name:'成交量',type:'bar',data:ck.map((k,i)=>({value:k.volume,itemStyle:{color:ck[i].close>=ck[i].open?'rgba(229,57,53,0.4)':'rgba(38,198,218,0.4)'}})),xAxisIndex:1,yAxisIndex:1},
           {name:'MA5',type:'line',data:ma5,smooth:true,symbol:'none',lineStyle:{width:1,color:mc[0]}},{name:'MA10',type:'line',data:ma10,smooth:true,symbol:'none',lineStyle:{width:1,color:mc[1]}},{name:'MA20',type:'line',data:ma20,smooth:true,symbol:'none',lineStyle:{width:1,color:mc[2]}},{name:'MA120',type:'line',data:ma120,smooth:true,symbol:'none',lineStyle:{width:1,color:mc[3]}},{name:'MA250',type:'line',data:ma250,smooth:true,symbol:'none',lineStyle:{width:1,color:mc[4]}},{name:'扁平基部',type:'scatter',data:marks,z:10}]})
     }
-    function renderTable(){const d=document.getElementById('table');if(!cs.length){d.innerHTML='<div style=padding:24px;text-align:center;color:var(--text-tertiary)>无扁平基部信号</div>';return}let h='<table><thead><tr><th>#</th><th>突破日</th><th>收盘</th><th>基部起</th><th>基部止</th><th>振幅</th><th>持续</th><th>量萎缩</th><th>量比</th></tr></thead><tbody>';[...cs].reverse().forEach((s,i)=>{h+='<tr><td>'+(cs.length-i)+'</td><td style=font-weight:700>'+s.date+'</td><td class=t-up>'+s.close.toFixed(2)+'</td><td>'+s.base_start_date+'</td><td>'+s.base_end_date+'</td><td>'+s.base_amplitude+'%</td><td>'+s.base_duration+'天</td><td>'+s.vol_contraction.toFixed(2)+'</td><td>'+s.breakout_vol_ratio.toFixed(2)+'</td></tr>'});d.innerHTML=h+'</tbody></table>'}
+    function renderTable(){const d=document.getElementById('table');if(!cs.length){d.innerHTML='<div style=padding:24px;text-align:center;color:var(--muted)>无扁平基部信号</div>';return}let h='<table><thead><tr><th>#</th><th>突破日</th><th>收盘</th><th>基部起</th><th>基部止</th><th>振幅</th><th>持续</th><th>量萎缩</th><th>量比</th></tr></thead><tbody>';[...cs].reverse().forEach((s,i)=>{h+='<tr><td>'+(cs.length-i)+'</td><td style=font-weight:700>'+s.date+'</td><td class=t-up>'+s.close.toFixed(2)+'</td><td>'+s.base_start_date+'</td><td>'+s.base_end_date+'</td><td>'+s.base_amplitude+'%</td><td>'+s.base_duration+'天</td><td>'+s.vol_contraction.toFixed(2)+'</td><td>'+s.breakout_vol_ratio.toFixed(2)+'</td></tr>'});d.innerHTML=h+'</tbody></table>'}
     async function loadCfg(){try{const r=await fetch(API_BASE+'/api/config?signal_type='+ST,{cache:'no-store'});const c=await r.json();if(!c||!c.flat_base)return;const b=c.flat_base;svs('p-am',Math.round((b.amp_max||0.12)*100));svs('p-md',b.min_duration||25);stog('p-sl-on',b.slope_enabled!==false);svs('p-vc',Math.round((b.vol_contraction_ratio||0.6)*100));stog('p-bb-on',b.bb_enabled!==false);svs('p-bv',Math.round((b.breakout_vol_ratio||1.4)*100));stog('p-gr-on',b.require_green!==false)}catch(e){}}
     function svs(id,v){const e=document.getElementById(id);if(!e)return;e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}))}
     function stog(id,on){const b=document.getElementById(id);if(!b)return;b.className='tsw '+(on?'on':'off')}

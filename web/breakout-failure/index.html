@@ -46,7 +46,7 @@
   html[data-theme="light"] .param-card-hd{color:#374151}
   html[data-theme="light"] .table-wrapper td{border-bottom-color:rgba(0,0,0,.03)}
 .chart-wrap{height:480px;margin-bottom:4px}
-  .chart-legend{display:flex;gap:12px;flex-wrap:wrap;padding:4px 0 8px;font-size:0.6rem;align-items:center;color:var(--text-tertiary)}
+  .chart-legend{display:flex;gap:12px;flex-wrap:wrap;padding:4px 0 8px;font-size:0.6rem;align-items:center;color:var(--muted)}
   .chart-legend .lg-item{display:inline-flex;align-items:center;gap:4px}
   .lg-pin{color:#A349A4;font-size:1.1rem}
   .lg-star-m{color:#FF9800;font-size:1rem}
@@ -168,7 +168,7 @@
             <option value="">选择突破日</option>
           </select>
           <input type="date" id="diag-check-date" style="padding:6px 10px;border:1px solid var(--divider);border-radius:10px;font-size:0.72rem;background:var(--card-bg);color:var(--text-primary);flex:1;min-width:120px">
-          <button onclick="runDiag()" style="padding:7px 16px;background:var(--color-accent);color:#FFF;border:none;border-radius:10px;font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button>
+          <button onclick="runDiag()" style="padding:7px 16px;background:var(--accent);color:#FFF;border:none;border-radius:10px;font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button>
         </div>
         <div id="diag-result" style="padding:0 16px 14px;display:none"></div>
       </div>
@@ -350,7 +350,7 @@ function renderTable(){
     h+='<tr>';
     h+='<td>'+(failureSignals.length-i)+'</td>';
     h+='<td style="font-weight:700">'+s.date+'</td>';
-    h+='<td style="font-size:0.68rem;color:var(--text-tertiary)">'+s.breakout_date+'</td>';
+    h+='<td style="font-size:0.68rem;color:var(--muted)">'+s.breakout_date+'</td>';
     h+='<td>'+s.failure_day+'</td>';
     h+='<td>'+d.rule_label+'</td>';
     h+='<td class="'+sevCls(s.severity)+'">'+s.severity+'</td>';
@@ -370,12 +370,12 @@ async function runDiag(){
   var div=document.getElementById('diag-result');
   if(!boDate||!checkDate){div.style.display='none';return}
   var code=document.getElementById('stock-code').value.trim(),mode=document.getElementById('mode').value;
-  div.innerHTML='<div style="font-size:0.68rem;color:var(--text-tertiary);padding:6px 0">⏳ 检测中...</div>';div.style.display='block';
+  div.innerHTML='<div style="font-size:0.68rem;color:var(--muted);padding:6px 0">⏳ 检测中...</div>';div.style.display='block';
   try{
     var resp=await fetch(API_URL+'/api/breakout-failure/diag?stock='+code+'&breakout_date='+boDate+'&check_date='+checkDate+'&mode='+mode);
     var d=await resp.json();
     if(d.error){div.innerHTML='<div style="font-size:0.68rem;color:#FF6B6B">'+d.error+'</div>';return}
-    var h='<div style="font-size:0.6rem;color:var(--text-tertiary);margin-bottom:6px">';
+    var h='<div style="font-size:0.6rem;color:var(--muted);margin-bottom:6px">';
     h+='突破日='+d.breakout_date+' | 检查日='+d.check_date+' | 买点='+d.buy_point+' | 收盘='+d.close+' | D+'+d.monitor_day+'</div>';
     h+='<table style="margin:0;font-size:0.65rem"><thead><tr><th>规则</th><th>条件</th><th>实际</th><th>判定</th></tr></thead><tbody>';
     var rules=d.rules||{};

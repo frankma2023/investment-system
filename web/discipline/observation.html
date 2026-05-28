@@ -20,7 +20,7 @@
   html[data-theme="light"] .page-header h1{color:#374151}
     .panel-header { padding: 16px 0 8px; }
     .panel-header h1 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 900; margin: 0; }
-    .panel-header p { font-size: 0.65rem; color: var(--text-tertiary); margin: 2px 0 0; }
+    .panel-header p { font-size: 0.65rem; color: var(--muted); margin: 2px 0 0; }
     .obs-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
     .obs-table th { text-align: center; padding: 8px 6px; border-bottom: 2px solid var(--divider); font-size: 0.6rem; font-weight: 700; color: var(--text-secondary); position: sticky; top: 0; background: var(--bg); cursor: pointer; user-select: none; white-space: nowrap; }
     .obs-table th:hover { color: var(--accent); }
@@ -103,7 +103,7 @@
         try { const arr = JSON.parse(item.sell_signals_json); count += (arr || []).length; } catch(e) {}
       }
       if (count > 0) return `<span style="color:var(--accent);font-weight:600">${count}个信号</span>`;
-      return '<span style="color:var(--text-tertiary)">-</span>';
+      return '<span style="color:var(--muted)">-</span>';
     }
 
     async function loadByDate(date) {

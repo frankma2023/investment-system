@@ -52,16 +52,16 @@
     .ftd-chart-container { width:100%; height:480px; }
     .date-row { display:flex; gap:8px; margin-top:12px; }
     .date-row .date-field { flex:1; }
-    .date-field label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--text-tertiary); margin-bottom:4px; }
+    .date-field label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
     .date-field input { width:100%; padding:8px 10px; border:1px solid var(--divider); border-radius:12px; font-family:var(--font-display); font-size:0.8rem; background:var(--card-bg); color:var(--text-primary); box-sizing:border-box; }
     .index-select-wrap { margin-bottom:12px; }
-    .index-select-wrap label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--text-tertiary); margin-bottom:4px; }
+    .index-select-wrap label { display:block; font-family:var(--font-display); font-size:0.65rem; font-weight:600; color:var(--muted); margin-bottom:4px; }
     .index-select-wrap select { width:100%; padding:8px 10px; border:1px solid var(--divider); border-radius:12px; font-family:var(--font-display); font-size:0.82rem; background:var(--card-bg); color:var(--text-primary); }
     .btn-run { display:block; width:100%; padding:12px; background:#FE2C55; color:#FFF; border:none; border-radius:14px; font-family:var(--font-display); font-size:1rem; font-weight:800; cursor:pointer; transition:opacity 0.2s; }
     .btn-run:hover { opacity:0.88; }
     .btn-run:disabled { background:#CCC; box-shadow:none; cursor:not-allowed; }
     .btn-save { display:block; width:100%; padding:10px; margin-top:8px; background:var(--card-bg); color:var(--text-primary); border:1.5px solid var(--divider); border-radius:14px; font-family:var(--font-display); font-size:0.9rem; font-weight:700; cursor:pointer; transition:all 0.2s; }
-    .btn-save:hover { border-color:var(--text-tertiary); background:var(--bg); }
+    .btn-save:hover { border-color:var(--muted); background:var(--bg); }
     .btn-save.saved { background:#E8F5E9; border-color:#4CAF50; color:#2E7D32; }
     /* ── 参数卡片 ── */
     .param-card { background:var(--card-bg); border:1px solid var(--divider); border-radius:18px; overflow:hidden; }
@@ -72,16 +72,16 @@
     .param-card-body.collapsed { display:none; }
     /* slider 行 */
     .slider-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
-    .slider-row .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--text-tertiary); flex-shrink:0; }
+    .slider-row .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--muted); flex-shrink:0; }
     .slider-row input[type=range] { flex:1; height:4px; }
     .slider-row .s-val { width:44px; text-align:right; font-size:0.7rem; font-weight:700; color:var(--text-primary); flex-shrink:0; }
     /* dropdown in param card */
     .param-select { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
-    .param-select .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--text-tertiary); flex-shrink:0; }
+    .param-select .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--muted); flex-shrink:0; }
     .param-select select { flex:1; padding:4px 8px; border:1px solid var(--divider); border-radius:8px; font-size:0.7rem; background:var(--card-bg); color:var(--text-primary); }
     /* toggle switch in card */
     .toggle-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
-    .toggle-row .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--text-tertiary); flex-shrink:0; }
+    .toggle-row .s-label { width:72px; font-size:0.65rem; font-weight:600; color:var(--muted); flex-shrink:0; }
     .toggle-switch { position:relative; width:36px; height:20px; border-radius:10px; border:none; cursor:pointer; transition:background 0.2s; flex-shrink:0; }
     .toggle-switch.on { background:#FE2C55; }
     .toggle-switch.off { background:#CCC; }
@@ -90,10 +90,10 @@
     .toggle-switch.off::after { left:2px; }
     /* stats */
     .stat-value { font-family:var(--font-display); font-size:1.5rem; font-weight:900; color:var(--text-primary); }
-    .stat-label { font-size:0.65rem; font-weight:600; color:var(--text-tertiary); letter-spacing:0.04em; }
+    .stat-label { font-size:0.65rem; font-weight:600; color:var(--muted); letter-spacing:0.04em; }
     .stat-value.green { color:#2E7D32; }
     .stat-value.orange { color:#FF6B6B; }
-    .stat-value.gray { color:var(--text-tertiary); }
+    .stat-value.gray { color:var(--muted); }
     @media (max-width:900px) { .ftd-layout { flex-direction:column; } .ftd-left { width:100%; } }
     .nav-dropdown:hover .nav-dropdown-menu { display:block; }
 </style>
@@ -122,7 +122,7 @@
             <div class="date-field"><label>开始日期</label><input type="date" id="date-start"></div>
             <div class="date-field"><label>结束日期</label><input type="date" id="date-end"></div>
           </div>
-          <div style="font-size:0.6rem;color:var(--text-tertiary);margin-top:4px">默认回测2年，确保反弹尝试窗口覆盖充足历史数据</div>
+          <div style="font-size:0.6rem;color:var(--muted);margin-top:4px">默认回测2年，确保反弹尝试窗口覆盖充足历史数据</div>
         </div>
         <div class="param-card" id="card1">
           <div class="param-card-header" onclick="toggleCard('card1')">
@@ -273,21 +273,21 @@
         <div class="xhs-card">
           <div class="xhs-card-header"><span class="xhs-card-label">📈 K线图 · 追盘日信号</span></div>
           <div class="ftd-chart-container" id="chart-kline"></div>
-          <div style="font-size:0.6rem;color:var(--text-tertiary);margin-top:6px">▲ 红色图钉=追盘日 · ▼ 绿色倒三角=反弹尝试日（创20日新低+收盘强势）</div>
+          <div style="font-size:0.6rem;color:var(--muted);margin-top:6px">▲ 红色图钉=追盘日 · ▼ 绿色倒三角=反弹尝试日（创20日新低+收盘强势）</div>
         </div>
 
         <!-- FTD Signal Table -->
         <div class="xhs-card">
           <div class="xhs-card-header">
             <span class="xhs-card-label">📋 追盘日明细</span>
-            <span style="font-size:0.7rem;color:var(--text-tertiary)">点击表头排序</span>
+            <span style="font-size:0.7rem;color:var(--muted)">点击表头排序</span>
           </div>
           <div class="table-wrapper" id="table-signals"></div>
           <div style="margin-top:14px;padding:12px 16px;background:var(--bg);border-radius:12px;border:1px solid var(--divider)">
             <div style="display:flex;gap:8px;align-items:center;">
               <span style="font-size:0.7rem;font-weight:700;color:var(--text-secondary);flex-shrink:0">🔎 单日排查</span>
               <input type="date" id="diag-date" style="padding:6px 10px;border:1px solid var(--divider);border-radius:10px;font-family:var(--font-display);font-size:0.72rem;background:var(--card-bg);color:var(--text-primary);flex:1">
-              <button onclick="runDiagnostic()" style="padding:7px 16px;background:var(--color-accent);color:#FFF;border:none;border-radius:10px;font-family:var(--font-display);font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button>
+              <button onclick="runDiagnostic()" style="padding:7px 16px;background:var(--accent);color:#FFF;border:none;border-radius:10px;font-family:var(--font-display);font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0">排查</button>
             </div>
             <div id="diag-result" style="margin-top:10px;display:none"></div>
           </div>
