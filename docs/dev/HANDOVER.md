@@ -2,7 +2,7 @@
 
 > 欧奈尔 CAN SLIM A股量化投资系统
 > 路径：`D:\hanako\investment-system`
-> 交接日期：2026-05-12
+> 交接日期：2026-05-28
 
 ## 技术栈
 
@@ -50,6 +50,16 @@ Python Flask + SQLite(20G WAL) + 前端原生JS + ECharts 5.5
 | 扁平基部 | `src/scanners/flat_base.py` | `config/market/flat_base.yaml` |
 | 大盘健康度 | `src/scanners/market_health.py` | — |
 | 大盘快照 | `scripts/compute_market_snapshot.py` | — |
+| 缠论分析 | `src/scanners/chanlun.py` | `config/chanlun.yaml`(待建) |
+
+## 看板页面
+
+| 页面 | 路径 | 说明 |
+|------|------|------|
+| 缠论分析 | `/chanlun-backtest/` | 单周期+多周期双模式，中枢/背驰/买卖信号/共振 |
+| 全市场形态扫描 | `/daily-pattern-scan/` | 静态HTML表格，客户端分页+筛选 |
+| 股票精选回测 | `/discipline/screening-backtest.html` | 精选快照历史回测 |
+| 指数精选回测 | `/discipline/screening-backtest-index.html` | 指数版精选回测+得分拆解弹窗 |
 
 ## 关键数据表
 
@@ -61,9 +71,15 @@ Python Flask + SQLite(20G WAL) + 前端原生JS + ECharts 5.5
 | `stock_rs_daily` | 个股RS(RPS_20/RPS_250) |
 | `index_rs_daily` | 指数RS(RS_20/60/120/250+MA+AD) |
 | `stock_margin` | 融资融券 |
-| `market_snapshot_daily` | 大盘快照 |
-| `market_health_daily` | 大盘健康度 |
-| `index_crowding_daily` | 指数拥挤度 |
+| `chanlun_bi` | 缠论笔记录 |
+| `chanlun_fx` | 缠论分型记录 |
+| `chanlun_zs` | 缠论中枢记录 |
+
+## 设计系统
+
+- **hanako-glass.css**：全站统一样式（41个页面共享），`max-width:1200px`，深浅双模式
+- **nav.js**：全站统一导航栏，`BACKTEST_ITEMS` + `MAIN_ITEMS` 数组管理，增删页面只改一处
+- **页面CSS铁律**：不覆盖 `.app-container`，不自定义全局布局，共享CSS是唯一真相源
 
 ## 每日更新
 

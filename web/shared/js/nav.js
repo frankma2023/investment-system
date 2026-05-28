@@ -2,6 +2,9 @@
  * Nav.js — 欧奈尔投资系统全站导航栏 (Dark Glass Edition for web4)
  */
 
+// 全站 favicon（所有页面统一）
+(function(){var l=document.createElement('link');l.rel='icon';l.type='image/svg+xml';l.href=(function(){var s=document.querySelector('script[src$=\"nav.js\"]');return s?s.src.replace(/\/shared\/js\/nav\.js.*/,'')+'/images/favicon.svg':'../images/favicon.svg'})();document.head.appendChild(l)})();
+
 // API Proxy: forward /api/ requests to Flask
 (function(){var B='http://localhost:8788',_f=window.fetch;window.fetch=function(u,o){if(typeof u==='string'&&u.indexOf('/api/')===0)u=B+u;return _f.call(window,u,o)}})();
 
@@ -32,6 +35,8 @@
     { href: '../breakout-failure/',     label: '突破失败',         page: 'breakout-failure' },
     { href: '../pattern-scan/',         label: '形态识别',         page: 'pattern-scan' },
     { href: '../chanlun-backtest/',     label: '缠论分析',         page: 'chanlun' },
+    { href: '../discipline/screening-backtest.html', label: '股票精选回测', page: 'screening-backtest' },
+    { href: '../discipline/screening-backtest-index.html', label: '指数精选回测', page: 'screening-backtest-index' },
       { href: '../progress.html',         label: '进展',             page: 'progress' },
 ];
 
@@ -86,10 +91,11 @@
 
   Nav.init = function (cfg) {
     config = cfg || {};
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', render);
-    } else {
+    // 只要 nav 元素已在 DOM 中，立即渲染（避免大页面等 DOMContentLoaded 过久）
+    if (document.getElementById('top-nav')) {
       render();
+    } else {
+      document.addEventListener('DOMContentLoaded', render);
     }
   };
 

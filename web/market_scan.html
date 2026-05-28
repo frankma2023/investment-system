@@ -8,8 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={theme:{extend:{colors:{surface:'#0f0f12',card:'#1a1a1f',border:'rgba(255,255,255,.06)',muted:'#8b8b90',accent:'#f59e0b'},fontFamily:{sans:['Inter','system-ui','sans-serif'],display:['Instrument Serif','Georgia','serif'],mono:['JetBrains Mono','Fira Code','monospace']}}}}</script>
 <link rel="stylesheet" href="shared/css/hanako-glass.css">
 <style>
   .page-header{text-align:center;padding:20px}
@@ -324,6 +322,22 @@
             }
         }
     
+  /* ── Tailwind 替代类（原 cdn.tailwindcss.com 已移除）── */
+  .container{max-width:1280px;margin:0 auto;padding:0 1rem}
+  .flex{display:flex}.grid{display:grid}
+  .grid-cols-1{grid-template-columns:repeat(1,1fr)}
+  .grid-cols-3{grid-template-columns:repeat(3,1fr)}
+  .gap-2{gap:0.5rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}
+  .items-center{align-items:center}
+  .justify-between{justify-content:space-between}
+  .font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}
+  .text-2xl{font-size:1.5rem;line-height:2rem}
+  .text-xl{font-size:1.25rem;line-height:1.75rem}
+  .text-lg{font-size:1.125rem;line-height:1.75rem}
+  .text-sm{font-size:0.875rem;line-height:1.25rem}
+  .text-center{text-align:center}
+  .mb-4{margin-bottom:1rem}.mb-8{margin-bottom:2rem}
+  .mt-2{margin-top:0.5rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}
 </style>
 </head>
 <body>

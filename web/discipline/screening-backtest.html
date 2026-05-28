@@ -4,142 +4,166 @@
 <meta charset="UTF-8">
 <link rel="icon" href="../images/favicon.svg" type="image/svg+xml">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>精选回测</title>
+<title>股票精选回测</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={theme:{extend:{colors:{surface:'#0f0f12',card:'#1a1a1f',border:'rgba(255,255,255,.06)',muted:'#8b8b90',accent:'#f59e0b'},fontFamily:{sans:['Inter','system-ui','sans-serif'],display:['Instrument Serif','Georgia','serif'],mono:['JetBrains Mono','Fira Code','monospace']}}}}</script>
+<link rel="preload" href="../shared/js/nav.js" as="script">
 <link rel="stylesheet" href="../shared/css/hanako-glass.css">
 <style>
-  .top-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
-  .top-bar label{font-size:10px;font-weight:500;color:var(--muted);display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.03em}
-  .top-bar input,.top-bar select{font-family:var(--font-body);padding:5px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:var(--card);color:var(--text-primary);outline:none;transition:all .2s}
-  .page-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-  .page-header h1{font-family:var(--font-display);font-size:1.2rem;font-weight:400;color:#d4d4d8;letter-spacing:-.01em}
-  html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
-  html[data-theme="light"] .page-header h1{color:#374151}
-    .panel-header { padding: 16px 0 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .panel-header h1 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 900; margin: 0; }
-    .stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 8px 0; }
-    .green { color: #2E7D32; } .red { color: #C62828; }
-    .bt-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
-    .bt-table th { text-align: center; padding: 7px 3px; border-bottom: 2px solid var(--divider); font-size: 0.6rem; font-weight: 700; color: var(--text-secondary); white-space: nowrap; position: sticky; top: 0; background: var(--bg); }
-    .bt-table td { padding: 5px 3px; border-bottom: 1px solid var(--divider); text-align: center; }
-    .bt-table tr:hover { background: var(--card-bg); }
-    .bt-table a { color: var(--accent); text-decoration: none; font-weight: 600; }
-    .label-tag { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 0.5rem; font-weight: 600; margin-right: 2px; }
+  body { font-family: var(--font-body); background: var(--bg); color: var(--text-primary); }
+
+  .page-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .page-header h1 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 400; color: var(--text-primary); }
+  html[data-theme="light"] .page-header h1 { color: #374151; }
+
+  .top-bar { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; padding: 14px 20px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 12px; box-shadow: var(--shadow-card); }
+  .top-bar label { font-size: 10px; font-weight: 500; color: var(--muted); display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: .03em; }
+  .top-bar input, .top-bar select { font-family: var(--font-body); padding: 6px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 12px; background: rgba(26,26,31,.4); color: var(--text-primary); outline: none; transition: all .2s; }
+  .top-bar input:focus, .top-bar select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,158,11,.1); }
+
+  .btn-run { padding: 7px 20px; background: var(--accent-subtle); color: var(--accent); border: 1px solid var(--accent-border); border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font-body); transition: all .2s; }
+  .btn-run:hover { background: rgba(245,158,11,.18); }
+
+  .stats-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+
+  .bt-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 10px; box-shadow: var(--shadow-card); overflow-x: auto; }
+
+  .bt-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; table-layout: auto; }
+  .bt-table th { text-align: center; padding: 7px 6px; border-bottom: 2px solid var(--divider); font-size: 0.6rem; font-weight: 700; color: var(--muted); white-space: nowrap; position: sticky; top: 0; background: var(--card); }
+  .bt-table td { padding: 5px 6px; border-bottom: 1px solid var(--divider); text-align: center; font-variant-numeric: tabular-nums; }
+  .bt-table tr:hover { background: var(--accent-subtle); }
+  .bt-table a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .bt-table a:hover { text-decoration: underline; }
+
+  .green { color: #4CAF50; font-weight: 700; }
+  .red { color: #E53935; font-weight: 700; }
+
+  .loading { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 0.75rem; }
+  .loading a { color: var(--accent); }
+
+  /* Light mode */
+  html[data-theme="light"] .top-bar { background: rgba(255,255,255,.75); border-color: var(--divider); }
+  html[data-theme="light"] .top-bar input, html[data-theme="light"] .top-bar select { background: rgba(255,255,255,.7); border-color: var(--divider); color: var(--text-primary); }
+  html[data-theme="light"] .bt-card { background: rgba(255,255,255,.75); border-color: var(--divider); }
+  html[data-theme="light"] .bt-table th { background: rgba(255,255,255,.75); }
 </style>
 </head>
 <body>
 <canvas id="bg-canvas"></canvas>
-<script>(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();
-</script>
+<script>(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();</script>
+
 <div class="app-container">
+<nav id="top-nav"></nav>
+<script src="../shared/js/nav.js"></script>
+<script>Nav.init({brandIcon:'🦊',brandText:'知行',currentPage:'screening-backtest'})</script>
 
-  <nav class="top-nav" id="top-nav"></nav>
+<div class="page-header">
+  <h1>📊 股票精选回测</h1>
+</div>
 
-    <div class="panel-header">
-      <h1>📊 精选回测</h1>
-    </div>
-
-    <div class="toolbar">
-      <label style="font-size:0.65rem;color:var(--text-secondary);">精选日期</label>
-      <select id="date-select" onchange="load()"></select>
-    </div>
-
-    <div id="stats-row" class="stats-row"></div>
-    <div id="table-wrap"><div class="loading">选择日期查看回测</div></div>
+<div class="top-bar">
+  <div>
+    <label>精选日期</label>
+    <select id="date-select" onchange="load()"></select>
   </div>
+</div>
 
-  <script src="../shared/js/nav.js"></script>
-  <script>
-    Nav.init({ brandIcon: '🦊', brandText: '知行', currentPage: 'discipline' });
+<div id="stats-row" class="stats-row"></div>
+<div class="bt-card" id="table-wrap">
+  <div class="loading">选择日期查看回测</div>
+</div>
+</div>
 
-    async function init() {
-      const resp = await fetch('/api/discipline/screening-backtest');
-      const d = await resp.json();
-      const sel = document.getElementById('date-select');
-      sel.innerHTML = '';
-      if (!d.available_dates || d.available_dates.length === 0) {
-        sel.innerHTML = '<option>— 暂无历史数据 —</option>';
-        document.getElementById('table-wrap').innerHTML = '<div class="loading">暂无精选快照数据。<br><span style="font-size:0.6rem;">请先访问 <a href="screening.html" style="color:var(--accent);">每日精选</a> 触发首次筛选。</span></div>';
-        return;
-      }
-      for (const dt of d.available_dates) {
-        const opt = document.createElement('option');
-        opt.value = dt;
-        opt.textContent = dt;
-        if (dt === d.date) opt.selected = true;
-        sel.appendChild(opt);
-      }
-      if (d.items && d.items.length) render(d);
-    }
+<script>
+async function init() {
+  var resp = await fetch('/api/discipline/screening-backtest');
+  var d = await resp.json();
+  var sel = document.getElementById('date-select');
+  sel.innerHTML = '';
+  if (!d.available_dates || d.available_dates.length === 0) {
+    sel.innerHTML = '<option>— 暂无历史数据 —</option>';
+    document.getElementById('table-wrap').innerHTML = '<div class="loading">暂无精选快照数据。<br><span style="font-size:0.6rem;">请先访问 <a href="screening.html" style="color:var(--accent);">每日精选</a> 触发首次筛选。</span></div>';
+    return;
+  }
+  for (var i = 0; i < d.available_dates.length; i++) {
+    var dt = d.available_dates[i];
+    var opt = document.createElement('option');
+    opt.value = dt;
+    opt.textContent = dt;
+    if (dt === d.date) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  if (d.items && d.items.length) render(d);
+}
 
-    async function load() {
-      const date = document.getElementById('date-select').value;
-      document.getElementById('table-wrap').innerHTML = '<div class="loading">加载中...</div>';
-      const resp = await fetch('/api/discipline/screening-backtest?date=' + date);
-      const d = await resp.json();
-      render(d);
-    }
+async function load() {
+  var date = document.getElementById('date-select').value;
+  document.getElementById('table-wrap').innerHTML = '<div class="loading">加载中...</div>';
+  var resp = await fetch('/api/discipline/screening-backtest?date=' + date);
+  var d = await resp.json();
+  render(d);
+}
 
-    function fmtPct(v) {
-      if (v == null) return '—';
-      const cls = v >= 0 ? 'green' : 'red';
-      const sign = v >= 0 ? '+' : '';
-      return `<span class="${cls}">${sign}${v}%</span>`;
-    }
+function fmtPct(v) {
+  if (v == null) return '—';
+  var cls = v >= 0 ? 'green' : 'red';
+  var sign = v >= 0 ? '+' : '';
+  return '<span class="' + cls + '">' + sign + v + '%</span>';
+}
 
-    function render(d) {
-      const s = d.stats || {};
-      let st = `<div class="stat-card"><div class="val">${s.count||0}</div><div class="lbl">精选数</div></div>`;
+function render(d) {
+  var s = d.stats || {};
+  var st = '<div class="stat-card"><div class="val">' + (s.count || 0) + '</div><div class="lbl">精选数</div></div>';
 
-      for (const tag of ['return_5d', 'return_10d', 'return_20d']) {
-        const label = tag.replace('return_', '') + '日';
-        const r = s[tag] || {};
-        const cls = (r.avg_return||0) >= 0 ? 'green' : 'red';
-        st += `<div class="stat-card">`;
-        st += `<div class="val ${cls}">${r.avg_return!=null?r.avg_return+'%':'—'}</div>`;
-        st += `<div class="lbl">${label} · 均收益</div>`;
-        st += `<div style="font-size:0.55rem;color:var(--muted)">`;
-        st += `胜率 ${r.win_rate!=null?r.win_rate+'%':'—'} · 有效 ${r.valid||0}`;
-        if (r.best) st += `<br>最佳 ${r.best.stock_code} ${fmtPct(r.best[tag])}`;
-        if (r.worst) st += `<br>最差 ${r.worst.stock_code} ${fmtPct(r.worst[tag])}`;
-        st += `</div></div>`;
-      }
-      document.getElementById('stats-row').innerHTML = st;
+  var tags = ['return_5d', 'return_10d', 'return_20d'];
+  for (var ti = 0; ti < tags.length; ti++) {
+    var tag = tags[ti];
+    var label = tag.replace('return_', '') + '日';
+    var r = s[tag] || {};
+    var cls = (r.avg_return || 0) >= 0 ? 'green' : 'red';
+    st += '<div class="stat-card">';
+    st += '<div class="val ' + cls + '">' + (r.avg_return != null ? r.avg_return + '%' : '—') + '</div>';
+    st += '<div class="lbl">' + label + ' · 均收益</div>';
+    st += '<div style="font-size:0.55rem;color:var(--muted)">';
+    st += '胜率 ' + (r.win_rate != null ? r.win_rate + '%' : '—') + ' · 有效 ' + (r.valid || 0);
+    if (r.best) st += '<br>最佳 ' + r.best.stock_code + ' ' + fmtPct(r.best[tag]);
+    if (r.worst) st += '<br>最差 ' + r.worst.stock_code + ' ' + fmtPct(r.worst[tag]);
+    st += '</div></div>';
+  }
+  document.getElementById('stats-row').innerHTML = st;
 
-      const items = d.items || [];
-      if (!items.length) {
-        document.getElementById('table-wrap').innerHTML = '<div class="loading">该日期无精选数据</div>';
-        return;
-      }
-      let h = '<table class="bt-table"><thead><tr>';
-      h += '<th>排名</th><th>代码</th><th>名称</th><th>O\'Neil</th>';
-      h += '<th>买点</th><th>信号日</th><th>当日价</th><th>5日收益</th><th>10日收益</th><th>20日收益</th><th>K线天数</th>';
-      h += '</tr></thead><tbody>';
-      for (const it of items) {
-        h += '<tr>';
-        h += `<td>${it.rank||'—'}</td>`;
-        h += `<td><a href="review.html?code=${it.stock_code}">${it.stock_code}</a></td>`;
-        h += `<td>${it.stock_name||''}</td>`;
-        h += `<td><b>${it.oneil_score!=null?it.oneil_score.toFixed(0):'—'}</b></td>`;
-        h += `<td>${it.ideal_buy?'¥'+it.ideal_buy.toFixed(2):'—'}</td>`;
-        h += `<td style="font-size:0.6rem">${it.buy_signal_date||'—'}</td>`;
-        h += `<td>${it.close_0d?'¥'+it.close_0d.toFixed(2):'—'}</td>`;
-        h += `<td>${fmtPct(it.return_5d)}</td>`;
-        h += `<td>${fmtPct(it.return_10d)}</td>`;
-        h += `<td>${fmtPct(it.return_20d)}</td>`;
-        h += `<td style="font-size:0.6rem;color:var(--muted)">${it.holding_days||0}d</td>`;
-        h += '</tr>';
-      }
-      h += '</tbody></table>';
-      document.getElementById('table-wrap').innerHTML = h;
-    }
+  var items = d.items || [];
+  if (!items.length) {
+    document.getElementById('table-wrap').innerHTML = '<div class="loading">该日期无精选数据</div>';
+    return;
+  }
+  var h = '<table class="bt-table"><thead><tr>';
+  h += '<th>排名</th><th>代码</th><th>名称</th><th>O\'Neil</th>';
+  h += '<th>买点</th><th>信号日</th><th>当日价</th><th>5日收益</th><th>10日收益</th><th>20日收益</th><th>K线天数</th>';
+  h += '</tr></thead><tbody>';
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    h += '<tr>';
+    h += '<td>' + (it.rank || '—') + '</td>';
+    h += '<td><a href="review.html?code=' + it.stock_code + '">' + it.stock_code + '</a></td>';
+    h += '<td>' + (it.stock_name || '') + '</td>';
+    h += '<td><b>' + (it.oneil_score != null ? it.oneil_score.toFixed(0) : '—') + '</b></td>';
+    h += '<td>' + (it.ideal_buy ? '¥' + it.ideal_buy.toFixed(2) : '—') + '</td>';
+    h += '<td style="font-size:0.6rem">' + (it.buy_signal_date || '—') + '</td>';
+    h += '<td>' + (it.close_0d ? '¥' + it.close_0d.toFixed(2) : '—') + '</td>';
+    h += '<td>' + fmtPct(it.return_5d) + '</td>';
+    h += '<td>' + fmtPct(it.return_10d) + '</td>';
+    h += '<td>' + fmtPct(it.return_20d) + '</td>';
+    h += '<td style="font-size:0.6rem;color:var(--muted)">' + (it.holding_days || 0) + 'd</td>';
+    h += '</tr>';
+  }
+  h += '</tbody></table>';
+  document.getElementById('table-wrap').innerHTML = h;
+}
 
-    init();
-  
+init();
+
 function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n)}
 (function(){var s=localStorage.getItem('theme')||'dark';document.documentElement.dataset.theme=s})();
 </script>

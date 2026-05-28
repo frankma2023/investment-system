@@ -2866,6 +2866,19 @@ def api_chanlun_echarts():
         import traceback
         return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
 
+@app.route('/api/chanlun/multi-period', methods=['GET'])
+def api_chanlun_multi_period():
+    """缠论多周期联立分析（日/周/月）"""
+    code = request.args.get('code', '000985')
+    limit = int(request.args.get('limit', 400))
+    try:
+        from scanners.chanlun import multi_period_analyze
+        result = multi_period_analyze(code, limit)
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+
 
 # ═══════════════════════════════════════════════
 # 统一形态扫描 API — /api/pattern-scan

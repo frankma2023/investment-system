@@ -8,8 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={theme:{extend:{colors:{surface:'#0f0f12',card:'#1a1a1f',border:'rgba(255,255,255,.06)',muted:'#8b8b90',accent:'#f59e0b'},fontFamily:{sans:['Inter','system-ui','sans-serif'],display:['Instrument Serif','Georgia','serif'],mono:['JetBrains Mono','Fira Code','monospace']}}}}</script>
 <link rel="stylesheet" href="../shared/css/hanako-glass.css">
 <style>
   .chart-wrap{height:520px;margin-bottom:4px}
@@ -194,7 +192,7 @@
     div.innerHTML=h+'</tbody></table>';
   }
 </script>
-  <script src="../shared/js/nav.glass.js"></script>
+  <script src="../shared/js/nav.js"></script>
   <script>function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n);if(typeof renderChart==='function')renderChart()}
 (function(){var s=localStorage.getItem('theme')||'dark';document.documentElement.dataset.theme=s})();
 Nav.init({brandIcon:"📉",brandText:"抛盘日回测",currentPage:"distribution-day"})</script>

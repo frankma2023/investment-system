@@ -8,8 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={theme:{extend:{colors:{surface:'#0f0f12',card:'#1a1a1f',border:'rgba(255,255,255,.06)',muted:'#8b8b90',accent:'#f59e0b'},fontFamily:{sans:['Inter','system-ui','sans-serif'],display:['Instrument Serif','Georgia','serif'],mono:['JetBrains Mono','Fira Code','monospace']}}}}</script>
 <link rel="stylesheet" href="shared/css/hanako-glass.css">
 <style>
   .page-header{text-align:center;padding:20px}
@@ -48,13 +46,13 @@
 
     <header class="panel-header">
       <h1>📋 欧奈尔投资系统 · 项目进展</h1>
-      <p>2026-05-19（阶段收尾）</p>
+      <p>2026-05-28（阶段收尾）</p>
     </header>
 
     <div class="pg-stats">
-      <div class="pg-stat"><div class="n" style="color:#4CAF50">76</div><div class="l">已完成</div></div>
+      <div class="pg-stat"><div class="n" style="color:#4CAF50">80</div><div class="l">已完成</div></div>
       <div class="pg-stat"><div class="n" style="color:#FF9800">0</div><div class="l">进行中</div></div>
-      <div class="pg-stat"><div class="n">1</div><div class="l">待开发</div></div>
+      <div class="pg-stat"><div class="n">2</div><div class="l">待开发</div></div>
     </div>
 
     <div class="section-title">功能模块</div>
@@ -245,9 +243,12 @@
 
     <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">43. base_breakout 引擎的 buy_point ≠ 信号日收盘价</div><div class="ld">base_breakout 返回 buy_point = prior_high + 0.01（基部前高突破价），而非信号日的 close。301377 买点 137.71 vs 实际收盘 253.68 差 85%。回测页显示买点价应优先取信号日 close（实际可成交价），取值链调整为 close → breakout_close → breakout_price → buy_point。教训：引擎输出的价格字段语义不同，直接展示前需确认其含义。</div></div>
 
-    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">44. 精选 API 每次刷新重跑完整筛选——极慢，应优先读快照表</div><div class="ld">api_screening 最初直接调用 screener.run()，每次刷新页面都重跑六层筛选（加载 1500+ 股票的 K 线和引擎），耗时数十秒。修复：优先从 discipline_screening_daily 快照表读取（毫秒级），仅当日无数据时才触发实时计算。daily_update.py 已在盘后自动预存快照，次日访问始终秒出。教训：高频访问的 API 前端页面，后端务必加缓存层——预计算落盘 > 每次实时计算。</div></div>
-
-    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">38. SQLite AVG() 聚合函数忽略 LIMIT，导致 S 维度量比恒为 1.0</div><div class="ld">CAN SLIM v3.0 中 S 维度计算 5 日均量 / 50 日均量。原 SQL 为 `SELECT AVG(volume) FROM t ORDER BY date DESC LIMIT N`，但 AVG() 是聚合函数，先算全表均值再应用 LIMIT（对单行结果无意义），两个查询返回相同的全历史均值，比值恒为 1.0。修复：改为子查询 `SELECT AVG(volume) FROM (SELECT volume FROM t ORDER BY date DESC LIMIT N)`。同理 base_breakout 的 `_sma` 等函数遇到 NULL close/volume 时 `sum()` 崩掉——需全部加 None 过滤。教训：聚合+排序+LIMIT 的组合必须用子查询隔离；任何假定"数据不会为 NULL"的金融计算必须有守卫。</div></div>
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">45. CZSC Rust 版将 naive datetime 当 UTC 处理，日期回退 8 小时</div><div class="ld">`pd.Timestamp.to_pydatetime()` 返回 naive datetime，CZSC Rust 核心将其解释为 UTC，输出分型/笔日期变成前一天 16:00。周日出现交易信号。修复：直接传 `pd.Timestamp`（有时区感知），不要 `.to_pydatetime()`。教训：Python→Rust FFI 的 datetime 传递必须确认时区语义。</div></div>
+    <div class="lesson-card" style="border-left-color:#FF9800"><div class="ln" style="color:#F57C00">46. 缠论笔严格交替，背驰检测需比较间隔同向笔而非相邻笔</div><div class="ld">笔的 direction 是上→下→上→下严格交替的，相邻笔方向永远相反。初始实现用 `bi[i-1] vs bi[i]` 比较永远得不到同向，背驰检测始终为空。修复：比较 `bi[i] vs bi[i+2]`（中间隔一个反向笔）。教训：理解数据结构的生成规则后再写检测逻辑，否则条件永远不会命中。</div></div>
+    <div class="lesson-card" style="border-left-color:#FF9800"><div class="ln" style="color:#F57F00">47. 周/月K线图需从日线合成，不能直接画日线</div><div class="ld">多周期模式下 W/M 图表仍渲染日线 OHLC，三个图看起来一模一样。修复：`resample('W-FRI')` / `resample('ME')` 合成真正的周/月 K 线，笔坐标通过 `_build_period_index_map` 映射。教训：换了周期参数不等于换了数据——必须确认图表上的每根蜡烛都来自正确的聚合粒度。</div></div>
+    <div class="lesson-card" style="border-left-color:#FF9800"><div class="ln" style="color:#F57F00">48. 全站 Tailwind CDN 是纯浪费——42个页面加载但只用1个页面用到</div><div class="ld">`cdn.tailwindcss.com` 被 42 个页面引用，实际 Tailwind 工具类只被 market_scan.html 使用了 25 个。批量删除 CDN 引用 + 给 market_scan.html 补 25 行等效 CSS，消除所有控制台警告。教训：模板复制粘贴的依赖要定期审计，生产环境不要用 CDN 脚本。</div></div>
+    <div class="lesson-card" style="border-left-color:#FF9800"><div class="ln" style="color:#F57F00">49. 页面自定义 app-container 越权覆盖共享CSS导致边距不一致</div><div class="ld">3 个页面各自写了 `max-width:1400px; padding:16px 24px 0` 覆盖 hanako-glass.css 的 `1200px; 12px 10px 40px`，左右边距肉眼可见不一致。删除自定义覆盖、统一继承共享样式。教训：共享 CSS 是唯一真相源，页面级覆盖只应为页面特有组件服务，不应重新定义全局布局。</div></div>
+    <div class="lesson-card" style="border-left-color:#FF9800"><div class="ln" style="color:#F57F00">50. 大页面导航栏延迟——nav.js 在底部加载导致 DOMContentLoaded 等待 37K 行</div><div class="ld">daily-pattern-scan 页面 37K 行 HTML，nav.js 放在 body 底部，Nav.init 等 DOMContentLoaded。修复：`<link rel="preload">` 提前下载 + nav.js 和 Nav.init 放在 `<nav>` 容器后立即执行。nav.js 的 init 已内置"top-nav在DOM中则立即渲染"逻辑。教训：大页面的关键渲染路径要前移，不要让导航栏等数据表格。</div></div>
 
     <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>
