@@ -13,23 +13,19 @@
 <link rel="stylesheet" href="../shared/css/hanako-glass.css">
 <script src="../shared/js/echarts.min.js"></script>
 <style>
+  /* Page-specific only */
   .top-bar{display:flex;gap:12px;align-items:flex-end;padding:14px 18px;background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;box-shadow:var(--shadow-card);flex-wrap:wrap}
   .top-bar .fld{flex:1;min-width:80px}
-  .top-bar label{display:block;font-size:10px;font-weight:500;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.03em}
+  .top-bar label{font-size:10px;font-weight:500;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.03em}
   .top-bar input,.top-bar select{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:rgba(26,26,31,.4);color:var(--text-primary);font-family:var(--font-body);outline:none;transition:all .2s}
   .top-bar input:focus,.top-bar select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,158,11,.1)}
-  .btn-run{padding:8px 24px;background:var(--accent-subtle);color:var(--accent);border:1px solid var(--accent-border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .2s;white-space:nowrap}
-  .btn-run:hover{background:rgba(245,158,11,.18)}.btn-run:disabled{opacity:.4;cursor:not-allowed}
-  .chart-wrap{width:100%;height:520px;margin-bottom:10px}
-  .mode-btn{padding:4px 10px;border:1px solid var(--border);border-radius:8px;background:rgba(26,26,31,.4);color:var(--muted);font-size:11px;cursor:pointer;white-space:nowrap;font-family:var(--font-body);transition:all .2s;margin-right:4px}
+  .mode-btn{padding:4px 10px;border:1px solid var(--border);border-radius:8px;background:rgba(26,26,31,.4);color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font-body);transition:all .2s;margin-right:4px}
   .mode-btn.active{background:var(--accent-subtle);color:var(--accent);border-color:var(--accent-border)}
+  .chart-wrap{width:100%;height:520px;margin-bottom:10px}
   .bottom-layout{display:flex;gap:14px;align-items:flex-start}
   .bottom-left{flex:1;min-width:0}
-  .bottom-right{width:340px;flex-shrink:0}
+  .bottom-right{width:360px;flex-shrink:0}
   .stat-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-  .stat-item{flex:1;min-width:80px;background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:14px;padding:12px;text-align:center;box-shadow:var(--shadow-card)}
-  .stat-item .val{font-family:var(--font-display);font-size:1.3rem;font-weight:400;color:var(--text-primary)}
-  .stat-item .lbl{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
   .signal-tag{display:inline-block;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:500;margin:2px 2px}
   .signal-buy{background:rgba(239,68,68,.1);color:var(--fall);border:1px solid rgba(239,68,68,.2)}
   .signal-sell{background:rgba(16,185,129,.1);color:var(--rise);border:1px solid rgba(16,185,129,.2)}
@@ -45,7 +41,7 @@
 <div class="top-bar">
   <div class="fld" style="flex:0.7;min-width:160px">
     <label>股票/指数代码</label>
-    <div style="display:flex;gap:6px;align-items:center">
+    <div style="display:flex;gap:4px;align-items:center">
       <button class="mode-btn" id="btn-stock" onclick="switchMode('stock')">个股</button>
       <button class="mode-btn active" id="btn-index" onclick="switchMode('index')">指数</button>
       <input type="text" id="code" value="000985" style="flex:1" onkeydown="if(event.key==='Enter')analyze()">
@@ -54,17 +50,13 @@
   </div>
   <div class="fld" style="flex:0.4;min-width:80px">
     <label>周期</label>
-    <select id="freq" onchange="analyze()">
-      <option value="D">日线</option>
-      <option value="W">周线</option>
-      <option value="M">月线</option>
-    </select>
+    <select id="freq" onchange="analyze()"><option value="D">日线</option><option value="W">周线</option><option value="M">月线</option></select>
   </div>
   <button class="btn-run" onclick="analyze()">分析</button>
 </div>
 
 <div class="stat-row" id="stats"></div>
-<div class="chart-wrap" id="chart"></div>
+<div class="chart-card" style="padding:0;overflow:hidden"><div class="chart-wrap" id="chart"></div></div>
 
 <div class="bottom-layout">
   <div class="bottom-left">
@@ -86,27 +78,21 @@
 <script>Nav.init({brandIcon:"⬤",brandText:"缠论分析",currentPage:"chanlun"})</script>
 <script>
 const API='http://localhost:8788';let mode='index',chartInst;
-
 function switchMode(m){mode=m;document.getElementById('btn-stock').className='mode-btn'+(m==='stock'?' active':'');document.getElementById('btn-index').className='mode-btn'+(m==='index'?' active':'');document.getElementById('code').value=m==='stock'?'600519':'000985';analyze()}
 
 async function analyze(){
   var code=document.getElementById('code').value.trim();if(!code)return;
   var freq=document.getElementById('freq').value;
   var btn=document.querySelector('.btn-run');btn.disabled=true;btn.textContent='⏳';
-  
-  // 查名称
   try{var nr=await fetch(API+'/api/stock-name?code='+code+'&mode='+mode);if(nr.ok){var nd=await nr.json();document.getElementById('stock-name').textContent=nd.name||''}}catch(e){}
-  
   try{
-    var resp=await fetch(API+'/api/chanlun/echarts?code='+code+'&freq='+freq+'&limit=400');
-    var opt=await resp.json();
-    if(opt.error){alert(opt.error);btn.disabled=false;btn.textContent='分析';return}
-    renderChart(opt);
-    
-    // 统计
-    var r2=await fetch(API+'/api/chanlun/analyze?code='+code+'&freq='+freq+'&limit=400');
-    var data=await r2.json();
-    if(!data.error)renderStats(data);
+    var[optResp,dataResp]=await Promise.all([
+      fetch(API+'/api/chanlun/echarts?code='+code+'&freq='+freq+'&limit=400'),
+      fetch(API+'/api/chanlun/analyze?code='+code+'&freq='+freq+'&limit=400')
+    ]);
+    var opt=await optResp.json(),data=await dataResp.json();
+    if(opt.error){alert(opt.error);return}
+    renderChart(opt);renderStats(data);
   }catch(e){alert('分析失败: '+e.message)}
   btn.disabled=false;btn.textContent='分析';
 }
@@ -114,54 +100,34 @@ async function analyze(){
 function renderChart(opt){
   var el=document.getElementById('chart');if(!el)return;
   if(chartInst&&!chartInst.isDisposed())chartInst.dispose();
-  chartInst=echarts.init(el);
-  // CZSC's to_echarts returns the full option
-  chartInst.setOption(opt);
+  chartInst=echarts.init(el);chartInst.setOption(opt);
 }
 
 function renderStats(data){
-  var html='';
-  html+='<div class="stat-item"><div class="val">'+data.bi_count+'</div><div class="lbl">笔</div></div>';
-  html+='<div class="stat-item"><div class="val">'+data.fx_count+'</div><div class="lbl">分型</div></div>';
-  if(data.bi_list&&data.bi_list.length){
-    var last=data.bi_list[data.bi_list.length-1];
-    html+='<div class="stat-item"><div class="val" style="color:'+(last.direction==='up'?'var(--fall)':'var(--rise)')+'">'+(last.direction==='up'?'↑':'↓')+'</div><div class="lbl">当前方向</div></div>';
-    html+='<div class="stat-item"><div class="val">'+(last.power||0).toFixed(1)+'</div><div class="lbl">笔力度</div></div>';
-  }
-  document.getElementById('stats').innerHTML=html;
-  
+  var stat=document.getElementById('stats');
+  if(!data.bi_count){stat.innerHTML='';return}
+  var last=data.bi_list[data.bi_list.length-1];
+  var dirClr=last.direction==='up'?'var(--fall)':'var(--rise)';
+  stat.innerHTML=
+    '<div class="stat-card"><div class="val">'+data.bi_count+'</div><div class="lbl">笔</div></div>'+
+    '<div class="stat-card"><div class="val">'+data.fx_count+'</div><div class="lbl">分型</div></div>'+
+    '<div class="stat-card"><div class="val" style="color:'+dirClr+'">'+(last.direction==='up'?'↑':'↓')+'</div><div class="lbl">当前方向</div></div>'+
+    '<div class="stat-card"><div class="val">'+(last.power||0).toFixed(1)+'</div><div class="lbl">笔力度</div></div>';
   // 笔列表
-  if(data.bi_list&&data.bi_list.length){
-    var tbl='<table class="mini-table"><thead><tr><th>方向</th><th>起点</th><th>终点</th><th>低</th><th>高</th><th>力度</th></tr></thead><tbody>';
-    var bis=[].concat(data.bi_list).reverse().slice(0,20);
-    bis.forEach(function(bi){
-      var d=bi.direction==='up'?'↑':'↓';
-      var c=bi.direction==='up'?'var(--fall)':'var(--rise)';
-      tbl+='<tr><td style="color:'+c+';font-weight:500">'+d+'</td><td>'+bi.sdt.slice(0,10)+'</td><td>'+bi.edt.slice(0,10)+'</td><td class="mono">'+bi.low.toFixed(1)+'</td><td class="mono">'+bi.high.toFixed(1)+'</td><td class="mono">'+(bi.power||0).toFixed(1)+'</td></tr>';
-    });
-    tbl+='</tbody></table>';
-    document.getElementById('bi-table').innerHTML=tbl;
-  }
-  
+  var tbl='<table class="mini-table"><thead><tr><th>方向</th><th>起点</th><th>终点</th><th>低</th><th>高</th><th>力度</th></tr></thead><tbody>';
+  [].concat(data.bi_list).reverse().slice(0,20).forEach(function(bi){
+    var d=bi.direction==='up'?'↑':'↓',c=bi.direction==='up'?'var(--fall)':'var(--rise)';
+    tbl+='<tr><td style="color:'+c+';font-weight:500">'+d+'</td><td>'+bi.sdt.slice(0,10)+'</td><td>'+bi.edt.slice(0,10)+'</td><td class="mono">'+bi.low.toFixed(1)+'</td><td class="mono">'+bi.high.toFixed(1)+'</td><td class="mono">'+(bi.power||0).toFixed(1)+'</td></tr>';
+  });
+  document.getElementById('bi-table').innerHTML=tbl+'</tbody></table>';
   // 信号
-  if(data.signals&&Object.keys(data.signals).length){
-    var sigs='';
-    for(var k in data.signals){
-      if(data.signals[k]){
-        sigs+='<span class="signal-tag signal-buy">'+k+'</span> ';
-      }
-    }
-    if(!sigs)sigs='<span style="color:var(--muted);font-size:11px">暂无明确信号</span>';
-    document.getElementById('signals-panel').innerHTML=sigs;
-  }else{
-    document.getElementById('signals-panel').innerHTML='<span style="color:var(--muted);font-size:11px">暂无信号</span>';
-  }
+  var sigs='';
+  if(data.signals)for(var k in data.signals){if(data.signals[k])sigs+='<span class="signal-tag signal-buy">'+k+'</span> '}
+  document.getElementById('signals-panel').innerHTML=sigs||'<span style="color:var(--muted);font-size:11px">暂无明确信号</span>';
 }
 
 function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n)}
 (function(){var s=localStorage.getItem('theme')||'dark';document.documentElement.dataset.theme=s})();
-
-// Auto-analyze
 analyze();
 </script>
 </body>
