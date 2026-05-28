@@ -271,7 +271,7 @@
       var volData=ck.map(function(k,i){var color=ck[i].close>=ck[i].open?'rgba(229,57,53,0.35)':'rgba(38,198,218,0.35)';return{value:k.volume,itemStyle:{color:color}}});
 
       chart.setOption({
-        backgroundColor:document.documentElement.dataset.theme==='dark'?'#2A2627':'#fff',
+        backgroundColor:document.documentElement.dataset.theme==='dark'?'#1a1a1f':'#fff',
         tooltip:{trigger:'axis',axisPointer:{type:'cross'},formatter:function(params){
           if(!params||!params.length)return'';
           var k=params[0];var di=k.dataIndex;var d=ck[di];if(!d)return'';

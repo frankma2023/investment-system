@@ -169,7 +169,7 @@
     }
     function renderChart(){
       if(!chart||!ck.length)return;
-      const dates=ck.map(k=>k.date);const bg=document.documentElement.dataset.theme==='dark'?'#2A2627':'#fff';
+      const dates=ck.map(k=>k.date);const bg=document.documentElement.dataset.theme==='dark'?'#1a1a1f':'#fff';
       const marks=[];cs.forEach(s=>{
         const si=dates.indexOf(s.date);if(si<0)return;
         marks.push({value:[si,s.close],symbol:'diamond',symbolSize:18,itemStyle:{color:'#4CAF50',borderColor:'#FFF',borderWidth:1}});

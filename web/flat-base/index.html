@@ -160,7 +160,7 @@
       btn.disabled=false
     }
     function renderChart(){
-      if(!chart||!ck.length)return;const dates=ck.map(k=>k.date),bg=document.documentElement.dataset.theme==='dark'?'#2A2627':'#fff';
+      if(!chart||!ck.length)return;const dates=ck.map(k=>k.date),bg=document.documentElement.dataset.theme==='dark'?'#1a1a1f':'#fff';
       const fmt=function(v){if(v==null)return'—';if(v>=1e8)return(v/1e8).toFixed(2)+'亿';if(v>=1e4)return(v/1e4).toFixed(0)+'万';return v.toFixed(0)};
       var ma=function(p){var r=[],sum=0;for(var i=0;i<ck.length;i++){if(ck[i].close!=null){sum+=ck[i].close;if(i>=p){sum-=ck[i-p].close;r.push(sum/p)}else{r.push(null)}}else{r.push(null)}}return r};
       var ma5=ma(5),ma10=ma(10),ma20=ma(20),ma120=ma(120),ma250=ma(250);

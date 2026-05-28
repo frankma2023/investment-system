@@ -139,7 +139,7 @@
     if(!chart||!kl.length)return;
     var dates=kl.map(function(k){return k.date});
     var isDark=document.documentElement.dataset.theme==='dark';
-    var bg=isDark?'#2A2627':'#fff',tx=isDark?'#ccc':'#333';
+    var bg=isDark?'#1a1a1f':'#fff',tx=isDark?'#ccc':'#333';
     var volColors=kl.map(function(k){return k.dist_type?isDark?'rgba(198,40,40,0.6)':'rgba(198,40,40,0.45)':isDark?'rgba(229,57,53,0.25)':'rgba(229,57,53,0.2)'});
     var cntData=cn.map(function(c){return c.count});
 

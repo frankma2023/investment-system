@@ -198,7 +198,7 @@
       const colors=['#FF9800','#2196F3','#4CAF50','#9C27B0','#00BCD4','#E91E63'];
       const points=[];cs.forEach((s,i)=>{const si=dates.indexOf(s.date);if(si<0)return;const cl=s.pivot_type==='10ma_bounce'?colors[2]:colors[0];points.push({value:[si,s.close],symbol:'triangle',symbolSize:16,symbolRotate:180,itemStyle:{color:cl,borderColor:'#FFF',borderWidth:0.8}});});
       const fmt=function(v){if(v==null)return'—';if(v>=1e8)return(v/1e8).toFixed(2)+'亿';if(v>=1e4)return(v/1e4).toFixed(0)+'万';return v.toFixed(0);};
-      var bg=document.documentElement.dataset.theme==='dark'?'#2A2627':'#fff';
+      var bg=document.documentElement.dataset.theme==='dark'?'#1a1a1f':'#fff';
       chart.setOption({
         backgroundColor:bg,tooltip:{trigger:'axis',axisPointer:{type:'cross',crossStyle:{color:'#999'}},backgroundColor:'rgba(255,255,255,0.75)',textStyle:{fontSize:10},formatter:function(params){if(!params||!params.length)return'';var k=ck[params[0].dataIndex];if(!k)return'';var chg=k.close-k.open;var raw=k.change_pct!=null?k.change_pct:null;var chgPct=raw!=null?(Math.abs(raw)>1?raw:raw*100).toFixed(2):(k.open>0?(chg/k.open*100).toFixed(2):'0.00');var col=chg>=0?'#E53935':'#26C6DA';return '<span style=font-size:12px;font-weight:700>'+k.date+'</span><br/>开盘：<b>'+k.open.toFixed(2)+'</b><br/>最高：<b>'+k.high.toFixed(2)+'</b><br/>最低：<b>'+k.low.toFixed(2)+'</b><br/>收盘：<b style=color:'+col+'>'+k.close.toFixed(2)+'</b><br/>涨跌：<b style=color:'+col+'>'+(chg>=0?'+':'')+chg.toFixed(2)+' ('+(chg>=0?'+':'')+chgPct+'%)</b><br/>成交量：<b>'+fmt(k.volume)+'</b><br/>成交额：<b>'+fmt(k.amount)+'</b>';}},axisPointer:{link:[{xAxisIndex:'all'}]},
         grid:[{left:'8%',right:'1%',top:8,height:'60%'},{left:'8%',right:'1%',top:'75%',height:'15%'}],

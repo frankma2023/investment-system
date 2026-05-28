@@ -104,8 +104,8 @@
     downColor: '#26C6DA',      // 阴线
 
     // 背景
-    darkBg: '#2A2627',
-    lightBg: '#fff',
+    darkBg: '#1a1a1f',
+    lightBg: '#ffffff',
 
     // 网格
     gridMainHeight: '60%',     // 主图高度

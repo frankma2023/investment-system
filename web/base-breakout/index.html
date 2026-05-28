@@ -219,7 +219,7 @@
     var ma=function(p){var r=[],s=0;for(var i=0;i<ck.length;i++){if(ck[i].close!=null){s+=ck[i].close;if(i>=p){s-=ck[i-p].close;r.push(s/p)}else r.push(null)}else r.push(null)}return r};
     var ma5=ma(5),ma10=ma(10),ma20=ma(20),ma60=ma(60),ma120=ma(120),ma250=ma(250);
     var isDark=document.documentElement.dataset.theme==='dark';
-    var bg=isDark?'#2A2627':'#fff';
+    var bg=isDark?'#1a1a1f':'#fff';
     var tx=isDark?'#ccc':'#333';
     var pts=[];
     cs.forEach(function(s){
