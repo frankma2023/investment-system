@@ -1,85 +1,86 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" class="dark">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>形态识别 · 投资手账本</title>
-  <link rel="stylesheet" href="../shared/css/theme.css">
-  <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="../shared/css/xhs-cards.css">
-  <link rel="stylesheet" href="../shared/css/components.css">
+  <title>形态识别</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="../shared/js/echarts.min.js"></script>
-  <style>
-    .top-bar { display:flex; gap:12px; align-items:flex-end; padding:16px 20px; background:var(--card-bg); border-radius:18px; margin-bottom:12px; box-shadow:0 1px 6px rgba(0,0,0,0.04); flex-wrap:wrap; }
-    .top-bar .fld { flex:1; min-width:90px; }
-    .top-bar label { display:block; font-size:0.6rem; font-weight:600; color:var(--text-tertiary); margin-bottom:3px; }
-    .top-bar input,.top-bar select { width:100%; padding:7px 10px; border:1px solid var(--divider); border-radius:10px; font-size:0.75rem; background:var(--card-bg); color:var(--text-primary); box-sizing:border-box; }
-    .btn-scan { padding:8px 24px; background:#FE2C55; color:#FFF; border:none; border-radius:14px; font-size:0.9rem; font-weight:800; cursor:pointer; white-space:nowrap; }
-    .btn-scan:hover { opacity:0.88; } .btn-scan:disabled { background:#CCC; cursor:not-allowed; }
-
-    /* 个股/指数切换 */
-    .mode-btn { padding:3px 8px; border:1px solid var(--divider); border-radius:8px; background:var(--card-bg); color:var(--text-secondary); font-size:0.6rem; cursor:pointer; white-space:nowrap; flex-shrink:0; }
-    .mode-btn.active { background:var(--color-accent); color:#FFF; border-color:var(--color-accent); font-weight:700; }
-
-    /* 图表控件栏 */
-    .chart-controls { display:flex; gap:16px; align-items:center; padding:6px 0; margin-bottom:6px; }
-    .chart-controls .ctrl-group { display:flex; align-items:center; gap:4px; }
-    .chart-controls .ctrl-label { font-size:0.6rem; font-weight:600; color:var(--text-tertiary); margin-right:4px; }
-    .chart-controls .ctrl-btn { padding:4px 12px; border:1px solid var(--divider); border-radius:10px; background:var(--card-bg); color:var(--text-secondary); font-size:0.68rem; cursor:pointer; transition:all 0.15s; }
-    .chart-controls .ctrl-btn:hover { border-color:var(--color-accent); color:var(--color-accent); }
-    .chart-controls .ctrl-btn.active { background:#FE2C55; color:#FFF; border-color:#FE2C55; font-weight:700; }
-
-    /* 图表区域 */
-    .chart-wrap { width:100%; height:560px; margin-bottom:0; }
-
-    /* 信号标记图例 */
-    .signal-legend { display:flex; gap:12px; flex-wrap:wrap; padding:6px 0 10px 0; font-size:0.62rem; align-items:center; color:var(--text-tertiary); }
-    .signal-legend .sl-item { display:inline-flex; align-items:center; gap:4px; font-size:0.65rem; color:var(--text-secondary); }
-    .signal-legend .sl-sym { font-size:0.9rem; line-height:1; }
-
-    /* 下方双栏 */
-    .bottom-layout { display:flex; gap:14px; align-items:flex-start; margin-bottom:10px; }
-    .bottom-left { flex:1; min-width:0; }
-    .bottom-right { width:340px; flex-shrink:0; }
-    @media (max-width:900px) { .bottom-layout { flex-direction:column; } .bottom-right { width:100%; } }
-
-    /* 分析建议卡片内部 */
-    .rec-section { margin-bottom:8px; }
-    .rec-section:last-child { margin-bottom:0; }
-    .rec-label { font-size:0.62rem; font-weight:700; color:var(--color-accent); margin-bottom:3px; display:flex; align-items:center; gap:4px; }
-    .rec-text { font-size:0.7rem; color:var(--text-secondary); line-height:1.5; }
-
-    /* 信号时间线 */
-    .timeline-wrap { max-height:520px; overflow-y:auto; }
-    .tl-item { display:flex; align-items:flex-start; gap:10px; padding:7px 8px; cursor:pointer; transition:background 0.15s; border-radius:10px; border-bottom:1px solid var(--divider); }
-    .tl-item:last-child { border-bottom:none; }
-    .tl-item:hover { background:var(--color-accent-subtle); }
-    .tl-dot { width:10px; height:10px; border-radius:50%; margin-top:4px; flex-shrink:0; }
-    .tl-info { flex:1; min-width:0; }
-    .tl-date { font-size:0.62rem; color:var(--text-tertiary); }
-    .tl-name { font-size:0.75rem; font-weight:700; }
-    .tl-desc { font-size:0.62rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .tl-empty { font-size:0.72rem; color:var(--text-tertiary); text-align:center; padding:32px 0; }
-
-    /* 图例行 */
-    .legend-row { display:flex; gap:12px; flex-wrap:wrap; padding:6px 0; font-size:0.62rem; align-items:center; }
-    .legend-row .lg-item { display:flex; align-items:center; gap:5px; cursor:default; }
-    .legend-row .lg-dot { width:9px; height:9px; border-radius:2px; }
-    .legend-row .lg-circle { border-radius:50%; }
-
-    /* 导航下拉 */
-    .nav-dropdown { position:relative; display:inline-flex; }
-    .nav-dropdown-menu { display:none; position:absolute; top:100%; left:0; background:var(--card-bg); border:1px solid var(--divider); border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); min-width:150px; padding:6px 0; z-index:200; white-space:nowrap; }
-    .nav-dropdown:hover .nav-dropdown-menu { display:block; }
-    .nav-dropdown-menu a { display:block; padding:7px 16px; font-size:0.72rem; color:var(--text-secondary); text-decoration:none; }
-    .nav-dropdown-menu a:hover { background:var(--color-accent-subtle); color:var(--color-accent); }
-    .nav-dropdown-menu a.active { color:var(--color-accent); font-weight:700; }
-  </style>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{surface:'#0f0f12',card:'#1a1a1f',border:'rgba(255,255,255,.06)',muted:'#8b8b90',accent:'#f59e0b',sp:'rgba(255,255,255,.04)'},fontFamily:{sans:['Inter','system-ui','sans-serif'],display:['"Instrument Serif"','Georgia','serif'],mono:['"JetBrains Mono"','"Fira Code"','monospace']}}}}</script>
+<link rel="stylesheet" href="../shared/css/hanako-glass.css">
+<link rel="stylesheet" href="../shared/css/hanako-glass.css">
+<style>
+  /* pattern-scan page-specific */
+  .top-bar{display:flex;gap:12px;align-items:flex-end;padding:16px 20px;background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;box-shadow:var(--shadow-card);flex-wrap:wrap}
+  .top-bar .fld{flex:1;min-width:90px}
+  .top-bar label{display:block;font-size:10px;font-weight:500;color:var(--muted);margin-bottom:4px;letter-spacing:.02em;text-transform:uppercase}
+  .top-bar input,.top-bar select{width:100%;padding:7px 12px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:rgba(26,26,31,.4);color:var(--text-primary);font-family:var(--font-body);outline:none;transition:all .2s}
+  .top-bar input:focus,.top-bar select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,158,11,.1)}
+  .top-bar input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.7)}
+  .btn-scan{padding:8px 24px;background:var(--accent-subtle);color:var(--accent);border:1px solid var(--accent-border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font-body);transition:all .2s}
+  .btn-scan:hover{background:rgba(245,158,11,.18)}.btn-scan:disabled{opacity:.4;cursor:not-allowed}
+  .mode-btn{padding:4px 10px;border:1px solid var(--border);border-radius:8px;background:rgba(26,26,31,.4);color:var(--muted);font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:var(--font-body);transition:all .2s}
+  .mode-btn.active{background:var(--accent-subtle);color:var(--accent);border-color:var(--accent-border)}
+  .chart-controls{display:flex;gap:16px;align-items:center;padding:6px 0;margin-bottom:6px}
+  .chart-controls .ctrl-group{display:flex;align-items:center;gap:4px}
+  .chart-controls .ctrl-label{font-size:10px;font-weight:500;color:var(--muted);margin-right:4px;text-transform:uppercase;letter-spacing:.04em}
+  .chart-controls .ctrl-btn{padding:5px 14px;border:1px solid var(--border);border-radius:10px;background:rgba(26,26,31,.4);color:var(--muted);font-size:11px;cursor:pointer;transition:all .2s;font-family:var(--font-body);backdrop-filter:blur(10px)}
+  .chart-controls .ctrl-btn:hover{border-color:var(--border-hover);color:#d4d4d8}
+  .chart-controls .ctrl-btn.active{background:var(--accent-subtle);color:var(--accent);border-color:var(--accent-border)}
+  .chart-wrap{width:100%;height:560px;margin-bottom:0}
+  .bottom-layout{display:flex;gap:14px;align-items:flex-start;margin-bottom:10px}
+  .bottom-left{flex:1;min-width:0}
+  .bottom-right{width:340px;flex-shrink:0}
+  @media(max-width:900px){.bottom-layout{flex-direction:column}.bottom-right{width:100%}}
+  .rec-section{margin-bottom:8px}.rec-section:last-child{margin-bottom:0}
+  .rec-label{font-size:11px;font-weight:500;color:var(--accent);margin-bottom:3px;display:flex;align-items:center;gap:4px}
+  .rec-text{font-size:12px;color:var(--text-secondary);line-height:1.6}
+  .timeline-wrap{max-height:520px;overflow-y:auto}
+  .tl-item{display:flex;align-items:flex-start;gap:10px;padding:7px 8px;cursor:pointer;transition:background .15s;border-radius:10px;border-bottom:1px solid rgba(255,255,255,.03)}
+  .tl-item:last-child{border-bottom:none}
+  .tl-item:hover{background:rgba(245,158,11,.06)}
+  .tl-dot{width:10px;height:10px;border-radius:50%;margin-top:4px;flex-shrink:0}
+  .tl-info{flex:1;min-width:0}
+  .tl-date{font-size:10px;color:var(--muted)}
+  .tl-name{font-size:12px;font-weight:500;color:#d4d4d8}
+  .tl-desc{font-size:10px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tl-empty{font-size:12px;color:var(--muted);text-align:center;padding:32px 0}
+  html[data-theme="light"] .top-bar{background:rgba(255,255,255,.75);border-color:var(--divider)}
+  html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
+  html[data-theme="light"] .top-bar input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.3)}
+  html[data-theme="light"] .ctrl-btn{background:rgba(255,255,255,.6);border-color:var(--divider);color:var(--muted)}
+  html[data-theme="light"] .ctrl-btn:hover{border-color:rgba(0,0,0,.15);color:#374151}
+  html[data-theme="light"] .rec-text{color:var(--text-secondary)}
+  html[data-theme="light"] .tl-item{border-bottom-color:rgba(0,0,0,.04)}
+  html[data-theme="light"] .tl-name{color:var(--text-primary)}
+  html[data-theme="light"] .tl-desc{color:var(--text-secondary)}
+  html[data-theme="light"] .chart-controls .ctrl-label{color:var(--muted)}
+  html[data-theme="light"] .signal-legend{color:var(--muted)}
+</style>
 </head>
 <body>
-  <div class="app-container">
-    <!-- 导航栏 -->
+<canvas id="bg-canvas"></canvas>
+<script>
+(function(){
+  var c=document.getElementById('bg-canvas'),w=c.width=window.innerWidth,h=c.height=window.innerHeight;
+  var ctx=c.getContext('2d'),particles=[],N=60;
+  for(var i=0;i<N;i++)particles.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    for(var i=0;i<N;i++){var p=particles[i];p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(245,158,11,'+p.o+')';ctx.fill()}
+    for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle='rgba(245,158,11,'+((100-dist)/100*.06)+')';ctx.stroke()}}}
+    requestAnimationFrame(draw);
+  }
+  draw();
+  window.addEventListener('resize',function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight});
+})();
+</script>
+<div class="app-container">
+
+      <!-- 导航栏 -->
     <nav id="top-nav"></nav>
 
     <!-- 参数横条 -->
@@ -143,5 +144,6 @@
   <script src="app.js"></script>
   <script src="../shared/js/nav.js"></script>
   <script>Nav.init({brandIcon:"🔎",brandText:"形态识别",currentPage:"pattern-scan"})</script>
+<script>if(typeof toggleTheme!=='function'){window.toggleTheme=function(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n)}}</script>
 </body>
 </html>

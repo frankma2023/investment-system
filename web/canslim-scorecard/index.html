@@ -1,71 +1,29 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" class="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <title>CAN SLIM 评分卡 · 投资手账本</title>
-<link rel="stylesheet" href="../shared/css/theme.css">
-<link rel="stylesheet" href="../shared/css/base.css">
-<link rel="stylesheet" href="../shared/css/xhs-cards.css">
-<link rel="stylesheet" href="../shared/css/components.css">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CAN SLIM评分卡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{surface:'#0f0f12',card:'#1a1a1f',border:'rgba(255,255,255,.06)',muted:'#8b8b90',accent:'#f59e0b'},fontFamily:{sans:['Inter','system-ui','sans-serif'],display:['Instrument Serif','Georgia','serif'],mono:['JetBrains Mono','Fira Code','monospace']}}}}</script>
+<link rel="stylesheet" href="../shared/css/hanako-glass.css">
 <script src="../shared/js/echarts.min.js"></script>
 <style>
-.top-bar { display:flex; gap:10px; align-items:flex-end; padding:14px 18px; background:var(--card-bg); border-radius:18px; margin-bottom:10px; box-shadow:0 1px 6px rgba(0,0,0,0.04); flex-wrap:wrap; }
-.top-bar .fld { flex:1; min-width:90px; }
-.top-bar label { display:block; font-size:0.58rem; font-weight:600; color:var(--text-tertiary); margin-bottom:2px; }
-.top-bar input { width:100%; padding:7px 8px; border:1px solid var(--divider); border-radius:10px; font-size:0.72rem; background:var(--card-bg); color:var(--text-primary); box-sizing:border-box; }
-.btn-run { padding:8px 22px; background:#FE2C55; color:#FFF; border:none; border-radius:12px; font-size:0.85rem; font-weight:800; cursor:pointer; }
-.btn-run:disabled { background:#CCC; }
-.btn-save { padding:6px 14px; background:var(--card-bg); border:1.5px solid var(--divider); border-radius:10px; font-size:0.7rem; font-weight:700; cursor:pointer; }
-.btn-save:hover { border-color:var(--color-accent); color:var(--color-accent); }
-
-/* Layout: left=params, right=results */
-.bottom-layout { display:flex; gap:12px; align-items:flex-start; }
-.bottom-left { width:340px; flex-shrink:0; display:flex; flex-direction:column; gap:8px; }
-.bottom-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:10px; }
-
-/* Radar */
-.radar-wrap { width:100%; height:420px; background:var(--card-bg); border-radius:16px; border:1px solid var(--divider); }
-
-/* Score table */
-.score-card { background:var(--card-bg); border:1px solid var(--divider); border-radius:16px; padding:14px 18px; }
-.score-card h3 { font-size:0.8rem; margin:0 0 10px; display:flex; align-items:center; gap:6px; }
-.grade-badge { display:inline-block; padding:3px 14px; border-radius:10px; font-size:1rem; font-weight:900; }
-.grade-S { background:#E8F5E9; color:#2E7D32; } .grade-A { background:#E3F2FD; color:#1565C0; }
-.grade-B { background:#FFF8E1; color:#F57F17; } .grade-C { background:#FFF3E0; color:#E65100; }
-.grade-D { background:#FFEBEE; color:#C62828; } .grade-E { background:#FCE4EC; color:#880E4F; }
-
-/* Dimension card */
-.dim-card { border-left:3px solid #ddd; padding:6px 10px; margin-bottom:4px; border-radius:0 8px 8px 0; background:var(--card-bg); }
-.dim-card .dim-header { display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; font-weight:700; }
-.dim-card .dim-detail { font-size:0.58rem; color:var(--text-tertiary); margin-top:2px; }
-.dim-card .dim-sub { font-size:0.6rem; color:var(--text-secondary); padding-left:10px; }
-.dim-c { border-left-color:#E53935; } .dim-a { border-left-color:#FF9800; } .dim-n { border-left-color:#4CAF50; }
-.dim-s { border-left-color:#2196F3; } .dim-l { border-left-color:#9C27B0; } .dim-i { border-left-color:#795548; }
-.score-pos { color:#2E7D32; } .score-neg { color:#C62828; } .score-zero { color:var(--text-tertiary); }
-
-/* Param card */
-.param-card { background:var(--card-bg); border:1px solid var(--divider); border-radius:14px; overflow:hidden; }
-.param-card-hd { display:flex; align-items:center; padding:8px 12px; cursor:pointer; font-size:0.68rem; font-weight:800; }
-.param-card-hd .dot { width:7px; height:7px; border-radius:50%; margin-right:6px; }
-.param-card-bd { padding:6px 12px 10px; }
-.param-card-bd.collapsed { display:none; }
-.param-row { display:flex; align-items:center; gap:6px; margin-bottom:2px; }
-.param-row label { width:130px; font-size:0.56rem; color:var(--text-tertiary); flex-shrink:0; }
-.param-row input { flex:1; padding:3px 6px; border:1px solid var(--divider); border-radius:6px; font-size:0.58rem; background:var(--card-bg); color:var(--text-primary); }
-
-.nav-dropdown { position:relative; display:inline-flex; }
-.nav-dropdown-menu { display:none; position:absolute; top:100%; left:0; background:var(--card-bg); border:1px solid var(--divider); border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); min-width:150px; padding:6px 0; z-index:200; white-space:nowrap; }
-.nav-dropdown:hover .nav-dropdown-menu { display:block; }
-.nav-dropdown-menu a { display:block; padding:7px 16px; font-size:0.72rem; color:var(--text-secondary); text-decoration:none; }
-.nav-dropdown-menu a:hover { background:var(--color-accent-subtle); color:var(--color-accent); }
-.nav-dropdown-menu a.active { color:var(--color-accent); font-weight:700; }
-@media (max-width:800px) { .bottom-layout { flex-direction:column; } .bottom-left { width:100%; } }
+  .top-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+  .top-bar label{font-size:10px;font-weight:500;color:var(--muted);display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.03em}
+  .top-bar input,.top-bar select{font-family:var(--font-body);padding:5px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:var(--card);color:var(--text-primary);outline:none;transition:all .2s}
+  html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
 </style>
 </head>
 <body>
+<canvas id="bg-canvas"></canvas>
+<script>(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();
+</script>
 <div class="app-container">
+
 <nav id="top-nav"></nav>
 
 <div class="top-bar">
@@ -100,6 +58,9 @@
 </div>
 <script src="app.js"></script>
   <script src="../shared/js/nav.js"></script>
-  <script>Nav.init({brandIcon:"🎯",brandText:"CAN SLIM 评分卡",currentPage:"canslim-scorecard"})</script>
+  <script>Nav.init({brandIcon:"🎯",brandText:"CAN SLIM 评分卡",currentPage:"canslim-scorecard"})
+function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n)}
+(function(){var s=localStorage.getItem('theme')||'dark';document.documentElement.dataset.theme=s})();
+</script>
 </body>
 </html>

@@ -1,78 +1,48 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" class="dark">
 <head>
 <meta charset="UTF-8">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>指数扫描看板 · 投资手账本</title>
-<link rel="stylesheet" href="../shared/css/theme.css">
-<link rel="stylesheet" href="../shared/css/base.css">
-<link rel="stylesheet" href="../shared/css/xhs-cards.css">
-<link rel="stylesheet" href="../shared/css/components.css">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>指数扫描</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{surface:'#0f0f12',card:'#1a1a1f',border:'rgba(255,255,255,.06)',muted:'#8b8b90',accent:'#f59e0b'},fontFamily:{sans:['Inter','system-ui','sans-serif'],display:['Instrument Serif','Georgia','serif'],mono:['JetBrains Mono','Fira Code','monospace']}}}}</script>
+<link rel="stylesheet" href="../shared/css/hanako-glass.css">
 <script src="../shared/js/echarts.min.js"></script>
-<script src="../shared/js/theme.js"></script>
 <style>
-/* ── 指数扫描 · 小红书风格 ── */
-.scan-stats { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
-.scan-stat { flex:1; min-width:110px; background:var(--card-bg); border:1px solid var(--divider); border-radius:var(--radius-md); padding:10px 12px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.03); }
-.scan-stat .val { font-family:var(--font-display); font-size:1.3rem; font-weight:900; color:var(--text-primary); }
-.scan-stat .lbl { font-size:0.55rem; color:var(--text-tertiary); margin-top:2px; font-weight:600; letter-spacing:0.03em; }
-.scan-stat.highlight { border-color:var(--color-up-border); background:var(--color-up-bg); }
-.scan-stat.highlight .val { color:var(--color-up); }
-
-.pool-tabs { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
-.pool-tab { padding:6px 14px; border:1px solid var(--divider); border-radius:20px; background:var(--card-bg); color:var(--text-secondary); cursor:pointer; font-family:var(--font-display); font-size:0.68rem; font-weight:600; transition:all 0.15s; }
-.pool-tab:hover { border-color:var(--color-accent); color:var(--color-accent); }
-.pool-tab.active { border-color:var(--color-accent); background:var(--color-accent); color:#FFF; }
-
-.filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; align-items:center; }
-.filter-bar select,.filter-bar input { padding:6px 10px; border:1px solid var(--divider); border-radius:var(--radius-sm); background:var(--card-bg); color:var(--text-primary); font-family:var(--font-display); font-size:0.65rem; }
-.filter-bar select:focus,.filter-bar input:focus { outline:none; border-color:var(--color-accent); }
-
-.scan-table { width:100%; border-collapse:collapse; font-size:0.68rem; }
-.scan-table th { background:var(--bg-surface); padding:8px 8px; text-align:left; font-family:var(--font-display); color:var(--text-tertiary); font-size:0.58rem; font-weight:700; border-bottom:2px solid var(--divider); cursor:pointer; white-space:nowrap; }
-.scan-table th:hover { color:var(--text-primary); }
-.scan-table th.sorted { color:var(--color-accent); }
-.scan-table td { padding:6px 8px; border-bottom:1px solid var(--border-subtle); color:var(--text-primary); font-size:0.64rem; }
-.scan-table tr:hover td { background:var(--bg-card-hover); }
-.scan-table .mono { font-family:var(--font-mono); }
-
-.badge { display:inline-block; padding:2px 8px; border-radius:8px; font-size:0.58rem; font-weight:700; }
-.badge-rs { background:var(--color-accent-bg); color:var(--color-accent); }
-.badge-ad-a { background:var(--color-up-bg); color:var(--color-up); }
-.badge-ad-e { background:var(--color-down-bg); color:var(--color-down); }
-.badge-crowd-high { background:var(--color-up-bg); color:var(--color-up); border:1px solid var(--color-up-border); }
-.badge-crowd-low { background:var(--color-down-bg); color:var(--color-down); border:1px solid var(--color-down-border); }
-.badge-div-top { background:var(--color-up-bg); color:var(--color-up); }
-.badge-div-bot { background:var(--color-down-bg); color:var(--color-down); }
-.badge-tier-L1 { background:var(--color-up-bg); color:var(--color-up); border:1px solid var(--color-up-border); }
-.badge-tier-L2 { background:var(--color-neutral-bg); color:var(--color-neutral); border:1px solid var(--color-neutral-border); }
-.badge-tier-L3 { background:rgba(160,80,255,0.08); color:#8A40D0; border:1px solid rgba(160,80,255,0.15); }
-
-.alert-cell { font-size:0.6rem; color:var(--text-tertiary); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-
-.loading-overlay { position:fixed; inset:0; z-index:999; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; flex-direction:column; }
-.loading-overlay .spinner { width:40px; height:40px; border:3px solid var(--divider); border-top-color:var(--color-accent); border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:12px; }
-@keyframes spin { to { transform:rotate(360deg); } }
-.loading-overlay span { font-family:var(--font-display); color:var(--text-secondary); font-size:0.75rem; }
-
-.clickable { cursor:pointer; }
-.clickable:hover { color:var(--color-accent); text-decoration:underline; }
-
-/* 导航下拉 */
-.nav-dropdown { position:relative; display:inline-flex; }
-.nav-dropdown-menu { display:none; position:absolute; top:100%; left:0; background:var(--card-bg); border:1px solid var(--divider); border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); min-width:150px; padding:6px 0; z-index:200; white-space:nowrap; }
-.nav-dropdown:hover .nav-dropdown-menu { display:block; }
-.nav-dropdown-menu a { display:block; padding:7px 16px; font-size:0.72rem; color:var(--text-secondary); text-decoration:none; transition:background 0.15s; font-family:var(--font-display); }
-.nav-dropdown-menu a:hover { background:var(--color-accent-subtle); color:var(--color-accent); }
+  .top-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+  .top-bar label{font-size:10px;font-weight:500;color:var(--muted);display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.03em}
+  .top-bar input,.top-bar select{font-family:var(--font-body);padding:5px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:var(--card);color:var(--text-primary);outline:none;transition:all .2s;backdrop-filter:blur(10px)}
+  .top-bar input:focus,.top-bar select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,158,11,.1)}
+  .tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;flex-wrap:wrap}
+  .tab{padding:6px 14px;border:1px solid var(--border);border-radius:10px;background:rgba(26,26,31,.4);color:var(--muted);cursor:pointer;font-family:var(--font-body);font-size:11px;font-weight:500;transition:all .2s;white-space:nowrap}
+  .tab:hover{border-color:var(--border-hover);color:#d4d4d8}
+  .tab.active{background:var(--accent-subtle);color:var(--accent);border-color:var(--accent-border)}
+  .tab-content{display:none;animation:fadeIn .4s ease}
+  .tab-content.active{display:block}
+  .btn-glass{font-family:var(--font-body);font-size:10px;font-weight:500;padding:4px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--card);color:var(--muted);transition:all .2s;text-decoration:none;display:inline-block}
+  .btn-glass:hover{color:#d4d4d8;background:rgba(255,255,255,.04);border-color:var(--border-hover)}
+  .btn-accent{background:var(--accent-subtle);color:var(--accent);border-color:var(--accent-border)}
+  .btn-accent:hover{background:rgba(245,158,11,.18)}
+  html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
+  html[data-theme="light"] .tab{background:rgba(255,255,255,.6);border-color:var(--divider);color:var(--muted)}
+  html[data-theme="light"] .tab:hover{border-color:rgba(0,0,0,.15);color:#374151}
+  html[data-theme="light"] .tab.active{background:var(--accent-subtle);color:var(--accent);border-color:var(--accent-border)}
 </style>
 </head>
 <body>
+<canvas id="bg-canvas"></canvas>
+<script>(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();
+</script>
+<div class="app-container">
+
 
 <div class="journal-dots"></div>
 <div class="washi-tape washi-1"></div>
 <div class="washi-tape washi-2"></div>
 
-<div class="app-container">
 <nav id="top-nav"></nav>
 
   <!-- ══════ STATS STRIP ══════ -->
@@ -278,6 +248,10 @@ function sortBy(col){if(sortCol===col)sortDir=sortDir==='asc'?'desc':'asc';else{
 function today(){var d=new Date();return d.toISOString().slice(0,10)}
 </script>
   <script src="../shared/js/nav.js"></script>
-  <script>Nav.init({brandIcon:"🔬",brandText:"指数扫描",currentPage:"index-scan"})</script>
+  <script>Nav.init({brandIcon:"🔬",brandText:"指数扫描",currentPage:"index-scan"})
+// Theme toggle for hanako-glass
+function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n)}
+(function(){var s=localStorage.getItem('theme')||'dark';document.documentElement.dataset.theme=s})();
+</script>
 </body>
 </html>

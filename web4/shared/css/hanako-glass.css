@@ -367,6 +367,15 @@ body {
 
 .data-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
 
+/* Legacy alias: .scr-table → same as .data-table (used in screening page JS) */
+.scr-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.scr-table thead { position: sticky; top: 0; z-index: 5; }
+.scr-table th { text-align: center; padding: 9px 4px; border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 500; color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap; background: rgba(15, 15, 18, 0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); text-transform: uppercase; letter-spacing: 0.04em; position: sticky; top: 0; }
+.scr-table th:hover { color: #d4d4d8; }
+.scr-table td { padding: 8px 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.03); text-align: center; font-weight: 300; }
+.scr-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
+.scr-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+
 .data-table a {
   color: var(--accent);
   text-decoration: none;
@@ -789,6 +798,13 @@ html[data-theme="light"] .xhs-card-label   { color: #374151; }
 html[data-theme="light"] .page-header h1   { color: #374151; }
 html[data-theme="light"] .modal-card h2    { color: #374151; }
 
+html[data-theme="light"] .top-nav {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
 html[data-theme="light"] .nav-item {
   color: var(--muted);
 }
@@ -827,6 +843,9 @@ html[data-theme="light"] .data-table th {
 }
 html[data-theme="light"] .data-table td { border-bottom-color: rgba(0, 0, 0, 0.03); }
 html[data-theme="light"] .data-table tbody tr:hover { background: rgba(0, 0, 0, 0.02); }
+html[data-theme="light"] .scr-table th { background: rgba(255, 255, 255, 0.9); color: var(--muted); border-bottom-color: var(--divider); }
+html[data-theme="light"] .scr-table td { border-bottom-color: rgba(0, 0, 0, 0.03); }
+html[data-theme="light"] .scr-table tbody tr:hover { background: rgba(0, 0, 0, 0.02); }
 
 html[data-theme="light"] .modal-card {
   background: rgba(255, 255, 255, 0.95);

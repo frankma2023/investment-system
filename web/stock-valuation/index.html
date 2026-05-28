@@ -1,68 +1,49 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" class="dark">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>个股全维度分析 · 投资手账本</title>
-<link rel="stylesheet" href="../shared/css/theme.css">
-<link rel="stylesheet" href="../shared/css/base.css">
-<link rel="stylesheet" href="../shared/css/xhs-cards.css">
-<link rel="stylesheet" href="../shared/css/components.css">
+<title>个股全维度分析</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{surface:'#0f0f12',card:'#1a1a1f',border:'rgba(255,255,255,.06)',muted:'#8b8b90',accent:'#f59e0b'},fontFamily:{sans:['Inter','system-ui','sans-serif'],display:['Instrument Serif','Georgia','serif'],mono:['JetBrains Mono','Fira Code','monospace']}}}}</script>
+<link rel="stylesheet" href="../shared/css/hanako-glass.css">
 <script src="../shared/js/echarts.min.js"></script>
-<script src="../shared/js/theme.js"></script>
 <style>
-  .top-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px}
-  .top-bar label{font-family:var(--font-display);font-size:0.62rem;font-weight:600;color:var(--text-tertiary);display:block;margin-bottom:3px}
-  .top-bar input,.top-bar select{padding:7px 10px;border:1px solid var(--divider);border-radius:12px;font-family:var(--font-display);font-size:0.78rem;background:var(--card-bg);color:var(--text-primary)}
-  .tabs{display:flex;gap:6px;margin-bottom:14px}
-  .tab{padding:8px 18px;border:1px solid var(--divider);border-radius:20px;background:var(--card-bg);color:var(--text-secondary);cursor:pointer;font-family:var(--font-display);font-size:0.7rem;font-weight:700;transition:all 0.15s}
-  .tab:hover{border-color:var(--color-accent);color:var(--color-accent)}
-  .tab.active{background:var(--color-accent);color:#FFF;border-color:var(--color-accent)}
-  .tab-content{display:none}
+  /* Page-specific: layout + tab grid overrides */
+  .top-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+  .top-bar label{font-size:11px;font-weight:500;color:var(--muted);display:block;margin-bottom:2px;letter-spacing:.02em;text-transform:uppercase}
+  .top-bar input,.top-bar select{font-family:var(--font-body);padding:5px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:var(--card);color:var(--text-primary);outline:none;transition:all .2s;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .top-bar input:focus,.top-bar select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,158,11,.1)}
+  .tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;flex-wrap:wrap}
+  .tab{padding:7px 16px;border:1px solid var(--border);border-radius:10px;background:rgba(26,26,31,.4);color:var(--muted);cursor:pointer;font-family:var(--font-body);font-size:12px;font-weight:500;transition:all .2s ease;white-space:nowrap;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .tab:hover{border-color:var(--border-hover);color:#d4d4d8}
+  .tab.active{background:var(--accent-subtle);color:var(--accent);border-color:var(--accent-border)}
+  .tab-content{display:none;animation:fadeIn .4s ease}
   .tab-content.active{display:block}
-  .stat-cards{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px}
-  .stat-card{background:var(--card-bg);border:1px solid var(--divider);border-radius:var(--radius-md);padding:10px 8px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.03)}
-  .stat-card .val{font-family:var(--font-display);font-size:1.15rem;font-weight:900;color:var(--text-primary)}
-  .stat-card .lbl{font-size:0.52rem;color:var(--text-tertiary);margin-top:2px;font-weight:600}
-  .chart-card{background:var(--card-bg);border:1px solid var(--divider);border-radius:var(--radius-lg);padding:14px;box-shadow:0 1px 4px rgba(0,0,0,0.03);margin-bottom:14px}
-  .chart-title{font-family:var(--font-display);font-size:0.72rem;font-weight:800;color:var(--text-secondary);margin-bottom:4px}
-  .analysis-text{font-size:0.68rem;color:var(--text-secondary);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-surface);border-radius:10px}
-  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .nav-dropdown{position:relative;display:inline-flex}
-  .nav-dropdown-menu{display:none;position:absolute;top:100%;left:0;background:var(--card-bg);border:1px solid var(--divider);border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.08);min-width:150px;padding:6px 0;z-index:200;white-space:nowrap}
-  .nav-dropdown:hover .nav-dropdown-menu{display:block}
-  .nav-dropdown-menu a{display:block;padding:7px 16px;font-size:0.72rem;color:var(--text-secondary);text-decoration:none;transition:background 0.15s;font-family:var(--font-display)}
-  .nav-dropdown-menu a:hover{background:var(--color-accent-subtle);color:var(--color-accent)}
-  @media(max-width:768px){.chart-grid{grid-template-columns:1fr}.stat-cards{grid-template-columns:repeat(3,1fr)}}
-  .xhs-loading{display:block;text-align:center;padding:40px;color:var(--text-tertiary);font-family:var(--font-display)}
-  .mini-table{width:100%;border-collapse:collapse;font-size:0.7rem;margin-top:8px}
-  .mini-table th{background:rgba(0,0,0,0.03);padding:6px 8px;text-align:left;font-weight:700;color:var(--text-tertiary);font-size:0.6rem;border-bottom:2px solid var(--divider)}
-  .mini-table td{padding:6px 8px;border-bottom:1px solid var(--divider)}
-  .mini-table .mono{font-family:var(--font-display);font-size:0.7rem}
-
-  /* ══ 财务评估复制样式 ══ */
-  .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .result-grid .full{grid-column:1/-1}
-  .metric-row{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0}
-  .metric-item{flex:1;min-width:70px;text-align:center;padding:8px;background:rgba(254,44,85,0.04);border-radius:10px}
-  .metric-item .val{font-family:var(--font-display);font-size:1.1rem;font-weight:900;color:var(--text-primary)}
-  .metric-item .lbl{font-size:0.58rem;color:var(--text-tertiary)}
-  .metric-item .val.up{color:var(--color-up)}
-  .metric-item .val.down{color:var(--color-down)}
-  .tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:0.62rem;font-weight:700}
-  .tag-green{background:#E8F5E9;color:#2E7D32}
-  .tag-red{background:#FFEBEE;color:#C62828}
-  .tag-orange{background:#FFF3E0;color:#E65100}
+  #tab-val .chart-grid{grid-template-columns:1fr}
+  #tab-profit .chart-grid{grid-template-columns:repeat(2,1fr)}
+  #tab-health .chart-grid{grid-template-columns:repeat(2,1fr)}
+  #tab-eval .result-grid{grid-template-columns:repeat(2,1fr)}
   .stock-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-  .stock-header .code{font-family:var(--font-display);font-size:0.75rem;color:var(--text-tertiary)}
-  .stock-header .name{font-family:var(--font-display);font-size:1rem;font-weight:900}
-  @media(max-width:800px){.result-grid{grid-template-columns:1fr}}
+  .stock-header .code{font-family:var(--font-mono);font-size:13px;color:var(--muted)}
+  .stock-header .name{font-family:var(--font-display);font-size:1.1rem;font-weight:400;color:var(--text-primary)}
+  @media(max-width:768px){#tab-profit .chart-grid,#tab-health .chart-grid,#tab-eval .result-grid{grid-template-columns:1fr}}
+  html[data-theme="light"] .tab{background:rgba(255,255,255,.6);border-color:var(--divider);color:var(--muted)}
+  html[data-theme="light"] .tab:hover{border-color:rgba(0,0,0,.15);color:#374151}
+  html[data-theme="light"] .tab.active{background:rgba(217,119,6,.08);color:var(--accent);border-color:var(--accent-border)}
+  html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
 </style>
 </head>
 <body>
-<div class="journal-dots"></div><div class="washi-tape washi-1"></div><div class="washi-tape washi-2"></div>
+<canvas id="bg-canvas"></canvas>
+<script>
+(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();
+</script>
 <div class="app-container">
+
 <nav id="top-nav"></nav>
 
   <div class="top-bar">
@@ -950,6 +931,6 @@ function renderFundChart(chartId, check, key){
 }
 </script>
   <script src="../shared/js/nav.js"></script>
-  <script>Nav.init({brandIcon:"💎",brandText:"个股扫描",currentPage:"stock-valuation"})</script>
+  <script>Nav.init({brandIcon:"⬤",brandText:"个股扫描",currentPage:"stock-valuation"})</script>
 </body>
 </html>

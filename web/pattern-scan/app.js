@@ -302,10 +302,10 @@ function renderChart() {
   var vols = ck.map(function (k) { return k.volume; });
   var volMA = ind.vol_ma50 || [];
 
-  // ── 主题背景 ──
-  var bg = document.documentElement.dataset.theme === 'dark' ? '#2A2627' : '#fff';
+  // ── 主题背景（与卡片底色一致）──
+  var bg = document.documentElement.dataset.theme === 'dark' ? 'rgba(26,26,31,.6)' : 'rgba(255,255,255,.75)';
   var axisColor = document.documentElement.dataset.theme === 'dark' ? 'rgba(200,200,200,0.3)' : 'rgba(128,128,128,0.3)';
-  var gridColor = document.documentElement.dataset.theme === 'dark' ? 'rgba(200,200,200,0.12)' : 'rgba(128,128,128,0.15)';
+  var gridColor = document.documentElement.dataset.theme === 'dark' ? 'rgba(200,200,200,0.08)' : 'rgba(128,128,128,0.1)';
 
   // ── 成交量格式化 ──
   function fmtVol(v) {

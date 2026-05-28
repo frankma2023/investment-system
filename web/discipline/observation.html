@@ -1,41 +1,32 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <link rel="icon" href="../images/favicon.svg" type="image/svg+xml">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>观察池 · 知行</title>
-  <link rel="stylesheet" href="../shared/css/theme.css">
-  <link rel="stylesheet" href="../shared/css/base.css">
-  <link rel="stylesheet" href="../shared/css/xhs-cards.css">
-  <link rel="stylesheet" href="../shared/css/components.css">
-  <script src="../shared/js/theme.js"></script>
-  <style>
-    body { max-width: 1200px; margin: 0 auto; }
-    .panel-header { padding: 16px 0 8px; }
-    .panel-header h1 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 900; margin: 0; }
-    .panel-header p { font-size: 0.65rem; color: var(--text-tertiary); margin: 2px 0 0; }
-    .obs-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
-    .obs-table th { text-align: center; padding: 8px 6px; border-bottom: 2px solid var(--divider); font-size: 0.6rem; font-weight: 700; color: var(--text-secondary); position: sticky; top: 0; background: var(--bg); cursor: pointer; user-select: none; white-space: nowrap; }
-    .obs-table th:hover { color: var(--accent); }
-    .obs-table th .sort-arrow { font-size: 0.5rem; margin-left: 2px; }
-    .obs-table td { padding: 8px 6px; border-bottom: 1px solid var(--divider); text-align: center; }
-    .obs-table tr:hover { background: var(--card-bg); }
-    .obs-table a { color: var(--accent); text-decoration: none; font-weight: 600; }
-    .tag { display: inline-block; padding: 1px 6px; border-radius: 6px; font-size: 0.55rem; font-weight: 600; }
-    .tag-leader { background: #F3E5F5; color: #7B1FA2; }       /* 龙头 - 紫色 */
-    .tag-burst { background: #E0F7FA; color: #00838F; }         /* 加速 - 青色 */
-    .tag-double { background: #FFEBEE; color: #C62828; }        /* 双强 - 红色 */
-    .tag-short { background: #E3F2FD; color: #1565C0; }         /* 短爆 - 蓝色 */
-    .tag-steady { background: #E8F5E9; color: #2E7D32; }        /* 稳健 - 绿色 */
-    .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
-    .toolbar input { padding: 5px 10px; border: 1px solid var(--divider); border-radius: 8px; font-size: 0.7rem; background: var(--card-bg); color: var(--text-primary); }
-    .loading { text-align: center; padding: 40px; color: var(--text-tertiary); }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>观察清单</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{surface:'#0f0f12',card:'#1a1a1f',border:'rgba(255,255,255,.06)',muted:'#8b8b90',accent:'#f59e0b'},fontFamily:{sans:['Inter','system-ui','sans-serif'],display:['Instrument Serif','Georgia','serif'],mono:['JetBrains Mono','Fira Code','monospace']}}}}</script>
+<link rel="stylesheet" href="../shared/css/hanako-glass.css">
+<style>
+  .top-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+  .top-bar label{font-size:10px;font-weight:500;color:var(--muted);display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.03em}
+  .top-bar input,.top-bar select{font-family:var(--font-body);padding:5px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:var(--card);color:var(--text-primary);outline:none;transition:all .2s}
+  .page-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .page-header h1{font-family:var(--font-display);font-size:1.2rem;font-weight:400;color:#d4d4d8;letter-spacing:-.01em}
+  html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
+  html[data-theme="light"] .page-header h1{color:#374151}
+</style>
 </head>
 <body>
-  <div class="app-container">
-    <nav class="top-nav" id="top-nav"></nav>
+<canvas id="bg-canvas"></canvas>
+<script>(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();
+</script>
+<div class="app-container">
+
+  <nav class="top-nav" id="top-nav"></nav>
 
     <div class="panel-header">
       <h1>🔍 观察池</h1>
@@ -211,6 +202,9 @@
     }
 
     load();
-  </script>
+  
+function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n)}
+(function(){var s=localStorage.getItem('theme')||'dark';document.documentElement.dataset.theme=s})();
+</script>
 </body>
 </html>
