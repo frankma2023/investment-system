@@ -1,0 +1,202 @@
+name: "hanako-glass"
+description: "Dark glass morphism design system for O'Neil CAN SLIM quantitative investment platform. Parchment-dark canvas, amber accents, serif headings, Inter body, JetBrains Mono for data. Card-based bento layout with backdrop-blur glass cards, subtle 1px borders, and particle field backgrounds."
+philosophy: "Let the data breathe. Every pixel of chrome is a pixel stolen from the chart. Cards are glass because they should feel like looking through a clean window at the numbers, not like solid walls."
+primary_mode: "dark"
+brand_source: "Custom — designed for Hanako Investment System by iterative refinement across 41 pages"
+brand_type: "data-dense dashboard"
+mono_for_code: true
+mono_for_metrics: true
+
+# ── PRIMITIVES ──────────────────────────────────────────
+primitives:
+  colors:
+    neutral:             # near-black with cool undertone, not warm brown
+      50:  "#f8f9fa"
+      100: "#e4e4e7"
+      200: "#a1a1aa"
+      300: "#8b8b90"
+      400: "#52525b"
+      500: "#3f3f46"
+      600: "#27272a"
+      700: "#1a1a1f"    # card-solid
+      800: "#18181b"
+      900: "#0f0f12"    # canvas
+    brand:               # amber/gold ramp — the only warm accent in a cool system
+      50:  "#fef3c7"
+      100: "#fde68a"
+      200: "#fcd34d"
+      300: "#fbbf24"
+      400: "#f59e0b"    # primary accent (dark mode)
+      500: "#d97706"    # primary accent (light mode)
+      600: "#b45309"
+      700: "#92400e"
+    rise:                # green — Chinese convention: 跌 (down) = green
+      100: "#d1fae5"
+      300: "#6ee7b7"
+      500: "#10b981"    # primary rise
+      700: "#059669"
+    fall:                # red — Chinese convention: 涨 (up) = red
+      100: "#fee2e2"
+      300: "#fca5a5"
+      500: "#ef4444"    # primary fall
+      700: "#dc2626"
+
+  spacing: [0, 2, 4, 6, 8, 10, 12, 16, 18, 20, 24, 32, 48]
+  radii:   [4, 6, 8, 10, 12, 14, 16, 20]
+
+# ── SEMANTIC TOKENS ─────────────────────────────────────
+tokens:
+  colors:
+    dark:
+      background:     "{neutral.900}"
+      surface1:       "rgba(26, 26, 31, 0.6)"
+      surface2:       "rgba(26, 26, 31, 0.4)"
+      border:         "rgba(255, 255, 255, 0.06)"
+      border_hover:   "rgba(255, 255, 255, 0.1)"
+      text1:          "{neutral.100}"
+      text2:          "{neutral.200}"
+      text3:          "{neutral.300}"
+      accent:         "{brand.400}"
+      accent_subtle:  "rgba(245, 158, 11, 0.08)"
+      accent_border:  "rgba(245, 158, 11, 0.3)"
+      rise:           "{rise.500}"
+      fall:           "{fall.500}"
+      nav_bg:         "rgba(26, 26, 31, 0.7)"
+      modal_bg:       "rgba(20, 20, 25, 0.95)"
+      chart_bg:       "rgba(26, 26, 31, 0.6)"
+      chart_axis:     "rgba(200, 200, 200, 0.3)"
+      chart_grid:     "rgba(200, 200, 200, 0.08)"
+      shadow:         "0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1)"
+
+    light:
+      background:     "{neutral.50}"
+      surface1:       "rgba(255, 255, 255, 0.75)"
+      surface2:       "rgba(255, 255, 255, 0.6)"
+      border:         "rgba(0, 0, 0, 0.08)"
+      border_hover:   "rgba(0, 0, 0, 0.15)"
+      text1:          "#1a1a2e"
+      text2:          "#4b5563"
+      text3:          "{neutral.300}"
+      accent:         "{brand.500}"
+      accent_subtle:  "rgba(217, 119, 6, 0.08)"
+      accent_border:  "rgba(217, 119, 6, 0.2)"
+      rise:           "{rise.700}"
+      fall:           "{fall.700}"
+      nav_bg:         "rgba(255, 255, 255, 0.75)"
+      modal_bg:       "rgba(255, 255, 255, 0.95)"
+      chart_bg:       "rgba(255, 255, 255, 0.75)"
+      chart_axis:     "rgba(128, 128, 128, 0.3)"
+      chart_grid:     "rgba(128, 128, 128, 0.1)"
+      shadow:         "0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.04)"
+
+  radii:
+    element:   8
+    control:   10
+    component: 14
+    container: 16
+    pill:      999
+
+  typography:
+    display:
+      family: "Instrument Serif"
+      fallback: "Georgia, serif"
+      weight: 400
+      line_height: 1.15
+      letter_spacing: "-0.01em"
+      google_fonts: "Instrument+Serif:ital@0;1"
+      usage: "card titles, stat values, page headings"
+    body:
+      family: "Inter"
+      fallback: "system-ui, -apple-system, sans-serif"
+      weight: 400
+      line_height: 1.5
+      letter_spacing: "0"
+      google_fonts: "Inter:wght@300;400;500;600"
+      usage: "labels, buttons, inputs, table text, navigation"
+    mono:
+      family: "JetBrains Mono"
+      fallback: "Fira Code, monospace"
+      weight: 400
+      line_height: 1.4
+      google_fonts: "JetBrains+Mono:wght@400;500"
+      usage: "stock codes, numbers in tables, financial metrics"
+
+  type_scale:
+    xs:    "10px"   # table headers, labels, captions
+    sm:    "11px"   # nav items, tags, badges
+    base:  "12px"   # table body, secondary text
+    md:    "13px"   # body, inputs
+    lg:    "15px"   # card titles
+    xl:    "1.1rem" # metric values
+    "2xl": "1.3rem" # stat card values
+    "3xl": "1.2rem" # page headings
+
+  # ── COMPONENT TOKENS ──────────────────────────────────
+  components:
+    nav:
+      padding: "8px 18px"
+      margin_bottom: 12
+      border_radius: 14
+      blur: 20
+
+    card:
+      padding: "10px"
+      margin_bottom: 8
+      border_radius: 14
+      border_width: 1
+      blur: 16
+
+    chart:
+      height_small: 220
+      height_medium: 260
+      height_large: 300
+      height_kline: 560
+
+    table:
+      header_bg: "rgba(15, 15, 18, 0.9)"
+      cell_padding: "8px 4px"
+      header_size: "10px"
+      body_size: "12px"
+
+    modal:
+      overlay_bg: "rgba(0, 0, 0, 0.55)"
+      card_bg: "rgba(26, 26, 31, 0.9)"
+      border_radius: 16
+      blur: 24
+
+    container:
+      max_width: 1200
+      padding_top: 16
+      padding_h: 24
+      padding_bottom: 48
+      mobile_padding: "12px 10px 40px"
+
+  # ── CHART COLOR PALETTE ──────────────────────────────
+  chart_colors:
+    line: ["#FF6B6B", "#E8A838", "#539BF5", "#4ECDC4", "#8B5CF6", "#FF9800"]
+    mean_line: "rgba(245, 158, 11, 0.5)"
+    bar_positive: "rgba(16, 185, 129, 0.7)"
+    bar_negative: "rgba(239, 68, 68, 0.7)"
+    percentile: "rgba(168, 85, 247, 0.6)"
+
+  # ── SIGNAL BADGE COLORS ──────────────────────────────
+  signal_colors:
+    rs_momentum:     "#f59e0b"  # amber — attention
+    ad_positive:     "#3b82f6"  # blue — institutional
+    crowd_warning:   "#ef4444"  # red — danger
+    divergence_top:  "#ef4444"  # red — warning
+    divergence_bot:  "#10b981"  # green — safe
+    tier_l1:         "#a78bfa"  # purple — elite
+
+# ── CORE RULES (enforced by skill) ──────────────────────
+rules:
+  - "All pages use class='app-container', never class='container' (Tailwind conflict)"
+  - "Every page must define toggleTheme() with localStorage persistence"
+  - "Backdrop-filter blur must be disabled during theme switch via data-theme-switching"
+  - "ECharts backgroundColor must match card background: rgba(26,26,31,.6) dark / rgba(255,255,255,.75) light"
+  - "Mean lines: dashed amber, values rounded to 3 decimals via Math.round(val*1000)/1000"
+  - "涨跌 colors follow Chinese convention: 涨红跌绿 (up=red=fall, down=green=rise)"
+  - "JS zero-touch: migration only changes CSS and HTML, never business logic JS"
+  - "All inline hardcoded colors (#2A2627, #FE2C55) must be migrated to design tokens"
+  - "Modal overlays need display:none by default, .active/.show to reveal"
+  - "Old theme files (xhs-backtest.css) must have their dark variables overridden to neutral grays"
