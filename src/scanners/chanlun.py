@@ -171,9 +171,13 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
     
     czsc_obj = CZSC(bars)
     
-    # K线数据
-    ohlc = [[row.open, row.close, row.low, row.high] for _, row in df.iterrows()]; ohlc = [[0 if isinstance(v,float) and math.isnan(v) else v for v in x] for x in ohlc]
-    vols = df["volume"].tolist()
+    # 构建带涨跌幅的 K线数据
+    ohlc_with_chg = []
+    for i, (_, row) in enumerate(df.iterrows()):
+        prev_close = df.iloc[i-1]["close"] if i > 0 else row.open
+        chg_pct = (row.close - prev_close) / prev_close * 100 if prev_close else 0
+        ohlc_with_chg.append([row.open, row.close, row.low, row.high, round(chg_pct, 2)])
+    volumes = df["volume"].tolist()
     
     # 构建笔的 markLine 数据
     mark_points = []
@@ -231,7 +235,8 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
         "tooltip": {"trigger": "axis", "axisPointer": {"type": "cross", "crossStyle": {"color": axis_color}},
             "backgroundColor": "rgba(20,20,25,0.95)" if is_dark else "rgba(255,255,255,0.95)",
             "borderColor": "rgba(255,255,255,0.06)" if is_dark else "rgba(0,0,0,0.08)",
-            "textStyle": {"fontSize": 11, "color": "#e4e4e7" if is_dark else "#1a1a2e"}},
+            "textStyle": {"fontSize": 11, "color": "#e4e4e7" if is_dark else "#1a1a2e"},
+            "formatter": "function(p){var k=p[0];if(!k)return'';var d=k.data;var chg=d[4]!=null?d[4].toFixed(2):'0.00';var col=chg>=0?('"+up_color+"':('"+down_color+"';return '<b>'+k.axisValue+'</b><br/>开盘: <b>'+d[1].toFixed(2)+'</b><br/>收盘: <b style=color:'+col+'>'+d[2].toFixed(2)+'</b><br/>最高: '+d[4].toFixed(2)+'<br/>最低: '+d[3].toFixed(2)+'<br/>涨跌: <b style=color:'+col+'>'+(chg>=0?'+':'')+chg+'%</b>'}"}
         "legend": {"data": ["K线", "成交量"], "bottom": 20, "textStyle": {"color": axis_color, "fontSize": 10}, "selectedMode": True},
         "grid": [{"left": "8%", "right": "4%", "top": 8, "height": "60%"},
                  {"left": "8%", "right": "4%", "top": "75%", "height": "15%"}],
@@ -246,7 +251,7 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
         "dataZoom": [{"type": "inside", "start": 70, "end": 100},
                      {"type": "slider", "start": 70, "end": 100, "height": 16, "bottom": 4}],
         "series": [
-            {"name": "K线", "type": "candlestick", "data": ohlc,
+            {"name": "K线", "type": "candlestick", "data": ohlc_with_chg,
              "itemStyle": {"color": up_color, "color0": down_color,
                            "borderColor": up_color, "borderColor0": down_color},
              "markPoint": {"data": mark_points, "symbol": "pin", "symbolSize": 14}},

@@ -56,8 +56,8 @@
   <div class="fld" style="flex:0.7;min-width:160px">
     <label>股票/指数代码</label>
     <div style="display:flex;gap:4px;align-items:center">
-      <button class="mode-btn" id="btn-stock" onclick="switchMode('stock')">个股</button>
-      <button class="mode-btn active" id="btn-index" onclick="switchMode('index')">指数</button>
+      <button class="ctrl-btn" id="btn-stock" onclick="switchMode('stock')">个股</button>
+      <button class="ctrl-btn active" id="btn-index" onclick="switchMode('index')">指数</button>
       <input type="text" id="code" value="000985" style="width:90px;flex:0" onkeydown="if(event.key==='Enter')analyze()">
       <span id="stock-name" style="font-size:10px;color:var(--muted);white-space:nowrap"></span>
     </div>
@@ -97,7 +97,7 @@
 <script>Nav.init({brandIcon:"⬤",brandText:"缠论分析",currentPage:"chanlun"})</script>
 <script>
 const API='http://localhost:8788';let mode='index',freq='D',chartInst;
-function switchMode(m){mode=m;document.getElementById('btn-stock').className='mode-btn'+(m==='stock'?' active':'');document.getElementById('btn-index').className='mode-btn'+(m==='index'?' active':'');document.getElementById('code').value=m==='stock'?'600519':'000985';analyze()}
+function switchMode(m){mode=m;document.getElementById('btn-stock').className='ctrl-btn'+(m==='stock'?' active':'');document.getElementById('btn-index').className='ctrl-btn'+(m==='index'?' active':'');document.getElementById('code').value=m==='stock'?'600519':'000985';analyze()}
 function switchFreq(f){freq=f;document.getElementById('btn-daily').className='ctrl-btn'+(f==='D'?' active':'');document.getElementById('btn-weekly').className='ctrl-btn'+(f==='W'?' active':'');document.getElementById('btn-monthly').className='ctrl-btn'+(f==='M'?' active':'');analyze()}
 
 async function analyze(){
