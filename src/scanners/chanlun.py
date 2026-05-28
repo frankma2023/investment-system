@@ -98,9 +98,10 @@ def analyze(code, freq="D", limit=500):
     
     fx_list = []
     for fx in czsc_obj.fx_list:
+        fx_type = getattr(fx, 'fx_type', getattr(fx, 'fx', getattr(fx, 'direction', '?')))
         fx_list.append({
             "dt": str(fx.dt),
-            "fx_type": fx.fx_type,
+            "fx_type": str(fx_type),
             "high": fx.high, "low": fx.low
         })
     
