@@ -2843,7 +2843,8 @@ def api_chanlun_analyze():
         result = analyze(code, freq, limit)
         return jsonify(result)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
 
 @app.route('/api/chanlun/echarts', methods=['GET'])
 def api_chanlun_echarts():
@@ -2857,7 +2858,8 @@ def api_chanlun_echarts():
         option = get_echarts_option(code, freq, limit, theme)
         return jsonify(option)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
 
 
 # ═══════════════════════════════════════════════
