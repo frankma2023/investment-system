@@ -122,7 +122,7 @@ function renderChart(opt){
   if(chartInst&&!chartInst.isDisposed())chartInst.dispose();
   chartInst=echarts.init(el);
   // 中文 tooltip
-  opt.tooltip.formatter=function(p){var k=p[0];if(!k)return'';var d=k.data;var o=d[0],c=d[1],l=d[2],h=d[3],chg=d[4]!=null?d[4]:0;var col=chg>=0?'#ef4444':'#10b981';return '<b>'+k.axisValue+'</b><br/>开: '+o.toFixed(2)+'<br/>收: <b style=color:'+col+'>'+c.toFixed(2)+'</b><br/>高: '+h.toFixed(2)+'<br/>低: '+l.toFixed(2)+'<br/>涨跌: <b style=color:'+col+'>'+(chg>=0?'+':'')+chg.toFixed(2)+'%</b>'}
+  opt.tooltip.formatter=function(p){var k=p[0];if(!k)return'';var d=k.data;var o=d[0],c=d[1],l=d[2],h=d[3];var idx=k.dataIndex;var prev=idx>0?opt.series[0].data[idx-1][1]:o;var chg=prev?(c-prev)/prev*100:0;var col=chg>=0?'#ef4444':'#10b981';return '<b>'+k.axisValue+'</b><br/>开: '+o.toFixed(2)+'<br/>收: <b style=color:'+col+'>'+c.toFixed(2)+'</b><br/>高: '+h.toFixed(2)+'<br/>低: '+l.toFixed(2)+'<br/>涨跌: <b style=color:'+col+'>'+(chg>=0?'+':'')+chg.toFixed(2)+'%</b>'}
   chartInst.setOption(opt);
 }
 

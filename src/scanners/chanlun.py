@@ -176,12 +176,12 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
     
     czsc_obj = CZSC(bars)
     
-    # 构建带涨跌幅的 K线数据
-    ohlc_with_chg = []
-    for i, (_, row) in enumerate(df.iterrows()):
-        prev_close = df.iloc[i-1]["close"] if i > 0 else row.open
-        chg_pct = (row.close - prev_close) / prev_close * 100 if prev_close else 0
-        ohlc_with_chg.append([row.open, row.close, row.low, row.high, round(chg_pct, 2)])
+    // 构建K线数据
+    ohlc_data = []
+    closes = []
+    for _, row in df.iterrows():
+        ohlc_data.append([row.open, row.close, row.low, row.high])
+        closes.append(row.close)
     volumes = df["volume"].tolist()
     
     # 构建笔的 markLine 数据
@@ -255,7 +255,7 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
         "dataZoom": [{"type": "inside", "start": 70, "end": 100},
                      {"type": "slider", "start": 70, "end": 100, "height": 16, "bottom": 4}],
         "series": [
-            {"name": "K线", "type": "candlestick", "data": ohlc_with_chg,
+            {"name": "K线", "type": "candlestick", "data": ohlc_data,
              "itemStyle": {"color": up_color, "color0": down_color,
                            "borderColor": up_color, "borderColor0": down_color},
              "markPoint": {"data": mark_points, "symbol": "pin", "symbolSize": 14}},
