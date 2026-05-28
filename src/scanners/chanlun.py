@@ -151,10 +151,11 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
     """手动构建 ECharts option（CZSC Rust版暂不支持 to_echarts）"""
     freq_enum = SUPPORTED_FREQ.get(freq, Freq.D)
     table = "index_daily_kline" if code.startswith("000") or code.startswith("399") else "daily_kline"
+    chg_col = "change" if table == "index_daily_kline" else "change_pct"
     
     conn = _connect()
     df = pd.read_sql(f"""
-        SELECT date, open, high, low, close, volume, amount, change
+        SELECT date, open, high, low, close, volume, amount, {chg_col} as change
         FROM {table}
         WHERE stock_code = ?
         ORDER BY date DESC LIMIT ?
