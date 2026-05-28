@@ -13,16 +13,24 @@
 <link rel="stylesheet" href="../shared/css/hanako-glass.css">
 <script src="../shared/js/echarts.min.js"></script>
 <style>
-  /* Page-specific only */
-  .top-bar{display:flex;gap:12px;align-items:flex-end;padding:14px 18px;background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;box-shadow:var(--shadow-card);flex-wrap:wrap}
-  .top-bar .fld{flex:1;min-width:80px}
-  .top-bar label{font-size:10px;font-weight:500;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.03em}
-  .top-bar input,.top-bar select{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:rgba(26,26,31,.4);color:var(--text-primary);font-family:var(--font-body);outline:none;transition:all .2s}
+  /* ── exactly matching pattern-scan component styles ── */
+  .top-bar{display:flex;gap:12px;align-items:flex-end;padding:16px 20px;background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;box-shadow:var(--shadow-card);flex-wrap:wrap}
+  .top-bar .fld{flex:1;min-width:90px}
+  .top-bar label{display:block;font-size:10px;font-weight:500;color:var(--muted);margin-bottom:4px;letter-spacing:.02em;text-transform:uppercase}
+  .top-bar input,.top-bar select{width:100%;padding:7px 12px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:rgba(26,26,31,.4);color:var(--text-primary);font-family:var(--font-body);outline:none;transition:all .2s}
   .top-bar input:focus,.top-bar select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,158,11,.1)}
-  .mode-btn{padding:4px 10px;border:1px solid var(--border);border-radius:8px;background:rgba(26,26,31,.4);color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font-body);transition:all .2s;margin-right:4px}
+  .btn-run{padding:8px 24px;background:var(--accent-subtle);color:var(--accent);border:1px solid var(--accent-border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font-body);transition:all .2s}
+  .btn-run:hover{background:rgba(245,158,11,.18)}.btn-run:disabled{opacity:.4;cursor:not-allowed}
+  .mode-btn{padding:4px 10px;border:1px solid var(--border);border-radius:8px;background:rgba(26,26,31,.4);color:var(--muted);font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:var(--font-body);transition:all .2s}
   .mode-btn.active{background:var(--accent-subtle);color:var(--accent);border-color:var(--accent-border)}
-  .chart-wrap{width:100%;height:520px;margin-bottom:10px}
-  .bottom-layout{display:flex;gap:14px;align-items:flex-start}
+  .chart-controls{display:flex;gap:16px;align-items:center;padding:6px 0;margin-bottom:6px}
+  .chart-controls .ctrl-group{display:flex;align-items:center;gap:4px}
+  .chart-controls .ctrl-label{font-size:10px;font-weight:500;color:var(--muted);margin-right:4px;text-transform:uppercase;letter-spacing:.04em}
+  .chart-controls .ctrl-btn{padding:5px 14px;border:1px solid var(--border);border-radius:10px;background:rgba(26,26,31,.4);color:var(--muted);font-size:11px;cursor:pointer;transition:all .2s;font-family:var(--font-body);backdrop-filter:blur(10px)}
+  .chart-controls .ctrl-btn:hover{border-color:var(--border-hover);color:#d4d4d8}
+  .chart-controls .ctrl-btn.active{background:var(--accent-subtle);color:var(--accent);border-color:var(--accent-border)}
+  .chart-wrap{width:100%;height:520px;margin-bottom:0}
+  .bottom-layout{display:flex;gap:14px;align-items:flex-start;margin-bottom:10px}
   .bottom-left{flex:1;min-width:0}
   .bottom-right{width:360px;flex-shrink:0}
   .stat-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
@@ -30,6 +38,12 @@
   .signal-buy{background:rgba(239,68,68,.1);color:var(--fall);border:1px solid rgba(239,68,68,.2)}
   .signal-sell{background:rgba(16,185,129,.1);color:var(--rise);border:1px solid rgba(16,185,129,.2)}
   @media(max-width:900px){.bottom-layout{flex-direction:column}.bottom-right{width:100%}}
+  /* Light mode */
+  html[data-theme="light"] .top-bar{background:rgba(255,255,255,.75);border-color:var(--divider)}
+  html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
+  html[data-theme="light"] .mode-btn{background:rgba(255,255,255,.6);border-color:var(--divider);color:var(--muted)}
+  html[data-theme="light"] .ctrl-btn{background:rgba(255,255,255,.6);border-color:var(--divider);color:var(--muted)}
+  html[data-theme="light"] .ctrl-btn:hover{border-color:rgba(0,0,0,.15);color:#374151}
 </style>
 </head>
 <body>
@@ -91,8 +105,9 @@ async function analyze(){
   var btn=document.querySelector('.btn-run');btn.disabled=true;btn.textContent='⏳';
   try{var nr=await fetch(API+'/api/stock-name?code='+code+'&mode='+mode);if(nr.ok){var nd=await nr.json();document.getElementById('stock-name').textContent=nd.name||''}}catch(e){}
   try{
+    var theme=document.documentElement.dataset.theme||'dark';
     var[optResp,dataResp]=await Promise.all([
-      fetch(API+'/api/chanlun/echarts?code='+code+'&freq='+freq+'&limit=400'),
+      fetch(API+'/api/chanlun/echarts?code='+code+'&freq='+freq+'&limit=400&theme='+theme),
       fetch(API+'/api/chanlun/analyze?code='+code+'&freq='+freq+'&limit=400')
     ]);
     var opt=await optResp.json(),data=await dataResp.json();
@@ -118,20 +133,18 @@ function renderStats(data){
     '<div class="stat-card"><div class="val">'+data.fx_count+'</div><div class="lbl">分型</div></div>'+
     '<div class="stat-card"><div class="val" style="color:'+dirClr+'">'+(last.direction==='up'?'↑':'↓')+'</div><div class="lbl">当前方向</div></div>'+
     '<div class="stat-card"><div class="val">'+(last.power||0).toFixed(1)+'</div><div class="lbl">笔力度</div></div>';
-  // 笔列表
   var tbl='<table class="mini-table"><thead><tr><th>方向</th><th>起点</th><th>终点</th><th>低</th><th>高</th><th>力度</th></tr></thead><tbody>';
   [].concat(data.bi_list).reverse().slice(0,20).forEach(function(bi){
     var d=bi.direction==='up'?'↑':'↓',c=bi.direction==='up'?'var(--fall)':'var(--rise)';
     tbl+='<tr><td style="color:'+c+';font-weight:500">'+d+'</td><td>'+bi.sdt.slice(0,10)+'</td><td>'+bi.edt.slice(0,10)+'</td><td class="mono">'+bi.low.toFixed(1)+'</td><td class="mono">'+bi.high.toFixed(1)+'</td><td class="mono">'+(bi.power||0).toFixed(1)+'</td></tr>';
   });
   document.getElementById('bi-table').innerHTML=tbl+'</tbody></table>';
-  // 信号
   var sigs='';
   if(data.signals)for(var k in data.signals){if(data.signals[k])sigs+='<span class="signal-tag signal-buy">'+k+'</span> '}
   document.getElementById('signals-panel').innerHTML=sigs||'<span style="color:var(--muted);font-size:11px">暂无明确信号</span>';
 }
 
-function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n);if(chartInst)setTimeout(analyze,100)}
+function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n);analyze()}
 (function(){var s=localStorage.getItem('theme')||'dark';document.documentElement.dataset.theme=s})();
 analyze();
 </script>

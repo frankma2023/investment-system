@@ -142,7 +142,7 @@ def save_to_db(code, freq, result):
     conn.close()
     return True
 
-def get_echarts_option(code, freq="D", limit=400):
+def get_echarts_option(code, freq="D", limit=400, theme="dark"):
     """手动构建 ECharts option（CZSC Rust版暂不支持 to_echarts）"""
     freq_enum = SUPPORTED_FREQ.get(freq, Freq.D)
     table = "index_daily_kline" if code.startswith("000") or code.startswith("399") else "daily_kline"
@@ -210,12 +210,12 @@ def get_echarts_option(code, freq="D", limit=400):
         except: pass
     
     # hanako-glass 配色 (根据主题动态)
-    is_dark = True  # 默认深色，前端可传参覆盖
-    chart_bg = "rgba(26,26,31,.6)"
-    axis_color = "rgba(200,200,200,0.3)"
-    grid_color = "rgba(200,200,200,0.08)"
-    up_color = "#ef4444"
-    down_color = "#10b981"
+    is_dark = theme == "dark"
+    chart_bg = "rgba(26,26,31,.6)" if is_dark else "rgba(255,255,255,.75)"
+    axis_color = "rgba(200,200,200,0.3)" if is_dark else "rgba(128,128,128,0.3)"
+    grid_color = "rgba(200,200,200,0.08)" if is_dark else "rgba(128,128,128,0.1)"
+    up_color = "#ef4444" if is_dark else "#dc2626"
+    down_color = "#10b981" if is_dark else "#059669"
     vol_color = up_color  # 成交量与K线同色：红涨绿跌
     vol_color0 = down_color
     
@@ -228,7 +228,10 @@ def get_echarts_option(code, freq="D", limit=400):
     return {
         "backgroundColor": chart_bg,
         "animation": False,
-        "tooltip": {"trigger": "axis", "axisPointer": {"type": "cross"}},
+        "tooltip": {"trigger": "axis", "axisPointer": {"type": "cross", "crossStyle": {"color": axis_color}},
+            "backgroundColor": "rgba(20,20,25,0.95)" if is_dark else "rgba(255,255,255,0.95)",
+            "borderColor": "rgba(255,255,255,0.06)" if is_dark else "rgba(0,0,0,0.08)",
+            "textStyle": {"fontSize": 11, "color": "#e4e4e7" if is_dark else "#1a1a2e"}},
         "legend": {"data": ["K线", "成交量"], "bottom": 20, "textStyle": {"color": axis_color, "fontSize": 10}, "selectedMode": True},
         "grid": [{"left": "8%", "right": "4%", "top": 8, "height": "60%"},
                  {"left": "8%", "right": "4%", "top": "75%", "height": "15%"}],

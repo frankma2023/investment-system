@@ -2853,7 +2853,8 @@ def api_chanlun_echarts():
     limit = int(request.args.get('limit', 300))
     try:
         from scanners.chanlun import get_echarts_option
-        option = get_echarts_option(code, freq, limit)
+        theme = request.args.get('theme', 'dark')
+        option = get_echarts_option(code, freq, limit, theme)
         return jsonify(option)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
