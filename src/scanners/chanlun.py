@@ -178,10 +178,10 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
     czsc_obj = CZSC(bars)
     
     # 构建K线数据
+    # 构建K线数据（4元素标准OHLC）
     ohlc_data = []
     for _, row in df.iterrows():
-        chg = float(row.get("change", 0)) if pd.notna(row.get("change")) else 0
-        ohlc_data.append([row.open, row.close, row.low, row.high, chg])
+        ohlc_data.append([row.open, row.close, row.low, row.high])
     volumes = df["volume"].tolist()
     
     # 构建笔的 markLine 数据
