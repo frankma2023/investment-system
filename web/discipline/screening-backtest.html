@@ -27,14 +27,15 @@
 
   .stats-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
 
-  .bt-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 10px; box-shadow: var(--shadow-card); overflow-x: auto; }
-
-  .bt-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; table-layout: auto; }
-  .bt-table th { text-align: center; padding: 7px 6px; border-bottom: 2px solid var(--divider); font-size: 0.6rem; font-weight: 700; color: var(--muted); white-space: nowrap; position: sticky; top: 0; background: var(--card); }
-  .bt-table td { padding: 5px 6px; border-bottom: 1px solid var(--divider); text-align: center; font-variant-numeric: tabular-nums; }
-  .bt-table tr:hover { background: var(--accent-subtle); }
-  .bt-table a { color: var(--accent); text-decoration: none; font-weight: 600; }
-  .bt-table a:hover { text-decoration: underline; }
+  .table-shell { background: var(--card); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-card); }
+  .scr-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .scr-table thead { position: sticky; top: 0; z-index: 5; }
+  .scr-table th { text-align: center; padding: 9px 4px; border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 500; color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap; background: var(--card); backdrop-filter: blur(10px); text-transform: uppercase; letter-spacing: .04em; }
+  .scr-table th:hover { color: var(--text-primary); }
+  .scr-table td { padding: 8px 4px; border-bottom: 1px solid rgba(255,255,255,.03); text-align: center; font-weight: 300; font-variant-numeric: tabular-nums; }
+  .scr-table tbody tr:hover { background: rgba(255,255,255,.02); }
+  .scr-table a { color: var(--accent); text-decoration: none; font-weight: 500; }
+  .scr-table a:hover { text-decoration: underline; }
 
   .green { color: #4CAF50; font-weight: 700; }
   .red { color: #E53935; font-weight: 700; }
@@ -45,8 +46,11 @@
   /* Light mode */
   html[data-theme="light"] .top-bar { background: rgba(255,255,255,.75); border-color: var(--divider); }
   html[data-theme="light"] .top-bar input, html[data-theme="light"] .top-bar select { background: rgba(255,255,255,.7); border-color: var(--divider); color: var(--text-primary); }
-  html[data-theme="light"] .bt-card { background: rgba(255,255,255,.75); border-color: var(--divider); }
-  html[data-theme="light"] .bt-table th { background: rgba(255,255,255,.75); }
+  html[data-theme="light"] .table-shell { background: rgba(255,255,255,.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(0,0,0,.06); }
+  html[data-theme="light"] .scr-table th { background: rgba(255,255,255,.9); color: #6b7280; border-bottom: 1px solid rgba(0,0,0,.06); }
+  html[data-theme="light"] .scr-table td { border-bottom: 1px solid rgba(0,0,0,.03); }
+  html[data-theme="light"] .scr-table tbody tr:hover { background: rgba(0,0,0,.02); }
+  html[data-theme="light"] .scr-table a { color: #d97706; }
 </style>
 </head>
 <body>
@@ -70,7 +74,7 @@
 </div>
 
 <div id="stats-row" class="stats-row"></div>
-<div class="bt-card" id="table-wrap">
+<div class="table-shell" id="table-wrap">
   <div class="loading">选择日期查看回测</div>
 </div>
 </div>
@@ -138,7 +142,7 @@ function render(d) {
     document.getElementById('table-wrap').innerHTML = '<div class="loading">该日期无精选数据</div>';
     return;
   }
-  var h = '<table class="bt-table"><thead><tr>';
+  var h = '<table class="scr-table"><thead><tr>';
   h += '<th>排名</th><th>代码</th><th>名称</th><th>O\'Neil</th>';
   h += '<th>买点</th><th>信号日</th><th>当日价</th><th>5日收益</th><th>10日收益</th><th>20日收益</th><th>K线天数</th>';
   h += '</tr></thead><tbody>';
