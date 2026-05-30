@@ -467,7 +467,7 @@ def compute_fear_greed(conn, target_date, ma50_pct=None):
     return round(composite, 1), score_fear_greed(composite)
 
 
-def score_fear_greed(val): return _tier6(val, [80, 60, 40, 20, 0], [0, 2, 4, 6, 8, 10])
+def score_fear_greed(val): return _tier6(val, [80, 60, 40, 20], [0, 4, 6, 8, 10])
 
 
 # ═══════════════════════════════════════════════

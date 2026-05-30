@@ -465,6 +465,68 @@ def api_market_health():
     })
 
 # ═══════════════════════════════════════════════
+# API: GET /api/market-sell-score
+# ═══════════════════════════════════════════════
+
+@app.route('/api/market-sell-score')
+def api_market_sell_score():
+    target_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    db = get_db()
+    row = db.execute(
+        "SELECT * FROM market_sell_score_daily WHERE date <= ? ORDER BY date DESC LIMIT 1",
+        (target_date,)
+    ).fetchone()
+
+    if not row:
+        return jsonify({'status': 'no_data', 'date': target_date, 'total_score': 0, 'signals': []})
+
+    signals = []
+    signal_meta = {
+        'dist_score':        ('抛盘日', '25日内抛盘日数量'),
+        'ftd_score':         ('追盘日失效', '追盘日确认后失效'),
+        'leader_score':      ('龙头股见顶', 'RS≥99龙头股>50%回落>10%'),
+        'junk_score':        ('垃圾股补涨', '低价股涨幅远超高价股'),
+        'divergence_score':  ('指数背离', '成分股涨跌背离'),
+        'ma50_score':        ('跌破50日线', '收盘跌破且5日未收复'),
+        'ma200_score':       ('跌破200日线', '收盘跌破200日均线'),
+        'death_cross_score': ('均线死叉', 'MA50下穿MA200'),
+        'ad_low5_score':     ('AD<0.7持续5天', '涨跌家数比连续低迷'),
+        'ad_crash_score':    ('AD<0.5', '涨跌家数比极端低迷（清仓级）'),
+        'hlnl_score':        ('NH/NL<0.5持续3天', '新高新低比恶化'),
+        'vol_dry_score':     ('上涨无量', '连续涨但量萎缩'),
+    }
+
+    for key, (name, desc) in signal_meta.items():
+        score_val = row[key] if row[key] else 0
+        if score_val > 0:
+            signals.append({'name': name, 'description': desc, 'score': score_val})
+
+    cleared = []
+    if row['cleared_signals']:
+        try:
+            cleared = json.loads(row['cleared_signals'])
+        except Exception:
+            pass
+
+    signal_details = {}
+    if row['signal_details']:
+        try:
+            signal_details = json.loads(row['signal_details'])
+        except Exception:
+            pass
+
+    return jsonify({
+        'date': row['date'],
+        'total_score': row['total_score'],
+        'position_advice': row['position_advice'],
+        'meltdown_triggered': bool(row['meltdown_triggered']),
+        'signals': signals,
+        'cleared_signals': cleared,
+        'signal_details': signal_details,
+    })
+
+
+# ═══════════════════════════════════════════════
 # API: GET /api/market-health/breakouts
 # ═══════════════════════════════════════════════
 
@@ -2838,12 +2900,12 @@ def api_chanlun_analyze():
     code = request.args.get('code', '000985')
     freq = request.args.get('freq', 'D')
     limit = int(request.args.get('limit', 300))
+    data_mode = request.args.get('mode', 'auto')
     try:
         from scanners.chanlun import analyze
-        result = analyze(code, freq, limit)
-        # Ensure JSON-serializable
+        result = analyze(code, freq, limit, data_mode=data_mode)
         import json
-        json.dumps(result)  # test serialization
+        json.dumps(result)
         return jsonify(result)
     except Exception as e:
         import traceback, sys
@@ -2857,10 +2919,11 @@ def api_chanlun_echarts():
     code = request.args.get('code', '000985')
     freq = request.args.get('freq', 'D')
     limit = int(request.args.get('limit', 300))
+    data_mode = request.args.get('mode', 'auto')
     try:
         from scanners.chanlun import get_echarts_option
         theme = request.args.get('theme', 'dark')
-        option = get_echarts_option(code, freq, limit, theme)
+        option = get_echarts_option(code, freq, limit, theme, data_mode=data_mode)
         return jsonify(option)
     except Exception as e:
         import traceback
@@ -2871,10 +2934,42 @@ def api_chanlun_multi_period():
     """缠论多周期联立分析（日/周/月）"""
     code = request.args.get('code', '000985')
     limit = int(request.args.get('limit', 400))
+    data_mode = request.args.get('mode', 'auto')
     try:
         from scanners.chanlun import multi_period_analyze
-        result = multi_period_analyze(code, limit)
+        result = multi_period_analyze(code, limit, data_mode=data_mode)
         return jsonify(result)
+    except Exception as e:
+        import traceback
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+
+
+@app.route('/api/chanlun/cascade', methods=['GET'])
+def api_chanlun_cascade():
+    """区间套分析：日线→60分钟→15分钟三级级联"""
+    code = request.args.get('code', '600519')
+    date = request.args.get('date', None)
+    side = request.args.get('side', None)
+    try:
+        from scanners.chanlun import cascade_analyze
+        result = cascade_analyze(code, date, side)
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+
+
+@app.route('/api/chanlun/cascade/echarts', methods=['GET'])
+def api_chanlun_cascade_echarts():
+    """区间套分钟级 K 线图 ECharts 配置"""
+    code = request.args.get('code', '600519')
+    freq = request.args.get('freq', '60')
+    limit = int(request.args.get('limit', 300))
+    try:
+        from scanners.chanlun import get_minute_echarts_option
+        theme = request.args.get('theme', 'dark')
+        option = get_minute_echarts_option(code, freq, limit, theme)
+        return jsonify(option)
     except Exception as e:
         import traceback
         return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500

@@ -53,6 +53,19 @@ def _ensure_tables(conn):
         CREATE INDEX IF NOT EXISTS idx_chanlun_bi_code ON chanlun_bi(stock_code, freq);
         CREATE INDEX IF NOT EXISTS idx_chanlun_fx_code ON chanlun_fx(stock_code, freq);
         CREATE INDEX IF NOT EXISTS idx_chanlun_zs_code ON chanlun_zs(stock_code, freq);
+        CREATE TABLE IF NOT EXISTS chanlun_segment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            stock_code TEXT NOT NULL,
+            freq TEXT NOT NULL,
+            sdt TEXT NOT NULL,
+            edt TEXT NOT NULL,
+            direction TEXT NOT NULL,
+            high REAL, low REAL,
+            bi_count INTEGER,
+            amplitude REAL, slope REAL, days INTEGER,
+            created_at TEXT DEFAULT (datetime('now', 'localtime'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_chanlun_segment_code ON chanlun_segment(stock_code, freq);
     """)
     conn.commit()
 
@@ -134,6 +147,174 @@ def compute_zhongshu(bi_list_raw):
         zs["bi_count"] = len(unique_bi)
     
     return merged
+
+
+# ═══════════════════════════════════════════════
+# 线段计算
+# ═══════════════════════════════════════════════
+
+def compute_segments(bi_list_raw):
+    """从笔列表计算线段（笔的高级别走势单元）
+    
+    缠论定义：线段由至少 3 笔构成，前三笔有重叠区间。
+    MVP 采用简化规则：基于极值突破判断线段终结。
+    
+    Args:
+        bi_list_raw: CZSC 的 BI 对象列表
+    
+    Returns:
+        list[dict]: 线段列表
+    """
+    n = len(bi_list_raw)
+    if n < 3:
+        return []
+    
+    segments = []
+    i = 0
+    
+    while i <= n - 3:
+        b0, b1, b2 = bi_list_raw[i], bi_list_raw[i+1], bi_list_raw[i+2]
+        
+        # 检查前三笔是否有重叠区间（构成线段的基本条件）
+        zg = min(b0.high, b1.high, b2.high)
+        zd = max(b0.low, b1.low, b2.low)
+        
+        if zg <= zd:
+            # 无重叠，不构成线段，继续前进
+            i += 1
+            continue
+        
+        # 前三笔构成线段，确定线段方向和极值
+        seg_dir = str(b0.direction)
+        is_up = seg_dir in ("up", "向上")
+        
+        # 收集线段内的笔
+        seg_bis = [b0, b1, b2]
+        seg_bi_indices = [i, i+1, i+2]
+        seg_high = max(b0.high, b1.high, b2.high)
+        seg_low = min(b0.low, b1.low, b2.low)
+        
+        # 逐笔延伸：向后延伸直到线段被破坏
+        j = i + 3
+        while j < n:
+            curr = bi_list_raw[j]
+            curr_dir = str(curr.direction)
+            
+            if curr_dir == seg_dir:
+                # 同向笔：延续线段
+                seg_bis.append(curr)
+                seg_bi_indices.append(j)
+                seg_high = max(seg_high, float(curr.high))
+                seg_low = min(seg_low, float(curr.low))
+                j += 1
+            else:
+                # 反向笔：检查是否破坏线段
+                # 向上线段被破坏：反向笔的低点 < 线段最低点
+                # 向下线段被破坏：反向笔的高点 > 线段最高点
+                broken = False
+                if is_up and float(curr.low) < seg_low:
+                    broken = True
+                elif not is_up and float(curr.high) > seg_high:
+                    broken = True
+                
+                if broken:
+                    # 线段在此终结
+                    break
+                else:
+                    # 反向笔未破坏线段，继续延伸
+                    seg_bis.append(curr)
+                    seg_bi_indices.append(j)
+                    seg_high = max(seg_high, float(curr.high))
+                    seg_low = min(seg_low, float(curr.low))
+                    j += 1
+        
+        # 线段必须有奇数笔（线段方向由第一笔定，最后一笔与第一笔同向）
+        # 简化处理：如果最后收集的是偶数笔，去掉最后一笔
+        bi_count = len(seg_bis)
+        if bi_count % 2 == 0 and bi_count > 3:
+            seg_bis = seg_bis[:-1]
+            seg_bi_indices = seg_bi_indices[:-1]
+        
+        first_bi = seg_bis[0]
+        last_bi = seg_bis[-1]
+        
+        # 计算线段属性
+        amplitude = seg_high - seg_low
+        days = (last_bi.edt - first_bi.sdt).days if hasattr(last_bi.edt, 'days') else 0
+        if days == 0:
+            days = len(seg_bis) * 5  # 估算
+        
+        # 斜率：用高低点估算
+        if days > 0:
+            if is_up:
+                slope = (seg_high - seg_low) / days
+            else:
+                slope = (seg_low - seg_high) / days
+        else:
+            slope = 0
+        
+        segments.append({
+            "sdt": str(first_bi.sdt)[:10],
+            "edt": str(last_bi.edt)[:10],
+            "direction": seg_dir,
+            "high": round(float(seg_high), 2),
+            "low": round(float(seg_low), 2),
+            "bi_count": len(seg_bis),
+            "bi_indices": seg_bi_indices,
+            "amplitude": round(float(amplitude), 2),
+            "slope": round(float(slope), 4),
+            "days": days
+        })
+        
+        # 下一段从 j 开始（即破坏线段的那一笔）
+        i = j
+    
+    # 给线段编号
+    for idx, seg in enumerate(segments):
+        seg["idx"] = idx + 1
+    
+    return segments
+
+
+def compute_segment_zs(segment_list):
+    """从线段列表计算线段级别中枢
+    
+    逻辑与 compute_zhongshu() 一致，输入从笔列表换为线段列表。
+    """
+    n = len(segment_list)
+    if n < 3:
+        return []
+    
+    zs_list = []
+    i = 0
+    while i <= n - 3:
+        s0, s1, s2 = segment_list[i], segment_list[i+1], segment_list[i+2]
+        # 线段对象是 dict，用键访问
+        h0, h1, h2 = s0["high"], s1["high"], s2["high"]
+        l0, l1, l2 = s0["low"], s1["low"], s2["low"]
+        
+        ZG = min(h0, h1, h2)
+        ZD = max(l0, l1, l2)
+        
+        if ZG > ZD:
+            ZZ = (ZG + ZD) / 2
+            zs_list.append({
+                "start_dt": s0["sdt"],
+                "end_dt": s2["edt"],
+                "zg": round(float(ZG), 2),
+                "zd": round(float(ZD), 2),
+                "zz": round(float(ZZ), 2),
+                "width": round(float(ZG - ZD), 2),
+                "width_pct": round(float(ZG - ZD) / float(ZZ) * 100, 2) if ZZ else 0,
+                "segment_indices": [i, i+1, i+2],
+                "level": "线段级别"
+            })
+        i += 1
+    
+    for idx, zs in enumerate(zs_list):
+        zs["idx"] = idx + 1
+    
+    return zs_list
 
 
 # ═══════════════════════════════════════════════
@@ -330,20 +511,36 @@ def generate_trade_signals(bi_list_raw, zs_list, divergence_signals):
 # 主分析函数
 # ═══════════════════════════════════════════════
 
-def analyze(code, freq="D", limit=500):
+def analyze(code, freq="D", limit=500, data_mode="auto"):
     """分析单只股票/指数的缠论结构
     
     Args:
         code: 股票代码 (如 000985)
         freq: K线周期 (D/W/M)
         limit: 读取K线数量
+        data_mode: 'stock'|'index'|'auto' — 数据表选择，auto 按前缀推断
     
     Returns:
         dict: {kline_count, bi_count, fx_count, zs_count, divergence_count,
                bi_list, fx_list, zs_list, divergence_signals, trade_signals}
     """
     freq_enum = SUPPORTED_FREQ.get(freq, Freq.D)
-    table = "index_daily_kline" if code.startswith("000") or code.startswith("399") else "daily_kline"
+    
+    # 确定数据表：优先用 data_mode，auto 按前缀推断
+    if data_mode == 'stock':
+        table = 'daily_kline'
+    elif data_mode == 'index':
+        table = 'index_daily_kline'
+    else:
+        # auto: 000/399 开头的优先查指数表，查不到再试个股表
+        if code.startswith("000") or code.startswith("399"):
+            # 先在指数表试，无数据则回退个股表
+            conn = _connect()
+            cnt = conn.execute("SELECT COUNT(*) FROM index_daily_kline WHERE stock_code=?", (code,)).fetchone()[0]
+            conn.close()
+            table = "index_daily_kline" if cnt > 0 else "daily_kline"
+        else:
+            table = "daily_kline"
     
     # 日线数据读取范围：按日期回溯，确保三种周期都覆盖约 3 年
     # 日线模式用 max(limit, 750)；周/月线需要更多日线来合成
@@ -409,6 +606,10 @@ def analyze(code, freq="D", limit=500):
     # ── 中枢检测 ──
     zs_list = compute_zhongshu(czsc_obj.bi_list)
     
+    # ── 线段计算 ──
+    segment_list = compute_segments(czsc_obj.bi_list)
+    segment_zs_list = compute_segment_zs(segment_list)
+    
     # ── 背驰检测 ──
     divergence_signals = detect_divergence(czsc_obj.bi_list, zs_list)
     
@@ -431,12 +632,16 @@ def analyze(code, freq="D", limit=500):
         "bi_count": len(bi_list),
         "fx_count": len(fx_list),
         "zs_count": len(zs_list),
+        "segment_count": len(segment_list),
+        "segment_zs_count": len(segment_zs_list),
         "divergence_count": len(divergence_signals),
         "trade_signal_count": len(trade_signals),
         "ubi": ubi_info,
         "bi_list": bi_list,
         "fx_list": fx_list,
         "zs_list": zs_list,
+        "segment_list": segment_list,
+        "segment_zs_list": segment_zs_list,
         "divergence_signals": divergence_signals,
         "trade_signals": trade_signals
     }
@@ -533,7 +738,7 @@ def _build_period_index_map(daily_df, target_freq, period_dates):
 # ECharts 配置生成
 # ═══════════════════════════════════════════════
 
-def get_echarts_option(code, freq="D", limit=400, theme="dark"):
+def get_echarts_option(code, freq="D", limit=400, theme="dark", data_mode="auto"):
     """构建 ECharts option（含 K线 + 成交量 + 笔标记 + 中枢矩形 + 买卖点）
     
     当 freq="W" 或 "M" 时，K线图使用从日线合成的周/月 K线，
@@ -545,7 +750,20 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
     from datetime import date, timedelta
     
     freq_enum = SUPPORTED_FREQ.get(freq, Freq.D)
-    table = "index_daily_kline" if code.startswith("000") or code.startswith("399") else "daily_kline"
+    
+    # 确定数据表
+    if data_mode == 'stock':
+        table = 'daily_kline'
+    elif data_mode == 'index':
+        table = 'index_daily_kline'
+    else:
+        if code.startswith("000") or code.startswith("399"):
+            conn = _connect()
+            cnt = conn.execute("SELECT COUNT(*) FROM index_daily_kline WHERE stock_code=?", (code,)).fetchone()[0]
+            conn.close()
+            table = "index_daily_kline" if cnt > 0 else "daily_kline"
+        else:
+            table = "daily_kline"
     chg_col = "change" if table == "index_daily_kline" else "change_pct"
     
     # 日线需要足够多数据来合成周/月线：按日期范围回溯 3 年
@@ -687,6 +905,57 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
     trade_signals = generate_trade_signals(czsc_obj.bi_list, zs_list,
         detect_divergence(czsc_obj.bi_list, zs_list))
     
+    # ── 线段色带 (markArea) + 端点标记 ──
+    segment_list = compute_segments(czsc_obj.bi_list)
+    segment_areas = []
+    for seg in segment_list:
+        sdt = seg["sdt"]
+        edt = seg["edt"]
+        if sdt in date_idx and edt in date_idx:
+            si = date_idx[sdt]
+            ei = date_idx[edt]
+            is_up = seg["direction"] in ("up", "向上")
+            seg_color = "rgba(239,68,68,0.08)" if is_up else "rgba(16,185,129,0.08)"
+            seg_border = "rgba(239,68,68,0.25)" if is_up else "rgba(16,185,129,0.25)"
+            segment_areas.append([{
+                "xAxis": si,
+                "yAxis": seg["low"],
+                "itemStyle": {"color": seg_color, "borderColor": seg_border, "borderWidth": 1}
+            }, {
+                "xAxis": ei,
+                "yAxis": seg["high"]
+            }])
+            # 线段端点小方块标记
+            for pt, price in [(si, seg["low"] if is_up else seg["high"]), (ei, seg["high"] if is_up else seg["low"])]:
+                mark_points.append({
+                    "name": "段" + ("起" if pt == si else "终"),
+                    "coord": [pt, price],
+                    "value": "段" + ("起" if pt == si else "终"),
+                    "symbol": "rect",
+                    "symbolSize": 8,
+                    "itemStyle": {"color": "#ef4444" if is_up else "#10b981"}
+                })
+    
+    # 线段中枢渲染
+    segment_zs_list = compute_segment_zs(segment_list)
+    for zs in segment_zs_list:
+        sdt = zs["start_dt"]
+        edt = zs["end_dt"]
+        if sdt in date_idx and edt in date_idx:
+            si = date_idx[sdt]
+            ei = date_idx[edt]
+            ZG = zs["zg"]
+            ZD = zs["zd"]
+            segment_areas.append([{
+                "xAxis": si, "yAxis": ZD,
+                "itemStyle": {"color": "rgba(245,158,11,0.18)", "borderColor": "rgba(245,158,11,0.5)", "borderWidth": 2, "borderType": "dashed"}
+            }, {
+                "xAxis": ei, "yAxis": ZG
+            }])
+    
+    # 合并笔中枢和线段色带到同一个 markArea
+    all_mark_areas = zs_mark_areas + segment_areas
+    
     buy_marks = []
     sell_marks = []
     for ts in trade_signals:
@@ -722,7 +991,7 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
         },
         "markArea": {
             "silent": False,
-            "data": zs_mark_areas
+            "data": all_mark_areas
         },
         "markLine": {
             "silent": True,
@@ -769,9 +1038,11 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
     return {
         "backgroundColor": chart_bg,
         "animation": False,
+        "axisPointer": {"link": [{"xAxisIndex": [0, 1]}]},
         "tooltip": {
             "trigger": "axis",
-            "axisPointer": {"type": "cross", "crossStyle": {"color": axis_color}},
+            "axisPointer": {"type": "cross", "crossStyle": {"color": axis_color},
+                            "link": [{"xAxisIndex": [0, 1]}]},
             "backgroundColor": "rgba(20,20,25,0.95)" if is_dark else "rgba(255,255,255,0.95)",
             "borderColor": "rgba(255,255,255,0.06)" if is_dark else "rgba(0,0,0,0.08)",
             "textStyle": {"fontSize": 11, "color": "#e4e4e7" if is_dark else "#1a1a2e"}
@@ -799,8 +1070,8 @@ def get_echarts_option(code, freq="D", limit=400, theme="dark"):
              "splitLine": {"show": False}}
         ],
         "dataZoom": [
-            {"type": "inside", "start": 70, "end": 100},
-            {"type": "slider", "start": 70, "end": 100, "height": 16, "bottom": 4}
+            {"type": "inside", "xAxisIndex": [0, 1], "start": 70, "end": 100},
+            {"type": "slider", "xAxisIndex": [0, 1], "start": 70, "end": 100, "height": 16, "bottom": 4}
         ],
         "series": series_list
     }
@@ -819,6 +1090,7 @@ def save_to_db(code, freq, result):
     conn.execute("DELETE FROM chanlun_bi WHERE stock_code=? AND freq=?", (code, freq))
     conn.execute("DELETE FROM chanlun_fx WHERE stock_code=? AND freq=?", (code, freq))
     conn.execute("DELETE FROM chanlun_zs WHERE stock_code=? AND freq=?", (code, freq))
+    conn.execute("DELETE FROM chanlun_segment WHERE stock_code=? AND freq=?", (code, freq))
     
     # 写入笔
     for bi in result.get("bi_list", []):
@@ -842,6 +1114,14 @@ def save_to_db(code, freq, result):
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (code, freq, zs["start_dt"], zs["end_dt"], zs["zg"], zs["zd"], zs["zz"], zs.get("bi_count", 0)))
     
+    # 写入线段
+    for seg in result.get("segment_list", []):
+        conn.execute("""
+            INSERT INTO chanlun_segment (stock_code, freq, sdt, edt, direction, high, low, bi_count, amplitude, slope, days)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (code, freq, seg["sdt"], seg["edt"], seg["direction"],
+              seg["high"], seg["low"], seg["bi_count"], seg["amplitude"], seg["slope"], seg["days"]))
+    
     conn.commit()
     conn.close()
     return True
@@ -851,7 +1131,7 @@ def save_to_db(code, freq, result):
 # 多周期联立分析
 # ═══════════════════════════════════════════════
 
-def multi_period_analyze(code, limit=400):
+def multi_period_analyze(code, limit=400, data_mode="auto"):
     """对同一代码进行日/周/月三周期联立分析
     
     Returns:
@@ -863,7 +1143,7 @@ def multi_period_analyze(code, limit=400):
     results = {}
     for freq in ["D", "W", "M"]:
         try:
-            r = analyze(code, freq, limit)
+            r = analyze(code, freq, limit, data_mode=data_mode)
             results[freq] = r
         except Exception as e:
             results[freq] = {"error": str(e)}
@@ -989,6 +1269,387 @@ def _analyze_resonance(results):
     resonance["score"] = score
     
     return resonance
+
+
+# ═══════════════════════════════════════════════
+# 区间套分析（日→60分钟→15分钟三级级联）
+# ═══════════════════════════════════════════════
+
+SUPPORTED_MINUTE_FREQ = {"15": Freq.F15, "60": Freq.F60}
+
+
+def _parse_baostock_time(date_str, time_str):
+    """解析 baostock 时间格式: '20260529', '150000000' → datetime"""
+    dt_str = str(date_str).strip()
+    tm_str = str(time_str).strip()
+    # time 格式: '150000000' → '15:00:00'
+    if len(tm_str) >= 6:
+        hh = tm_str[0:2]
+        mm = tm_str[2:4]
+        ss = tm_str[4:6]
+    else:
+        hh, mm, ss = '00', '00', '00'
+    return pd.to_datetime(f"{dt_str} {hh}:{mm}:{ss}")
+
+
+def _get_minute_bars(code, frequency, start_date=None, end_date=None):
+    """从缓存读取分钟 K 线并转换为 CZSC RawBar 列表
+    
+    Args:
+        code: 股票代码
+        frequency: '15' | '60'
+        start_date: 起始日期
+        end_date: 结束日期
+    
+    Returns:
+        list[RawBar]
+    """
+    from data.lixr_api.api_stock_minute import sync_minute_kline, get_cached_klines
+    
+    # 确保缓存有数据
+    sync_minute_kline(code, frequency, start_date, end_date)
+    
+    # 读取缓存
+    df = get_cached_klines(code, frequency, start_date, end_date)
+    if df.empty:
+        return []
+    
+    freq_enum = SUPPORTED_MINUTE_FREQ.get(frequency, Freq.F15)
+    bars = []
+    for _, row in df.iterrows():
+        dt = _parse_baostock_time(row['date'], row['time'])
+        bars.append(RawBar(
+            symbol=code, dt=dt, freq=freq_enum,
+            open=float(row['open']), close=float(row['close']),
+            high=float(row['high']), low=float(row['low']),
+            vol=float(row['volume']), amount=float(row['amount'])
+        ))
+    
+    return bars
+
+
+def get_minute_echarts_option(code, frequency, limit=400, theme="dark"):
+    """分钟级 K 线 ECharts 配置（60分钟/15分钟）
+    
+    Args:
+        code: 股票代码
+        frequency: '15' | '60'
+        limit: K线数量
+        theme: 'dark' | 'light'
+    """
+    freq_enum = SUPPORTED_MINUTE_FREQ.get(frequency, Freq.F15)
+    
+    # 从缓存读取分钟数据
+    bars = _get_minute_bars(code, frequency)
+    if not bars:
+        return {"error": f"无{频率}分钟K线数据: {code}"}
+    
+    # 截取最近 limit 根
+    if len(bars) > limit:
+        bars = bars[-limit:]
+    
+    # CZSC 计算
+    czsc_obj = CZSC(bars)
+    
+    # 构建 X 轴标签（日期+时间）
+    x_labels = []
+    for b in bars:
+        dt = getattr(b, 'dt', None)
+        if dt:
+            x_labels.append(dt.strftime("%m-%d %H:%M") if hasattr(dt, 'strftime') else str(dt)[:16])
+        else:
+            x_labels.append('')
+    
+    # OHLC 数据
+    ohlc_data = [[float(b.open), float(b.close), float(b.low), float(b.high)] for b in bars]
+    
+    # 配色
+    is_dark = theme == "dark"
+    up_color = "#ef4444" if is_dark else "#dc2626"
+    down_color = "#10b981" if is_dark else "#059669"
+    axis_color = "rgba(200,200,200,0.3)" if is_dark else "rgba(128,128,128,0.3)"
+    grid_color = "rgba(200,200,200,0.08)" if is_dark else "rgba(128,128,128,0.1)"
+    chart_bg = "rgba(26,26,31,.6)" if is_dark else "rgba(255,255,255,.75)"
+    
+    # 笔标记
+    date_idx = {x_labels[i]: i for i in range(len(x_labels))}
+    mark_points = []
+    for bi in czsc_obj.bi_list:
+        try:
+            s = str(bi.dt)[:16] if hasattr(bi.dt, 'strftime') else str(bi.dt)[:16]
+            for k, idx in date_idx.items():
+                if k.startswith(s[:11]):
+                    is_down = str(bi.direction) in ("down", "向下")
+                    mark_points.append({
+                        "coord": [idx, float(bi.high) if is_down else float(bi.low)],
+                        "value": ("顶" if is_down else "底") + str(round(float(bi.high if is_down else bi.low), 0)),
+                        "symbol": "arrow", "symbolRotate": 0 if is_down else 180,
+                        "symbolSize": 8, "symbolOffset": [0, -5 if is_down else 5],
+                        "itemStyle": {"color": up_color if is_down else down_color},
+                        "label": {"show": True, "fontSize": 7, "fontWeight": "normal",
+                                  "color": up_color if is_down else down_color, "offset": [0, -8] if is_down else [0, 8]}
+                    })
+                    break
+        except Exception:
+            pass
+    
+    # 中枢
+    zs_list = compute_zhongshu(czsc_obj.bi_list)
+    zs_areas = []
+    for zs in zs_list:
+        sdt, edt = zs["start_dt"], zs["end_dt"]
+        si = ei = -1
+        for k, idx in date_idx.items():
+            if k.startswith(sdt[:7]): si = idx
+            if k.startswith(edt[:7]): ei = idx
+        if si >= 0 and ei >= 0:
+            zs_areas.append([{"xAxis": si, "yAxis": zs["zd"],
+                "itemStyle": {"color": "rgba(245,158,11,0.12)", "borderColor": "rgba(245,158,11,0.3)", "borderWidth": 1, "borderType": "dashed"}},
+                {"xAxis": ei, "yAxis": zs["zg"]}])
+    
+    return {
+        "backgroundColor": chart_bg,
+        "animation": False,
+        "tooltip": {"trigger": "axis", "axisPointer": {"type": "cross", "crossStyle": {"color": axis_color}},
+            "backgroundColor": "rgba(20,20,25,0.95)" if is_dark else "rgba(255,255,255,0.95)",
+            "borderColor": "rgba(255,255,255,0.06)" if is_dark else "rgba(0,0,0,0.08)",
+            "textStyle": {"fontSize": 11, "color": "#e4e4e7" if is_dark else "#1a1a2e"}},
+        "grid": [{"left": "8%", "right": "4%", "top": 8, "height": "75%"}],
+        "xAxis": [{"type": "category", "data": x_labels, "axisLabel": {"color": axis_color, "fontSize": 8},
+                    "axisLine": {"lineStyle": {"color": grid_color}}}],
+        "yAxis": [{"type": "value", "scale": True, "axisLabel": {"color": axis_color, "fontSize": 9},
+                    "splitLine": {"lineStyle": {"color": grid_color}}}],
+        "dataZoom": [{"type": "inside", "start": 70, "end": 100},
+                     {"type": "slider", "start": 70, "end": 100, "height": 16, "bottom": 4}],
+        "series": [{
+            "name": "K线", "type": "candlestick", "data": ohlc_data,
+            "itemStyle": {"color": up_color, "color0": down_color, "borderColor": up_color, "borderColor0": down_color},
+            "markPoint": {"data": mark_points, "symbol": "arrow", "symbolSize": 8,
+                          "label": {"show": True, "fontSize": 7}},
+            "markArea": {"silent": False, "data": zs_areas}
+        }]
+    }
+
+
+def cascade_analyze(code, daily_date=None, daily_side=None):
+    """区间套分析：日线背驰信号 → 60分钟确认 → 15分钟精确定位
+    
+    Args:
+        code: 股票代码
+        daily_date: 日线背驰信号日期（可选，默认取最新日线信号）
+        daily_side: 'buy' | 'sell'（可选，默认取最新信号方向）
+    
+    Returns:
+        dict: {
+            daily_signal: 日线信号详情,
+            cascade_signals: [区间套信号列表],
+            levels: {daily, 60min, 15min} 各级分析结果,
+            has_cascade: 是否存在区间套
+        }
+    """
+    # Step 1: 日线分析（获取最新的买卖信号）
+    daily_result = analyze(code, "D", 400, data_mode="stock")
+    if daily_result.get("error"):
+        return {"error": daily_result["error"]}
+    
+    trade_signals = daily_result.get("trade_signals", [])
+    if not trade_signals:
+        return {"error": "日线无买卖信号，无法进行区间套分析", "daily_signal": None, "cascade_signals": []}
+    
+    # 选择目标信号
+    target_signal = None
+    if daily_date:
+        for ts in trade_signals:
+            if ts["dt"] == daily_date:
+                target_signal = ts
+                break
+    
+    if not target_signal:
+        # 取最新信号
+        target_signal = trade_signals[0]
+    
+    target_date = target_signal["dt"]
+    target_side = daily_side or target_signal["side"]
+    is_buy = target_side == "buy"
+    
+    # 确定分钟数据的日期范围（CZSC笔划分对数据范围敏感，需给足前后空间）
+    from datetime import datetime as dt_cls
+    dt_obj = dt_cls.strptime(target_date, "%Y-%m-%d")
+    m_start = (dt_obj - pd.DateOffset(days=180)).strftime("%Y-%m-%d")
+    m_end = (dt_obj + pd.DateOffset(days=60)).strftime("%Y-%m-%d")
+    
+    # Step 2: 60分钟确认
+    bars_60 = _get_minute_bars(code, "60", m_start, m_end)
+    if len(bars_60) < 10:
+        return {"error": "60分钟数据不足", "daily_signal": target_signal, "cascade_signals": []}
+    
+    czsc_60 = CZSC(bars_60)
+    zs_60 = compute_zhongshu(czsc_60.bi_list)
+    div_60 = detect_divergence(czsc_60.bi_list, zs_60)
+    
+    # 匹配：60分钟的背驰方向与日线一致，且在 ±3 天内
+    matched_60 = []
+    for d in div_60:
+        if d["category"] != "趋势背驰":
+            continue
+        d_dt = d["dt"]
+        try:
+            d_obj = dt_cls.strptime(d_dt, "%Y-%m-%d")
+            diff_days = abs((d_obj - dt_obj).days)
+            same_dir = (is_buy and d["type"] == "底背驰") or (not is_buy and d["type"] == "顶背驰")
+            if diff_days <= 3 and same_dir:
+                # 提取笔的完整时间（含时分）
+                bi_idx = d.get("bi_idx", 0)
+                if bi_idx < len(czsc_60.bi_list):
+                    bi_dt = czsc_60.bi_list[bi_idx].sdt
+                    if hasattr(bi_dt, 'strftime'):
+                        d["dt_full"] = bi_dt.strftime("%Y-%m-%d %H:%M")
+                    else:
+                        d["dt_full"] = str(bi_dt)[:16]
+                else:
+                    d["dt_full"] = d_dt
+                matched_60.append(d)
+        except ValueError:
+            continue
+    
+    if not matched_60:
+        return {
+            "daily_signal": target_signal,
+            "cascade_signals": [],
+            "has_cascade": False,
+            "levels_passed": 1,
+            "confidence": "低（仅日线确认）",
+            "reason": "60分钟未检测到与日线匹配的背驰信号"
+        }
+    
+    # Step 3: 15分钟精确定位
+    # 在60分钟确认点附近缩小范围
+    best_60 = matched_60[0]  # 取第一个匹配的
+    dt_60 = dt_cls.strptime(best_60["dt"], "%Y-%m-%d")
+    m15_start = (dt_60 - pd.DateOffset(days=90)).strftime("%Y-%m-%d")
+    m15_end = (dt_60 + pd.DateOffset(days=10)).strftime("%Y-%m-%d")
+    
+    bars_15 = _get_minute_bars(code, "15", m15_start, m15_end)
+    if len(bars_15) < 10:
+        return {
+            "daily_signal": target_signal,
+            "cascade_signals": [{
+                "type": f"区间套{'一买' if is_buy else '一卖'}",
+                "side": target_side,
+                "dt_daily": target_date,
+                "dt_60min": best_60.get("dt_full", best_60["dt"]),
+                "price_daily": target_signal["price"],
+                "confidence": "中（日线+60分确认）",
+                "levels_passed": 2
+            }],
+            "has_cascade": True,
+            "levels_passed": 2,
+            "confidence": "中",
+            "reason": "15分钟数据不足"
+        }
+    
+    czsc_15 = CZSC(bars_15)
+    zs_15 = compute_zhongshu(czsc_15.bi_list)
+    div_15 = detect_divergence(czsc_15.bi_list, zs_15)
+    
+    # 匹配：15分钟背驰方向一致，且在60分钟确认点 ±1 天内
+    matched_15 = []
+    for d in div_15:
+        if d["category"] != "趋势背驰":
+            continue
+        d_dt = d["dt"]
+        try:
+            d_obj = dt_cls.strptime(d_dt, "%Y-%m-%d")
+            diff_days = abs((d_obj - dt_60).days)
+            same_dir = (is_buy and d["type"] == "底背驰") or (not is_buy and d["type"] == "顶背驰")
+            if diff_days <= 1 and same_dir:
+                # 提取笔的完整时间
+                bi_idx = d.get("bi_idx", 0)
+                if bi_idx < len(czsc_15.bi_list):
+                    bi_dt = czsc_15.bi_list[bi_idx].sdt
+                    if hasattr(bi_dt, 'strftime'):
+                        d["dt_full"] = bi_dt.strftime("%Y-%m-%d %H:%M")
+                    else:
+                        d["dt_full"] = str(bi_dt)[:16]
+                else:
+                    d["dt_full"] = d_dt
+                matched_15.append(d)
+        except ValueError:
+            continue
+    
+    # 构建结果
+    cascade_sigs = []
+    if matched_15:
+        for d15 in matched_15:
+            # 精确入场价：15分钟背驰点的极值
+            bi_15 = czsc_15.bi_list
+            entry_price = None
+            for bi in bi_15:
+                bi_sdt = str(bi.sdt)[:10]
+                if bi_sdt == d15["dt"] and str(bi.direction) in ("down", "向下"):
+                    entry_price = round(float(bi.low), 2)
+                    break
+            if entry_price is None and d15.get("bi_idx", 0) < len(bi_15):
+                entry_bi = bi_15[d15["bi_idx"]]
+                entry_price = round(float(entry_bi.low) if is_buy else float(entry_bi.high), 2)
+            
+            cascade_sigs.append({
+                "type": f"区间套{'一买' if is_buy else '一卖'}",
+                "side": target_side,
+                "dt_daily": target_date,
+                "dt_60min": best_60.get("dt_full", best_60["dt"]),
+                "dt_15min": d15.get("dt_full", d15["dt"]),
+                "price_daily": target_signal["price"],
+                "price_entry": entry_price or target_signal["price"],
+                "entry_range": [round(entry_price * 0.998, 2), round(entry_price * 1.005, 2)] if entry_price else None,
+                "confidence": "高",
+                "levels_passed": 3,
+                "daily_div": {"type": target_signal.get("div_signal", ""), "power_ratio": 0, "severity": target_signal.get("confidence", "")},
+                "60min_div": {"type": best_60["type"], "power_ratio": best_60["power_ratio"], "severity": best_60["severity"]},
+                "15min_div": {"type": d15["type"], "power_ratio": d15["power_ratio"], "severity": d15["severity"]}
+            })
+    else:
+        # 仅有日线+60分确认
+        cascade_sigs.append({
+            "type": f"区间套{'一买' if is_buy else '一卖'}",
+            "side": target_side,
+            "dt_daily": target_date,
+            "dt_60min": best_60.get("dt_full", best_60["dt"]),
+            "price_daily": target_signal["price"],
+            "confidence": "中",
+            "levels_passed": 2,
+            "daily_div": {"type": target_signal.get("div_signal", ""), "power_ratio": 0, "severity": target_signal.get("confidence", "")},
+            "60min_div": {"type": best_60["type"], "power_ratio": best_60["power_ratio"], "severity": best_60["severity"]}
+        })
+    
+    levels_passed = cascade_sigs[0]["levels_passed"]
+    confidence = "高" if levels_passed == 3 else "中"
+    
+    return {
+        "code": code,
+        "daily_signal": target_signal,
+        "cascade_signals": cascade_sigs,
+        "has_cascade": True,
+        "levels_passed": levels_passed,
+        "confidence": confidence,
+        "daily": {
+            "bi_count": daily_result["bi_count"],
+            "zs_count": daily_result["zs_count"],
+            "divergence_count": daily_result["divergence_count"]
+        },
+        "min60": {
+            "bi_count": len(czsc_60.bi_list),
+            "zs_count": len(zs_60),
+            "divergence_count": len(div_60),
+            "matched_count": len(matched_60)
+        },
+        "min15": {
+            "bi_count": len(czsc_15.bi_list) if len(bars_15) >= 10 else 0,
+            "zs_count": len(zs_15) if len(bars_15) >= 10 else 0,
+            "divergence_count": len(div_15) if len(bars_15) >= 10 else 0,
+            "matched_count": len(matched_15)
+        }
+    }
 
 
 # ═══════════════════════════════════════════════

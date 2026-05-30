@@ -125,6 +125,7 @@ TASKS = [
     ("📐 指数拥挤度",      [PYTHON_EXE, "src/scanners/index_crowding.py", "--date", today_str]),
     ("🔄 融资融券(新API)", [PYTHON_EXE, "scripts/fetch_margin_daily.py"]),
     ("💊 大盘健康度",      [PYTHON_EXE, "src/scanners/market_health.py", "--date", today_str]),
+    ("📉 大盘卖出评分",    [PYTHON_EXE, "src/scanners/market_sell_score.py", "--date", today_str]),
     ("📸 大盘扫描快照",    [PYTHON_EXE, "scripts/compute_market_snapshot.py", "--date", today_str]),
 ]
 
@@ -167,6 +168,45 @@ TASKS.append(("📋 欧奈尔每日精选·股票", [PYTHON_EXE, "src/discipline
 
 # 步骤15：欧奈尔每日精选·指数（每日执行，依赖指数K线 + 指数RS）
 TASKS.append(("📊 欧奈尔每日精选·指数", [PYTHON_EXE, "src/discipline/index_screener.py", "--date", today_str]))
+
+# 步骤16：缠论分钟数据预下载（每日执行，为区间套分析缓存关注股票的分钟K线）
+TASKS.append(("⏱️ 缠论分钟数据预下载", [PYTHON_EXE, "-c", """
+import sys; sys.path.insert(0, 'src')
+from data.lixr_api.api_stock_minute import sync_minute_kline
+import sqlite3
+
+DB = r'data/lixinger.db'
+conn = sqlite3.connect(DB)
+
+# 从观察池和每日精选股票获取关注列表
+codes = set()
+try:
+    rows = conn.execute('SELECT DISTINCT stock_code FROM discipline_observation_pool WHERE date=(SELECT MAX(date) FROM discipline_observation_pool)').fetchall()
+    codes.update(r[0] for r in rows)
+except: pass
+try:
+    rows = conn.execute('SELECT DISTINCT stock_code FROM discipline_screening_daily WHERE date=(SELECT MAX(date) FROM discipline_screening_daily)').fetchall()
+    codes.update(r[0] for r in rows)
+except: pass
+conn.close()
+
+if not codes:
+    print('无关注股票，跳过分钟数据预下载')
+else:
+    print(f'预下载 {len(codes)} 只关注股票的分钟K线...')
+    for i, code in enumerate(sorted(codes)):
+        try:
+            c60 = sync_minute_kline(code, '60') or 0
+            c15 = sync_minute_kline(code, '15') or 0
+            if (i+1) % 20 == 0:
+                print(f'  进度: {i+1}/{len(codes)}')
+        except Exception as e:
+            print(f'  {code} 下载失败: {e}')
+    print(f'完成: {len(codes)} 只股票分钟数据已缓存')
+"""]))
+
+# 步骤17：缠论批量扫描（每日执行，对观察池+精选池股票做缠论分析）
+TASKS.append(("🎋 缠论批量扫描", [PYTHON_EXE, "src/scanners/chanlun_scan.py", "--date", today_str]))
 
 for label, cmd in TASKS:
     lbl, ok, elapsed, _ = run_task(label, cmd)

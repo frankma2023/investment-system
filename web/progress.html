@@ -46,11 +46,11 @@
 
     <header class="panel-header">
       <h1>📋 欧奈尔投资系统 · 项目进展</h1>
-      <p>2026-05-28（阶段收尾）</p>
+      <p>2026-05-30（阶段收尾）</p>
     </header>
 
     <div class="pg-stats">
-      <div class="pg-stat"><div class="n" style="color:#4CAF50">87</div><div class="l">已完成</div></div>
+      <div class="pg-stat"><div class="n" style="color:#4CAF50">89</div><div class="l">已完成</div></div>
       <div class="pg-stat"><div class="n" style="color:#FF9800">0</div><div class="l">进行中</div></div>
       <div class="pg-stat"><div class="n">2</div><div class="l">待开发</div></div>
     </div>
@@ -119,6 +119,8 @@
           <tr><td><span class="pg-dot dot-done"></span>⚡ 背驰检测(趋势+盘整)</td><td>detect_divergence</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>🎯 买卖信号(一/三)</td><td>generate_trade_signals</td></tr>
           <tr><td><span class="pg-dot dot-done"></span>🔮 多周期联立共振</td><td>multi_period_analyze</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>🎯 区间套买卖点</td><td>cascade_analyze</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>📋 缠论批量扫描</td><td>chanlun_scan.py</td></tr>
         </table>
       </div>
 
@@ -195,9 +197,9 @@
       </div>
 
       <div class="pg-card">
-        <h3>📐 未来引擎 <span class="badge" style="background:#FFF3E0;color:#E65100">1项</span></h3>
+        <h3>📐 已完成 <span class="badge" style="background:#E8F5E9;color:#2E7D32">1项</span></h3>
         <table class="pg-table">
-          <tr><td><span class="pg-dot dot-todo"></span>大盘环境卖出</td><td>market_exit</td></tr>
+          <tr><td><span class="pg-dot dot-done"></span>大盘环境卖出评分</td><td>market_sell_score.py</td></tr>
         </table>
       </div>
 
@@ -262,6 +264,9 @@
     <div class="lesson-card" style="border-left-color:#FF9800"><div class="ln" style="color:#F57F00">48. 全站 Tailwind CDN 是纯浪费——42个页面加载但只用1个页面用到</div><div class="ld">`cdn.tailwindcss.com` 被 42 个页面引用，实际 Tailwind 工具类只被 market_scan.html 使用了 25 个。批量删除 CDN 引用 + 给 market_scan.html 补 25 行等效 CSS，消除所有控制台警告。教训：模板复制粘贴的依赖要定期审计，生产环境不要用 CDN 脚本。</div></div>
     <div class="lesson-card" style="border-left-color:#FF9800"><div class="ln" style="color:#F57F00">49. 页面自定义 app-container 越权覆盖共享CSS导致边距不一致</div><div class="ld">3 个页面各自写了 `max-width:1400px; padding:16px 24px 0` 覆盖 hanako-glass.css 的 `1200px; 12px 10px 40px`，左右边距肉眼可见不一致。删除自定义覆盖、统一继承共享样式。教训：共享 CSS 是唯一真相源，页面级覆盖只应为页面特有组件服务，不应重新定义全局布局。</div></div>
     <div class="lesson-card" style="border-left-color:#FF9800"><div class="ln" style="color:#F57F00">50. 大页面导航栏延迟——nav.js 在底部加载导致 DOMContentLoaded 等待 37K 行</div><div class="ld">daily-pattern-scan 页面 37K 行 HTML，nav.js 放在 body 底部，Nav.init 等 DOMContentLoaded。修复：`<link rel="preload">` 提前下载 + nav.js 和 Nav.init 放在 `<nav>` 容器后立即执行。nav.js 的 init 已内置"top-nav在DOM中则立即渲染"逻辑。教训：大页面的关键渲染路径要前移，不要让导航栏等数据表格。</div></div>
+    <div class="lesson-card" style="border-left-color:#C62828"><div class="ln" style="color:#C62828">51. ECharts 多 grid 配置三件套——写参数前必须查文档，凭感觉必错</div><div class="ld">chanlun-backtest 十字线修复暴露三个 ECharts 5 API 错误：(1) `axisPointer.link.xAxisIndex` 用了字符串 `"all"` 而非数字数组 `[0,1]`；(2) 只在 tooltip 内配了 link，忘了 option 顶层也需要；(3) `dataZoom` 缺 `xAxisIndex` 导致两个 grid 缩放不同步、十字线日期错位。全部因为凭感觉写参数不查文档。教训：涉及 API 配置参数的代码，必须先查官方文档确认类型和必填项，不能靠"看起来像"猜测。</div></div>
+    <div class="lesson-card" style="border-left-color:#FF9800"><div class="ln" style="color:#F57F00">52. Baostock 分钟数据按需拉取+缓存——首次慢，后续秒出</div><div class="ld">baostock 免费提供分钟 K 线（15/60 分钟），历史从 1999 年开始。封装 api_stock_minute.py 拉取模块（上下文管理器防连接泄漏），SQLite 缓存（INSERT OR IGNORE 增量），首次拉取约 3 秒，缓存后秒读。daily_update.py 步骤16 盘后预下载观察池+精选池分钟数据，次日区间套分析秒出。教训：免费数据源+本地缓存 > 实时请求——盘后预加载是用户体验的关键。</div></div>
+    <div class="lesson-card" style="border-left-color:#FF9800"><div class="ln" style="color:#F57F00">53. 缩小扫描范围比全市场扫描更有价值——671 只 8 分钟完成</div><div class="ld">缠论批量扫描最初设计为全市场 5000 只（2-4 小时）。改为只扫描观察池+精选池（671 只）后，8 分钟即可完成，且扫描的都是用户实际关注的标的，信号更有决策价值。教训：技术可行 ≠ 产品有价值——聚焦用户真正需要的数据范围，性价比提升一个数量级。</div></div>
 
     <div class="updated">❤️ 投资手账本 · 项目进展</div>
   </div>

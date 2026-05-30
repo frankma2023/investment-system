@@ -153,12 +153,13 @@
     async function load() {
       const div=document.getElementById('content');
       try{
-        const[hr,pr]=await Promise.all([
+        const[hr,pr,sr]=await Promise.all([
           fetch(API_BASE+'/api/market-health?date=latest').then(r=>r.json()),
-          fetch(API_BASE+'/api/market-panorama').then(r=>r.json())
+          fetch(API_BASE+'/api/market-panorama').then(r=>r.json()),
+          fetch(API_BASE+'/api/market-sell-score?date=latest').then(r=>r.json()).catch(()=>({status:'no_data'}))
         ]);
         if(hr.status==='no_data'){div.innerHTML='<div class="no-data">📡 暂无健康度数据</div>';return;}
-        render(hr,pr);
+        render(hr,pr,sr);
         loadMajorIndices();
       }catch(e){div.innerHTML='<div class="no-data">📡 数据加载失败</div>';}
     }
@@ -235,7 +236,7 @@
       },300);
     }
 
-    function render(h,p){
+    function render(h,p,sr){
       const score=h.total_score||0;const rt=rl(score);const rcc=rc(score);
       let html='';
 
@@ -246,7 +247,7 @@
       // 卡片1: 大盘健康度
       html+=`<div class="score-hero">
         <div class="score-ring" style="background:${rcc}15;border:3px solid ${rcc}30"><div style="text-align:center"><div class="num" style="color:${rcc}">${score}</div></div></div>
-        <div class="score-info"><div class="label">大盘健康度 / 100</div><div class="rating" style="color:${rcc}">${rt.r} · ${rt.label}</div><div class="advice">${rt.a}</div></div>
+        <div class="score-info"><div class="label">大盘健康度 / 100</div><div class="rating" style="color:${rcc}">${rt.r} · ${rt.l}</div><div class="advice">${rt.a}</div></div>
       </div>`;
       // 卡片2: 全市场成交额趋势
       html+='<div class="score-card"><div class="sc-title">全市场成交额趋势</div>';
@@ -259,28 +260,9 @@
       html+='<div class="sc-sub">>2 多方主导 | <0.5 空方主导</div>';
       html+='<div class="sc-chart" id="chart-hl-trend"></div></div>';
       html+='</div>';
-      // 刷新按钮移到下面
-      html+='<div style="text-align:right;margin-bottom:8px"><span style="font-size:10px;color:var(--muted);margin-right:8px">'+h.date+'</span><button onclick="computeSnapshot()" style="font-size:10px;padding:4px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--muted);cursor:pointer;font-family:var(--font-body)">刷新计算</button></div>';
 
-      // ═══ L1: 核心信号 ═══
-      html+='<div class="section-hdr">📡 核心信号</div><div class="core-grid">';
-      // 抛盘日
-      const dist=p?.core?.distribution||{};
-      let distCls='core-ok',distIcon='📉';
-      if(dist.level==='danger')distCls='core-danger';
-      else if(dist.level==='warning')distCls='core-warning';
-      html+=`<div class="core-card ${distCls}"><div class="icon">${distIcon}</div><div class="label">抛盘日</div><div class="val">${dist.label||'—'}<span style="font-size:0.6rem;color:var(--muted)"> /30天</span></div>${dist.dates?'<div style="font-size:0.55rem;color:var(--muted);margin-top:2px">'+dist.dates+'</div>':''}<div class="desc">${dist.desc||''}</div></div>`;
-      // 追盘日
-      const ftd=p?.core?.ftd||{};
-      const ftdCls=(ftd.count||0)>0?'core-ok':'core-'+((ftd.level||'')||'unknown');
-      html+=`<div class="core-card ${ftdCls}"><div class="icon">📈</div><div class="label">追盘日</div><div class="val">${ftd.label||'—'}<span style="font-size:0.6rem;color:var(--muted)"> /30天</span></div>${ftd.dates?'<div style="font-size:0.55rem;color:var(--muted);margin-top:2px">'+ftd.dates+'</div>':''}<div class="desc">${ftd.desc||''}</div></div>`;
-      // 吸筹日
-      const acc=p?.core?.accumulation||{};
-      const accCls=(acc.count||0)>0?'core-ok':'core-'+((acc.level||'')||'unknown');
-      html+=`<div class="core-card ${accCls}"><div class="icon">📦</div><div class="label">吸筹日</div><div class="val">${acc.label||'—'}</div><div class="desc">${acc.desc||'—'}</div></div>`;
-      html+='</div>';
-
-      // ═══ L2: 辅助指标 ═══
+      
+// ═══ L2: 辅助指标 ═══
       html+='<div class="section-hdr">📊 辅助指标 · 参与健康评分</div><div class="ind-grid">';
       const meta={
         ma50_above:{n:'MA50上方占比',u:'%',t:'宽度',max:15,hi:70,lo:30},
@@ -301,6 +283,83 @@
           <div class="ibar"><div class="ibar-fill" style="width:${bw}%;background:${bc}"></div></div>
           <div class="is">${ind.score}/${m.max}分</div><div class="id">${DESC[ind.key]||''}</div></div>`;
       });
+      html+='</div>';
+
+      
+      // ═══ 卖出评分卡片 ═══
+      if(sr&&sr.status!=='no_data'){
+        const sscore=sr.total_score||0;
+        const melt=sr.meltdown_triggered;
+        const sColor=melt?'#ef4444':sscore>=140?'#ef4444':sscore>=100?'#f59e0b':sscore>=60?'#f59e0b':'#10b981';
+        const sBg=melt?'rgba(239,68,68,0.12)':sscore>=140?'rgba(239,68,68,0.08)':sscore>=100?'rgba(245,158,11,0.1)':sscore>=60?'rgba(245,158,11,0.06)':'rgba(16,185,129,0.08)';
+        const clearedCount=sr.cleared_signals?sr.cleared_signals.length:0;
+        const sd=sr.signal_details||{};
+        html+='<div class="section-hdr">📉 大盘卖出评分</div>';
+        html+='<div class="score-row">';
+        html+='<div class="score-hero" style="background:'+sBg+';max-width:none">';
+        html+='<div class="score-ring" style="background:'+sColor+'15;border:3px solid '+sColor+'30"><div style="text-align:center"><div class="num" style="color:'+sColor+'">'+sscore+'</div></div></div>';
+        html+='<div class="score-info"><div class="label">卖出评分'+(melt?' · ⚠️熔断':sscore>=140?' · 清仓':sscore>=100?' · 高危':sscore>=60?' · 警戒':'')+'</div>';
+        html+='<div class="rating" style="color:'+sColor+'">'+(sr.position_advice||'—')+'</div>';
+        html+='<div class="advice">'+(sr.signals&&sr.signals.length?sr.signals.length+'个信号触发':'无信号')+' · ≥60 减半仓 · ≥100 减至25% · ≥140 清仓</div></div></div>';
+        html+='<div class="score-card"><div class="sc-title">清仓级信号</div><div class="sc-val" style="color:'+(clearedCount>0?'#ef4444':'var(--muted)')+'">'+clearedCount+'</div><div class="sc-sub">'+(clearedCount>0?sr.cleared_signals.join(' / '):'无')+'</div></div>';
+        html+='<div class="score-card"><div class="sc-title">分数构成</div><div class="sc-val" style="font-size:0.65rem;color:var(--text-primary);line-height:1.6">'+(sr.signals&&sr.signals.length?sr.signals.map(function(s){return s.name+' +'+s.score}).join('<br>'):'<span style=color:var(--muted)>—</span>')+'</div><div class="sc-sub">= '+sscore+' 分</div></div>';
+        html+='</div>';
+
+        // 7个子卡片
+        function sigScore(name){return (sr.signals.find(function(x){return x.name===name})||{}).score||0}
+        html+='<div class="ind-grid">';
+        const sellMeta=[
+          {key:'leader',n:'龙头股见顶',icon:'🏔️',t:'领先',s:sigScore('龙头股见顶'),max:25,desc:'RS≥99龙头股>50%回落>10%'},
+          {key:'junk',n:'垃圾股补涨',icon:'🗑️',t:'结构',s:sigScore('垃圾股补涨'),max:25,desc:'低价股涨幅>高价股1.5倍持续5天'},
+          {key:'diverge',n:'指数背离',icon:'🔀',t:'背离',s:sigScore('指数背离'),max:60,desc:'5个指数成分股涨跌背离'},
+          {key:'ma',n:'均线系统',icon:'📐',t:'趋势',s:sigScore('跌破50日线')+sigScore('跌破200日线')+sigScore('均线死叉'),max:170,desc:'50日线/200日线/死叉'},
+          {key:'ad',n:'AD涨跌比',icon:'⚖️',t:'情绪',s:sigScore('AD<0.7持续5天')+sigScore('AD<0.5'),max:60,desc:'全市场涨跌家数比'},
+          {key:'hlnl',n:'NH/NL新高新低',icon:'📊',t:'宽度',s:sigScore('NH/NL<0.5持续3天'),max:30,desc:'52周新高/新低比<0.5持续3天'},
+          {key:'voldry',n:'上涨无量',icon:'📉',t:'量价',s:sigScore('上涨无量'),max:20,desc:'连续5日涨但量<20日均量×80%'},
+        ];
+        // 状态描述
+        const sellState={
+          leader:sd.leader_fallen||'—',
+          junk:sd.junk_rally?'⚠️ 已触发':'✅ 未触发',
+          diverge:(sd.divergence_count||0)+'个指数'+(sd.divergence_leader?' (含领涨)':''),
+          ma:sd.ma200_broken?'200日线跌破':sd.ma50_broken?'50日线跌破':sd.death_cross?'死叉':'均线正常',
+          ad:sd.ad_crash?'<0.5极端':sd.ad_low5?'<0.7持续5天':'正常',
+          hlnl:sd.hlnl_low?'⚠️ <0.5':'✅ 正常',
+          voldry:sd.vol_dry?'⚠️ 已触发':'✅ 未触发'
+        };
+        sellMeta.forEach(function(m){
+          var sv=sellState[m.key]||'—';
+          var hasVal=typeof sv==='string'?sv.indexOf('⚠')>=0||sv.indexOf('跌破')>=0||sv.indexOf('死叉')>=0:sv>0;
+          const ic=hasVal?(m.s>0?'#ef4444':'#f59e0b'):'var(--muted)';
+          const scoreColor=m.s>0?'#ef4444':'var(--muted)';
+          html+='<div class="ind-card"><div class="ih"><span class="in">'+m.icon+' '+m.n+'</span><span class="it">'+m.t+'</span></div>';
+          html+='<div class="iv" style="color:'+scoreColor+'">+'+m.s+'<span class="iu"> /'+m.max+'分</span></div>';
+          html+='<div class="iu" style="font-size:0.62rem;color:'+ic+'">'+sv+'</div>';
+          html+='<div class="ibar"><div class="ibar-fill" style="width:'+Math.min(100,m.s/m.max*100)+'%;background:'+(m.s>0?'#ef4444':'#4CAF50')+'"></div></div>';
+          html+='<div class="id">'+m.desc+'</div></div>';
+        });
+        html+='</div>';
+      }
+
+      // 刷新按钮移到下面
+      html+='<div style="text-align:right;margin-bottom:8px"><span style="font-size:10px;color:var(--muted);margin-right:8px">'+h.date+'</span><button onclick="computeSnapshot()" style="font-size:10px;padding:4px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--muted);cursor:pointer;font-family:var(--font-body)">刷新计算</button></div>';
+
+      // ═══ L1: 核心信号 ═══
+      html+='<div class="section-hdr">📡 核心信号</div><div class="core-grid">';
+      // 抛盘日
+      const dist=p?.core?.distribution||{};
+      let distCls='core-ok',distIcon='📉';
+      if(dist.level==='danger')distCls='core-danger';
+      else if(dist.level==='warning')distCls='core-warning';
+      html+=`<div class="core-card ${distCls}"><div class="icon">${distIcon}</div><div class="label">抛盘日</div><div class="val">${dist.label||'—'}<span style="font-size:0.6rem;color:var(--muted)"> /30天</span></div>${dist.dates?'<div style="font-size:0.55rem;color:var(--muted);margin-top:2px">'+dist.dates+'</div>':''}<div class="desc">${dist.desc||''}</div></div>`;
+      // 追盘日
+      const ftd=p?.core?.ftd||{};
+      const ftdCls=(ftd.count||0)>0?'core-ok':'core-'+((ftd.level||'')||'unknown');
+      html+=`<div class="core-card ${ftdCls}"><div class="icon">📈</div><div class="label">追盘日</div><div class="val">${ftd.label||'—'}<span style="font-size:0.6rem;color:var(--muted)"> /30天</span></div>${ftd.dates?'<div style="font-size:0.55rem;color:var(--muted);margin-top:2px">'+ftd.dates+'</div>':''}<div class="desc">${ftd.desc||''}</div></div>`;
+      // 吸筹日
+      const acc=p?.core?.accumulation||{};
+      const accCls=(acc.count||0)>0?'core-ok':'core-'+((acc.level||'')||'unknown');
+      html+=`<div class="core-card ${accCls}"><div class="icon">📦</div><div class="label">吸筹日</div><div class="val">${acc.label||'—'}</div><div class="desc">${acc.desc||'—'}</div></div>`;
       html+='</div>';
 
       // ═══ L3: 市场全景 ═══
