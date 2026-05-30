@@ -8,159 +8,127 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preload" href="../shared/js/nav.js" as="script">
 <link rel="stylesheet" href="../shared/css/hanako-glass.css">
 <style>
-  .top-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
-  .top-bar label{font-size:10px;font-weight:500;color:var(--muted);display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.03em}
-  .top-bar input,.top-bar select{font-family:var(--font-body);padding:5px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:var(--card);color:var(--text-primary);outline:none;transition:all .2s}
-  .page-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-  .page-header h1{font-family:var(--font-display);font-size:1.2rem;font-weight:400;color:#d4d4d8;letter-spacing:-.01em}
-  html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
-  html[data-theme="light"] .page-header h1{color:#374151}
-    .hero { text-align: center; padding: 40px 0 20px; }
-    .hero h1 { font-family: var(--font-display); font-size: 1.8rem; font-weight: 900; margin: 0; }
-    .hero p { color: var(--muted); font-size: 0.75rem; margin-top: 6px; }
-    .stage-row { display: flex; gap: 12px; margin: 20px 0; }
-    .stage-card { flex: 1; background: var(--card-bg); border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: transform .15s; text-decoration: none; color: inherit; }
-    .stage-card:hover { transform: translateY(-2px); }
-    .stage-card .icon { font-size: 2rem; margin-bottom: 8px; }
-    .stage-card h3 { font-family: var(--font-display); font-size: 0.85rem; font-weight: 800; margin: 0 0 4px; }
-    .stage-card p { font-size: 0.62rem; color: var(--muted); margin: 0; }
-    .quick-stats { display: flex; gap: 10px; margin: 16px 0; flex-wrap: wrap; }
-    .qs { flex: 1 1 140px; background: var(--card-bg); border-radius: 14px; padding: 16px; text-align: center; }
-    .qs .n { font-family: var(--font-display); font-size: 1.6rem; font-weight: 900; }
-    .qs .l { font-size: 0.55rem; color: var(--muted); margin-top: 2px; }
+body{font-family:var(--font-body);background:var(--bg);color:var(--text-primary)}
+.hero{text-align:center;padding:40px 0 20px}
+.hero h1{font-family:var(--font-display);font-size:1.8rem;font-weight:400;margin:0;color:var(--text-primary)}
+.hero p{color:var(--muted);font-size:0.75rem;margin-top:6px}
+html[data-theme="light"] .hero h1{color:#374151}
+
+.stage-row{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap}
+.stage-card{flex:1 1 150px;background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:14px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;text-decoration:none;color:inherit;box-shadow:var(--shadow-card)}
+.stage-card:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.15)}
+.stage-card .icon{font-size:1.8rem;margin-bottom:6px}
+.stage-card h3{font-family:var(--font-display);font-size:0.85rem;font-weight:600;margin:0 0 4px;color:var(--text-primary)}
+.stage-card p{font-size:0.62rem;color:var(--muted);margin:0}
+
+.quick-stats{display:flex;gap:10px;margin:16px 0;flex-wrap:wrap}
+.qs{flex:1 1 130px;background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:14px;padding:14px 10px;text-align:center;box-shadow:var(--shadow-card);transition:all .2s}
+.qs:hover{border-color:var(--accent)}
+.qs .n{font-family:var(--font-display);font-size:1.4rem;font-weight:700;color:var(--text-primary)}
+.qs .l{font-size:0.55rem;color:var(--muted);margin-top:2px}
+#stat-asset-box{cursor:pointer}
+
+html[data-theme="light"] .stage-card{background:rgba(255,255,255,.75);border-color:var(--divider)}
+html[data-theme="light"] .stage-card h3{color:#374151}
+html[data-theme="light"] .qs{background:rgba(255,255,255,.7);border-color:var(--divider)}
 </style>
 </head>
 <body>
 <canvas id="bg-canvas"></canvas>
-<script>(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();
-</script>
+<script>(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();</script>
 <div class="app-container">
 
-  <nav class="top-nav" id="top-nav"></nav>
+<nav id="top-nav"></nav>
+<script src="../shared/js/nav.js"></script>
+<script>Nav.init({brandIcon:'🦊',brandText:'知行',currentPage:'discipline'})</script>
 
-    <div class="hero">
-      <h1>⚖️ 知行</h1>
-      <p>O'Neil Discipline Engine · 投资纪律系统</p>
-    </div>
+<div class="hero">
+  <h1>⚖️ 知行</h1>
+  <p>投资纪律系统 · 从分析到执行</p>
+</div>
 
-    <div class="stage-row">
-      <a href="screening.html" class="stage-card">
-        <div class="icon">📋</div>
-        <h3>每日精选</h3>
-        <p>O'Neil 综合评分</p>
-      </a>
-      <a href="observation.html" class="stage-card">
-        <div class="icon">🔍</div>
-        <h3>观察池</h3>
-        <p>今日自动筛选结果</p>
-      </a>
-      <a href="watchlist.html" class="stage-card">
-        <div class="icon">⭐</div>
-        <h3>自选池</h3>
-        <p>我的重点关注</p>
-      </a>
-      <a href="trades.html" class="stage-card">
-        <div class="icon">📊</div>
-        <h3>交易记录</h3>
-        <p>买入 · 卖出 · 复盘</p>
-      </a>
-      <a href="monitor.html" class="stage-card">
-        <div class="icon">📡</div>
-        <h3>持仓监控</h3>
-        <p>告警 · 止损 · 扫描</p>
-      </a>
-    </div>
+<div class="stage-row">
+  <a href="screening.html" class="stage-card"><div class="icon">📋</div><h3>每日精选</h3><p>综合评分</p></a>
+  <a href="observation.html" class="stage-card"><div class="icon">🔍</div><h3>观察池</h3><p>自动筛选</p></a>
+  <a href="watchlist.html" class="stage-card"><div class="icon">⭐</div><h3>自选池</h3><p>重点关注</p></a>
+  <a href="trades.html" class="stage-card"><div class="icon">📊</div><h3>交易记录</h3><p>买入·卖出</p></a>
+  <a href="monitor.html" class="stage-card"><div class="icon">📡</div><h3>持仓监控</h3><p>告警·止损</p></a>
+</div>
 
-    <div id="summary-stats" class="quick-stats">
-      <div class="qs"><div class="n" id="stat-obs">-</div><div class="l">观察池标的</div></div>
-      <div class="qs"><div class="n" id="stat-wl">-</div><div class="l">自选池标的</div></div>
-      <div class="qs"><div class="n" id="stat-hold">-</div><div class="l">持仓中</div></div>
-      <div class="qs"><div class="n" id="stat-pnl">-</div><div class="l">累计盈亏</div></div>
-      <div class="qs"><div class="n" id="stat-rate">-</div><div class="l">胜率</div></div>
-      <div class="qs"><div class="n" id="stat-plr">-</div><div class="l">盈亏比</div></div>
-      <div class="qs"><div class="n" id="stat-mdd">-</div><div class="l">最大回撤</div></div>
-      <div class="qs" id="stat-asset-box" style="cursor:pointer" onclick="editTotalAsset()">
-        <div class="n" id="stat-asset">-</div><div class="l">总资产 💰</div>
-      </div>
-      <div class="qs"><div class="n" id="stat-mv">-</div><div class="l">总市值</div></div>
-      <div class="qs"><div class="n" id="stat-cash">-</div><div class="l">现金</div></div>
-      <div class="qs"><div class="n" id="stat-pos">-</div><div class="l">仓位%</div></div>
-    </div>
-
+<div id="summary-stats" class="quick-stats">
+  <div class="qs"><div class="n" id="stat-obs">-</div><div class="l">观察池标的</div></div>
+  <div class="qs"><div class="n" id="stat-wl">-</div><div class="l">自选池标的</div></div>
+  <div class="qs"><div class="n" id="stat-hold">-</div><div class="l">持仓中</div></div>
+  <div class="qs"><div class="n" id="stat-pnl">-</div><div class="l">累计盈亏</div></div>
+  <div class="qs"><div class="n" id="stat-rate">-</div><div class="l">胜率</div></div>
+  <div class="qs"><div class="n" id="stat-plr">-</div><div class="l">盈亏比</div></div>
+  <div class="qs"><div class="n" id="stat-mdd">-</div><div class="l">最大回撤</div></div>
+  <div class="qs" id="stat-asset-box" onclick="editTotalAsset()">
+    <div class="n" id="stat-asset">-</div><div class="l">总资产 💰</div>
   </div>
+  <div class="qs"><div class="n" id="stat-mv">-</div><div class="l">总市值</div></div>
+  <div class="qs"><div class="n" id="stat-cash">-</div><div class="l">现金</div></div>
+  <div class="qs"><div class="n" id="stat-pos">-</div><div class="l">仓位%</div></div>
+</div>
+</div>
 
-  <script src="../shared/js/nav.js"></script>
-  <script>
-    Nav.init({ brandIcon: '🦊', brandText: '知行', currentPage: 'discipline' });
+<script>
+async function loadStats() {
+  try {
+    var results = await Promise.all([
+      fetch('/api/discipline/observation').then(function(r){return r.json()}),
+      fetch('/api/discipline/watchlist').then(function(r){return r.json()}),
+      fetch('/api/discipline/summary').then(function(r){return r.json()}),
+      fetch('/api/discipline/config').then(function(r){return r.json()}).catch(function(){return {total_asset:null}})
+    ]);
+    var obs = results[0], wl = results[1], summary = results[2], configResp = results[3];
+    document.getElementById('stat-obs').textContent = obs.count || 0;
+    document.getElementById('stat-wl').textContent = wl.count || 0;
+    document.getElementById('stat-hold').textContent = (summary.holding && summary.holding.count) || 0;
+    var pnl = (summary.closed && summary.closed.total_pnl) || 0;
+    document.getElementById('stat-pnl').textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(0);
+    document.getElementById('stat-pnl').style.color = pnl >= 0 ? '#10b981' : '#ef4444';
+    document.getElementById('stat-rate').textContent = ((summary.closed && summary.closed.win_rate) || 0) + '%';
 
-    async function loadStats() {
-      try {
-        const [obs, wl, summary, configResp] = await Promise.all([
-          fetch('/api/discipline/observation').then(r => r.json()),
-          fetch('/api/discipline/watchlist').then(r => r.json()),
-          fetch('/api/discipline/summary').then(r => r.json()),
-          fetch('/api/discipline/config').then(r => r.json()).catch(() => ({ total_asset: null })),
-        ]);
-        document.getElementById('stat-obs').textContent = obs.count || 0;
-        document.getElementById('stat-wl').textContent = wl.count || 0;
-        document.getElementById('stat-hold').textContent = summary.holding?.count || 0;
-        const pnl = summary.closed?.total_pnl || 0;
-        document.getElementById('stat-pnl').textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(0);
-        document.getElementById('stat-pnl').style.color = pnl >= 0 ? '#4CAF50' : '#F44336';
-        document.getElementById('stat-rate').textContent = (summary.closed?.win_rate || 0) + '%';
-
-        // D模块: 盈亏比
-        const plr = summary.closed?.profit_loss_ratio;
-        if (plr != null && plr !== 0) {
-          document.getElementById('stat-plr').textContent = (plr >= 999 ? '∞' : plr.toFixed(1));
-          document.getElementById('stat-plr').style.color = plr >= 2 ? '#4CAF50' : plr > 0 ? '#FF9800' : '#F44336';
-        }
-        // D模块: 最大回撤
-        const mdd = summary.closed?.max_drawdown_pct;
-        if (mdd != null) {
-          document.getElementById('stat-mdd').textContent = mdd.toFixed(1) + '%';
-          document.getElementById('stat-mdd').style.color = mdd <= 5 ? '#4CAF50' : mdd <= 15 ? '#FF9800' : '#F44336';
-        }
-
-        // D模块: 总资产/市值/现金/仓位
-        const totalAsset = configResp.total_asset || 0;
-        const marketValue = summary.holding?.market_value || summary.holding?.total_cost || 0;
-        const cash = totalAsset - marketValue;
-        const posPct = totalAsset > 0 ? Math.min(100, Math.round(marketValue / totalAsset * 100)) : 0;
-
-        document.getElementById('stat-asset').textContent = '¥' + totalAsset.toLocaleString();
-        document.getElementById('stat-mv').textContent = '¥' + marketValue.toLocaleString();
-        document.getElementById('stat-cash').textContent = '¥' + Math.max(0, cash).toLocaleString();
-        document.getElementById('stat-pos').textContent = posPct + '%';
-      } catch (e) {
-        console.error('加载统计数据失败', e);
-      }
+    var plr = summary.closed && summary.closed.profit_loss_ratio;
+    if (plr != null && plr !== 0) {
+      document.getElementById('stat-plr').textContent = plr >= 999 ? '∞' : plr.toFixed(1);
+      document.getElementById('stat-plr').style.color = plr >= 2 ? '#10b981' : plr > 0 ? '#f59e0b' : '#ef4444';
+    }
+    var mdd = summary.closed && summary.closed.max_drawdown_pct;
+    if (mdd != null) {
+      document.getElementById('stat-mdd').textContent = mdd.toFixed(1) + '%';
+      document.getElementById('stat-mdd').style.color = mdd <= 5 ? '#10b981' : mdd <= 15 ? '#f59e0b' : '#ef4444';
     }
 
-    async function editTotalAsset() {
-      const current = document.getElementById('stat-asset').textContent.replace(/[^0-9]/g, '') || '0';
-      const val = prompt('输入总资产金额：', parseInt(current) || 100000);
-      if (!val) return;
-      const amount = parseFloat(val);
-      if (isNaN(amount) || amount <= 0) return;
+    var totalAsset = configResp.total_asset || 0;
+    var marketValue = (summary.holding && (summary.holding.market_value || summary.holding.total_cost)) || 0;
+    var cash = totalAsset - marketValue;
+    var posPct = totalAsset > 0 ? Math.min(100, Math.round(marketValue / totalAsset * 100)) : 0;
+    document.getElementById('stat-asset').textContent = '¥' + totalAsset.toLocaleString();
+    document.getElementById('stat-mv').textContent = '¥' + marketValue.toLocaleString();
+    document.getElementById('stat-cash').textContent = '¥' + Math.max(0, cash).toLocaleString();
+    document.getElementById('stat-pos').textContent = posPct + '%';
+  } catch(e) {}
+}
 
-      try {
-        await fetch('/api/discipline/config', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: 'total_asset', value: amount })
-        });
-        // 重新加载
-        loadStats();
-      } catch (e) {
-        alert('保存失败: ' + e.message);
-      }
-    }
-
+async function editTotalAsset() {
+  var current = document.getElementById('stat-asset').textContent.replace(/[^0-9]/g, '') || '0';
+  var val = prompt('输入总资产金额：', parseInt(current) || 100000);
+  if (!val) return;
+  var amount = parseFloat(val);
+  if (isNaN(amount) || amount <= 0) return;
+  try {
+    await fetch('/api/discipline/config', { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({key:'total_asset',value:amount}) });
     loadStats();
-  
+  } catch(e) { alert('保存失败: ' + e.message); }
+}
+
+loadStats();
+
 function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n)}
 (function(){var s=localStorage.getItem('theme')||'dark';document.documentElement.dataset.theme=s})();
 </script>

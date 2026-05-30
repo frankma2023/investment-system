@@ -8,223 +8,215 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preload" href="../shared/js/nav.js" as="script">
 <link rel="stylesheet" href="../shared/css/hanako-glass.css">
 <style>
-  .top-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
-  .top-bar label{font-size:10px;font-weight:500;color:var(--muted);display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.03em}
-  .top-bar input,.top-bar select{font-family:var(--font-body);padding:5px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:var(--card);color:var(--text-primary);outline:none;transition:all .2s}
-  .page-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-  .page-header h1{font-family:var(--font-display);font-size:1.2rem;font-weight:400;color:#d4d4d8;letter-spacing:-.01em}
-  html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
-  html[data-theme="light"] .page-header h1{color:#374151}
-    .panel-header { padding: 16px 0 8px; display: flex; justify-content: space-between; align-items: center; }
-    .panel-header h1 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 900; margin: 0; }
-    .holdings-grid { display: flex; flex-direction: column; gap: 10px; }
-    .holding-card { background: var(--card-bg); border-radius: 14px; padding: 16px; display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: start; border-left: 4px solid transparent; transition: border-color .2s; }
-    .holding-card.red { border-left-color: #F44336; }
-    .holding-card.yellow { border-left-color: #FF9800; }
-    .holding-card.green { border-left-color: #4CAF50; }
-    .alert-light { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-    .alert-light.red { background: #FFEBEE; color: #F44336; }
-    .alert-light.yellow { background: #FFF3E0; color: #FF9800; }
-    .alert-light.green { background: #E8F5E9; color: #4CAF50; }
-    .holding-info { min-width: 0; }
-    .holding-info .name { font-family: var(--font-display); font-size: 0.95rem; font-weight: 800; margin-bottom: 4px; }
-    .holding-info .code { font-size: 0.65rem; color: var(--muted); }
-    .holding-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px; font-size: 0.7rem; }
-    .holding-stats .stat { text-align: center; }
-    .holding-stats .stat .val { font-family: var(--font-display); font-weight: 700; font-size: 0.85rem; }
-    .holding-stats .stat .lbl { font-size: 0.55rem; color: var(--muted); }
-    .pnl-up { color: #F44336; }
-    .pnl-down { color: #4CAF50; }
-    .holding-actions { display: flex; flex-direction: column; gap: 6px; }
-    .holding-actions button, .holding-actions a { font-size: 0.6rem; padding: 4px 10px; border-radius: 6px; cursor: pointer; border: none; text-decoration: none; text-align: center; }
-    .btn-sm { background: var(--bg); color: var(--text-primary); border: 1px solid var(--divider); }
-    .btn-danger { background: #F44336; color: #fff; }
-    .alerts-list { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--divider); }
-    .alert-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 0.65rem; border-bottom: 1px solid var(--divider); }
-    .alert-item .ack-btn { font-size: 0.55rem; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--divider); background: var(--bg); color: var(--text-secondary); cursor: pointer; }
-    .alert-item .ack-btn.acked { color: var(--muted); cursor: default; opacity: 0.5; }
-    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
-    .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+body{font-family:var(--font-body);background:var(--bg);color:var(--text-primary)}
+.page-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.page-header h1{font-family:var(--font-display);font-size:1.2rem;font-weight:400;color:var(--text-primary)}
+html[data-theme="light"] .page-header h1{color:#374151}
+
+.btn-primary{padding:6px 16px;background:var(--accent-subtle);color:var(--accent);border:1px solid var(--accent-border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .2s}
+.btn-primary:hover{background:rgba(245,158,11,.18)}
+
+.holdings-grid{display:flex;flex-direction:column;gap:10px}
+.holding-card{background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:14px;padding:16px;display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:start;box-shadow:var(--shadow-card);transition:all .2s}
+.holding-card.red{border-left:4px solid #ef4444}
+.holding-card.yellow{border-left:4px solid #f59e0b}
+.holding-card.green{border-left:4px solid #10b981}
+.holding-card:hover{border-color:var(--accent)}
+.alert-light{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.alert-light.red{background:rgba(239,68,68,.12);color:#f87171}
+.alert-light.yellow{background:rgba(245,158,11,.12);color:#fbbf24}
+.alert-light.green{background:rgba(16,185,129,.12);color:#34d399}
+.holding-info{min-width:0}
+.holding-info .name{font-family:var(--font-display);font-size:0.95rem;font-weight:600;margin-bottom:4px;color:var(--text-primary)}
+.holding-info .code{font-size:0.65rem;color:var(--muted)}
+.holding-stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:0.7rem}
+.holding-stats .stat{text-align:center}
+.holding-stats .stat .val{font-family:var(--font-display);font-weight:700;font-size:0.85rem}
+.holding-stats .stat .lbl{font-size:0.55rem;color:var(--muted)}
+.pnl-up{color:#ef4444}
+.pnl-down{color:#10b981}
+.holding-actions{display:flex;flex-direction:column;gap:6px}
+.holding-actions button,.holding-actions a{font-size:0.6rem;padding:4px 10px;border-radius:6px;cursor:pointer;text-decoration:none;text-align:center;display:block;transition:all .15s}
+.btn-sm{background:rgba(26,26,31,.4);color:var(--text-primary);border:1px solid var(--border);font-family:var(--font-body)}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+.alerts-list{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.alert-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:0.65rem;border-bottom:1px solid rgba(255,255,255,.03)}
+.alert-item .ack-btn{font-size:0.55rem;padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:rgba(26,26,31,.4);color:var(--text-secondary);cursor:pointer;transition:all .15s}
+.alert-item .ack-btn:hover{color:var(--accent);border-color:var(--accent)}
+.alert-item .ack-btn.acked{color:var(--muted);cursor:default;opacity:0.5}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-state .icon{font-size:3rem;margin-bottom:12px}
+.empty-state a{color:var(--accent)}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:360px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+.modal-box h3{font-family:var(--font-display);font-size:0.9rem;margin:0 0 12px;color:var(--text-primary)}
+.modal-box label{display:block;font-size:0.65rem;color:var(--muted);margin:8px 0 2px}
+.modal-box input{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.75rem;background:rgba(26,26,31,.4);color:var(--text-primary);box-sizing:border-box;outline:none}
+.modal-row{display:flex;gap:8px;margin-top:14px}
+.modal-row .btn-cancel{flex:1;background:transparent;border:1px solid var(--border);padding:6px 16px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:12px}
+
+.loading{text-align:center;padding:60px 20px;color:var(--muted);font-family:var(--font-display)}
+
+html[data-theme="light"] .holding-card{background:rgba(255,255,255,.7);border-color:var(--divider)}
+html[data-theme="light"] .holding-info .name{color:#374151}
+html[data-theme="light"] .btn-sm{background:rgba(255,255,255,.6)}
+html[data-theme="light"] .modal-box{background:rgba(255,255,255,.95)}
+html[data-theme="light"] .modal-box input{background:rgba(255,255,255,.7);border-color:var(--divider)}
+html[data-theme="light"] .alert-light.red{background:rgba(239,68,68,.08)}
+html[data-theme="light"] .alert-light.yellow{background:rgba(245,158,11,.08)}
+html[data-theme="light"] .alert-light.green{background:rgba(16,185,129,.08)}
 </style>
 </head>
 <body>
 <canvas id="bg-canvas"></canvas>
-<script>(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();
-</script>
+<script>(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();</script>
 <div class="app-container">
 
-  <nav class="top-nav" id="top-nav"></nav>
+<nav id="top-nav"></nav>
+<script src="../shared/js/nav.js"></script>
+<script>Nav.init({brandIcon:'🦊',brandText:'知行',currentPage:'monitor'})</script>
 
-    <div class="panel-header">
-      <h1>📡 持仓监控</h1>
-      <button class="btn-run" onclick="manualScan()" style="font-size:0.7rem;width:auto;padding:4px 14px;">🔄 立即扫描</button>
-    </div>
+<div class="page-header">
+  <h1>📡 持仓监控</h1>
+  <button class="btn-primary" onclick="manualScan()">🔄 立即扫描</button>
+</div>
 
-    <div class="toolbar">
-      <span style="font-size:0.65rem;color:var(--muted);" id="scan-status">加载中...</span>
-    </div>
+<div style="margin-bottom:10px">
+  <span style="font-size:0.62rem;color:var(--muted)" id="scan-status">加载中...</span>
+</div>
 
-    <div id="content"><div class="loading">加载中...</div></div>
+<div id="content"><div class="loading">加载中...</div></div>
+</div>
 
-    <!-- 更新现价弹窗 -->
-    <div class="modal-overlay" id="price-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:100;justify-content:center;align-items:center;">
-      <div style="background:var(--card-bg);border-radius:16px;padding:24px;max-width:360px;width:90%;">
-        <h3 style="font-family:var(--font-display);font-size:0.9rem;margin:0 0 12px;">💵 手工更新现价</h3>
-        <p style="font-size:0.65rem;color:var(--muted);margin:0 0 8px;" id="price-stock-label"></p>
-        <label style="display:block;font-size:0.65rem;color:var(--text-secondary);margin:8px 0 2px;">当日价格</label>
-        <input type="number" id="price-input" step="0.01" style="width:100%;padding:6px 10px;border:1px solid var(--divider);border-radius:8px;font-size:0.75rem;background:var(--bg);color:var(--text-primary);box-sizing:border-box;">
-        <div style="display:flex;gap:8px;margin-top:14px;">
-          <button class="btn-run" onclick="submitPrice()" style="flex:1;">确认</button>
-          <button onclick="document.getElementById('price-modal').style.display='none'" style="flex:1;background:var(--divider);border:none;padding:6px 16px;border-radius:8px;cursor:pointer;">取消</button>
-        </div>
-      </div>
+<div class="modal-overlay" id="price-modal">
+  <div class="modal-box">
+    <h3>💵 手工更新现价</h3>
+    <p style="font-size:0.65rem;color:var(--muted);margin:0 0 8px" id="price-stock-label"></p>
+    <label>当日价格</label>
+    <input type="number" id="price-input" step="0.01">
+    <div class="modal-row">
+      <button class="btn-primary" onclick="submitPrice()" style="flex:1">确认</button>
+      <button class="btn-cancel" onclick="document.getElementById('price-modal').classList.remove('show')">取消</button>
     </div>
   </div>
+</div>
 
-  <script src="../shared/js/nav.js"></script>
-  <script>
-    Nav.init({ brandIcon: '🦊', brandText: '知行', currentPage: 'discipline' });
+<script>
+var holdingsData = [];
 
-    let holdingsData = [];
+async function load() {
+  try {
+    var resp = await fetch('/api/discipline/monitor');
+    var data = await resp.json();
+    holdingsData = data.holdings || [];
+    document.getElementById('scan-status').innerHTML = '共 ' + (data.count||0) + ' 笔持仓 · 总市值 <b>¥' + (data.total_market_value||0).toLocaleString() + '</b>';
+    render();
+  } catch(e) {
+    document.getElementById('content').innerHTML = '<div class="loading">加载失败: ' + e.message + '</div>';
+  }
+}
 
-    async function load() {
-      try {
-        const resp = await fetch('/api/discipline/monitor');
-        const data = await resp.json();
-        holdingsData = data.holdings || [];
-        const totalMV = data.total_market_value || 0;
-        document.getElementById('scan-status').innerHTML = `共 ${data.count} 笔持仓 · 总市值 <b>¥${totalMV.toLocaleString()}</b>`;
-        render();
-      } catch (e) {
-        document.getElementById('content').innerHTML = `<div class="loading">加载失败: ${e.message}</div>`;
-      }
-    }
+function render() {
+  if (!holdingsData.length) {
+    document.getElementById('content').innerHTML = '<div class="empty-state"><div class="icon">📭</div><div>暂无持仓记录</div><div style="font-size:0.6rem;margin-top:8px">在<a href="trades.html" style="color:var(--accent)">交易记录</a>中录入买入后显示</div></div>';
+    return;
+  }
+  var html = '<div class="holdings-grid">';
+  for (var i = 0; i < holdingsData.length; i++) {
+    var h = holdingsData[i];
+    var lightClass = h.alert_light || 'green';
+    var lightIcon = lightClass === 'red' ? '🔴' : lightClass === 'yellow' ? '🟡' : '🟢';
+    var pnlClass = h.pnl_pct >= 0 ? 'pnl-up' : 'pnl-down';
+    var pnlSign = h.pnl_pct >= 0 ? '+' : '';
 
-    function render() {
-      if (!holdingsData.length) {
-        document.getElementById('content').innerHTML = `
-          <div class="empty-state">
-            <div class="icon">📭</div>
-            <div>暂无持仓记录</div>
-            <div style="font-size:0.6rem;margin-top:8px;">
-              在<a href="trades.html" style="color:var(--accent)">交易记录</a>中录入买入后，此处将显示持仓监控
-            </div>
-          </div>`;
-        return;
-      }
+    html += '<div class="holding-card ' + lightClass + '">';
+    html += '<div class="alert-light ' + lightClass + '">' + lightIcon + '</div>';
+    html += '<div class="holding-info">';
+    html += '<div class="name">' + (h.stock_name || h.stock_code) + '</div>';
+    html += '<div class="code">' + h.stock_code + '</div>';
+    html += '<div class="holding-stats">';
+    html += '<div class="stat"><div class="val">' + h.buy_date + '</div><div class="lbl">买入日</div></div>';
+    html += '<div class="stat"><div class="val">¥' + h.buy_price.toFixed(2) + '</div><div class="lbl">买入价</div></div>';
+    html += '<div class="stat"><div class="val">¥' + h.current_price.toFixed(2) + '</div><div class="lbl">现价</div></div>';
+    html += '<div class="stat"><div class="val ' + pnlClass + '">' + pnlSign + h.pnl_pct.toFixed(1) + '%</div><div class="lbl">浮盈</div></div>';
+    html += '<div class="stat"><div class="val">' + h.hold_days + '天</div><div class="lbl">持股天数</div></div>';
+    html += '<div class="stat"><div class="val">' + h.buy_qty + '股</div><div class="lbl">数量</div></div>';
+    html += '<div class="stat"><div class="val">¥' + (h.market_value || 0).toLocaleString() + '</div><div class="lbl">市值</div></div>';
+    html += '<div class="stat"><div class="val">' + (h.position_pct || 0).toFixed(1) + '%</div><div class="lbl">仓位占比</div></div>';
+    html += '</div>';
 
-      let html = '<div class="holdings-grid">';
-      for (const h of holdingsData) {
-        const lightClass = h.alert_light || 'green';
-        const lightIcon = lightClass === 'red' ? '🔴' : lightClass === 'yellow' ? '🟡' : '🟢';
-        const pnlClass = h.pnl_pct >= 0 ? 'pnl-up' : 'pnl-down';
-        const pnlSign = h.pnl_pct >= 0 ? '+' : '';
-
-        html += `<div class="holding-card ${lightClass}">
-          <div class="alert-light ${lightClass}">${lightIcon}</div>
-          <div class="holding-info">
-            <div class="name">${h.stock_name || h.stock_code}</div>
-            <div class="code">${h.stock_code}</div>
-            <div class="holding-stats">
-              <div class="stat"><div class="val">${h.buy_date}</div><div class="lbl">买入日</div></div>
-              <div class="stat"><div class="val">¥${h.buy_price.toFixed(2)}</div><div class="lbl">买入价</div></div>
-              <div class="stat"><div class="val">¥${h.current_price.toFixed(2)}</div><div class="lbl">现价</div></div>
-              <div class="stat"><div class="val ${pnlClass}">${pnlSign}${h.pnl_pct.toFixed(1)}%</div><div class="lbl">浮盈</div></div>
-              <div class="stat"><div class="val">${h.hold_days}天</div><div class="lbl">持股天数</div></div>
-              <div class="stat"><div class="val">${h.buy_qty}股</div><div class="lbl">数量</div></div>
-              <div class="stat"><div class="val">¥${(h.market_value || 0).toLocaleString()}</div><div class="lbl">市值</div></div>
-              <div class="stat"><div class="val">${(h.position_pct || 0).toFixed(1)}%</div><div class="lbl">仓位占比</div></div>
-            </div>`;
-
-        // 告警列表
-        if (h.alerts && h.alerts.length > 0) {
-          html += `<div class="alerts-list">`;
-          for (const a of h.alerts) {
-            const acked = a.acknowledged ? 'acked' : '';
-            html += `<div class="alert-item">
-              <span>${a.alert_level === 'red' ? '🔴' : a.alert_level === 'yellow' ? '🟡' : '🟢'} ${a.alert_message}</span>
-              <button class="ack-btn ${acked}" onclick="ackAlert(${a.id}, this)" ${a.acknowledged ? 'disabled' : ''}>
-                ${a.acknowledged ? '已知晓 ✓' : '已知晓'}
-              </button>
-            </div>`;
-          }
-          html += `</div>`;
-        }
-
-        html += `</div>
-          <div class="holding-actions">
-            <a href="review.html?code=${h.stock_code}" class="btn-sm">📋 复核</a>
-            <a href="trades.html" class="btn-sm">📈 交易记录</a>
-            <button class="btn-sm" onclick="showPriceModal(${h.trade_id}, '${h.stock_name||h.stock_code}', ${h.current_price})">💵 更新现价</button>
-          </div>
-        </div>`;
+    if (h.alerts && h.alerts.length > 0) {
+      html += '<div class="alerts-list">';
+      for (var j = 0; j < h.alerts.length; j++) {
+        var a = h.alerts[j];
+        var acked = a.acknowledged ? 'acked' : '';
+        html += '<div class="alert-item"><span>' + (a.alert_level === 'red' ? '🔴' : a.alert_level === 'yellow' ? '🟡' : '🟢') + ' ' + a.alert_message + '</span>';
+        html += '<button class="ack-btn ' + acked + '" onclick="ackAlert(' + a.id + ', this)" ' + (a.acknowledged ? 'disabled' : '') + '>' + (a.acknowledged ? '已知晓 ✓' : '已知晓') + '</button></div>';
       }
       html += '</div>';
-      document.getElementById('content').innerHTML = html;
     }
 
-    async function manualScan() {
-      const btn = document.querySelector('.panel-header .btn-run');
-      btn.disabled = true;
-      btn.textContent = '⏳ 扫描中...';
-      document.getElementById('scan-status').textContent = '正在扫描所有持仓...';
+    html += '</div>';
+    html += '<div class="holding-actions">';
+    html += '<a href="review.html?code=' + h.stock_code + '" class="btn-sm">📋 复核</a>';
+    html += '<a href="trades.html" class="btn-sm">📈 交易记录</a>';
+    html += '<button class="btn-sm" onclick="showPriceModal(' + h.trade_id + ',\'' + (h.stock_name||h.stock_code) + '\',' + h.current_price + ')">💵 更新现价</button>';
+    html += '</div></div>';
+  }
+  html += '</div>';
+  document.getElementById('content').innerHTML = html;
+}
 
-      try {
-        const resp = await fetch('/api/discipline/monitor/scan', { method: 'POST' });
-        const data = await resp.json();
-        document.getElementById('scan-status').textContent = `扫描完成，生成 ${data.alerts_count} 条告警`;
-        // 重新加载
-        await load();
-      } catch (e) {
-        document.getElementById('scan-status').textContent = `扫描失败: ${e.message}`;
-      }
-      btn.disabled = false;
-      btn.textContent = '🔄 立即扫描';
-    }
+async function manualScan() {
+  var btn = document.querySelector('.btn-primary');
+  btn.disabled = true; btn.textContent = '⏳ 扫描中...';
+  document.getElementById('scan-status').textContent = '正在扫描所有持仓...';
+  try {
+    var resp = await fetch('/api/discipline/monitor/scan', { method: 'POST' });
+    var data = await resp.json();
+    document.getElementById('scan-status').textContent = '扫描完成，生成 ' + data.alerts_count + ' 条告警';
+    await load();
+  } catch(e) {
+    document.getElementById('scan-status').textContent = '扫描失败: ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = '🔄 立即扫描';
+}
 
-    let priceTradeId = null;
+var priceTradeId = null;
 
-    function showPriceModal(tradeId, stockName, currentPrice) {
-      priceTradeId = tradeId;
-      document.getElementById('price-stock-label').textContent = stockName;
-      document.getElementById('price-input').value = currentPrice || '';
-      document.getElementById('price-modal').style.display = 'flex';
-    }
+function showPriceModal(tradeId, stockName, currentPrice) {
+  priceTradeId = tradeId;
+  document.getElementById('price-stock-label').textContent = stockName;
+  document.getElementById('price-input').value = currentPrice || '';
+  document.getElementById('price-modal').classList.add('show');
+}
 
-    async function submitPrice() {
-      const price = parseFloat(document.getElementById('price-input').value);
-      if (!priceTradeId || isNaN(price) || price <= 0) return;
-      try {
-        const resp = await fetch('/api/discipline/monitor/price', {
-          method: 'PUT', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ trade_id: priceTradeId, price: price })
-        });
-        const data = await resp.json();
-        if (data.updated) {
-          document.getElementById('price-modal').style.display = 'none';
-          load(); // 重新加载显示新价格
-        }
-      } catch (e) { alert('更新失败: ' + e.message); }
-    }
+async function submitPrice() {
+  var price = parseFloat(document.getElementById('price-input').value);
+  if (!priceTradeId || isNaN(price) || price <= 0) return;
+  try {
+    var resp = await fetch('/api/discipline/monitor/price', { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trade_id:priceTradeId,price:price}) });
+    var data = await resp.json();
+    if (data.updated) { document.getElementById('price-modal').classList.remove('show'); load(); }
+  } catch(e) { alert('更新失败: ' + e.message); }
+}
 
-    async function ackAlert(alertId, btn) {
-      try {
-        const resp = await fetch(`/api/discipline/monitor/alerts/${alertId}/acknowledge`, { method: 'PUT' });
-        const data = await resp.json();
-        if (data.acknowledged) {
-          btn.textContent = '已知晓 ✓';
-          btn.classList.add('acked');
-          btn.disabled = true;
-        }
-      } catch (e) {
-        alert('确认失败: ' + e.message);
-      }
-    }
+async function ackAlert(alertId, btn) {
+  try {
+    var resp = await fetch('/api/discipline/monitor/alerts/' + alertId + '/acknowledge', { method:'PUT' });
+    var data = await resp.json();
+    if (data.acknowledged) { btn.textContent = '已知晓 ✓'; btn.classList.add('acked'); btn.disabled = true; }
+  } catch(e) { alert('确认失败: ' + e.message); }
+}
 
-    load();
-  
+load();
+
 function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n)}
 (function(){var s=localStorage.getItem('theme')||'dark';document.documentElement.dataset.theme=s})();
 </script>

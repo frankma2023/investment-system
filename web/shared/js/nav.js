@@ -36,6 +36,7 @@
     { href: '../pattern-scan/',         label: '形态识别',         page: 'pattern-scan' },
     { href: '../discipline/screening-backtest.html', label: '股票精选回测', page: 'screening-backtest' },
     { href: '../discipline/screening-backtest-index.html', label: '指数精选回测', page: 'screening-backtest-index' },
+    { href: '../chanlun-backtest-compare/', label: '缠论vs欧奈尔', page: 'chanlun-backtest-compare' },
       { href: '../progress.html',         label: '进展',             page: 'progress' },
 ];
 

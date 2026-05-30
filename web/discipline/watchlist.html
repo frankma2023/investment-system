@@ -8,152 +8,138 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preload" href="../shared/js/nav.js" as="script">
 <link rel="stylesheet" href="../shared/css/hanako-glass.css">
 <style>
-  .top-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
-  .top-bar label{font-size:10px;font-weight:500;color:var(--muted);display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.03em}
-  .top-bar input,.top-bar select{font-family:var(--font-body);padding:5px 10px;border:1px solid var(--border);border-radius:10px;font-size:12px;background:var(--card);color:var(--text-primary);outline:none;transition:all .2s}
-  .page-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-  .page-header h1{font-family:var(--font-display);font-size:1.2rem;font-weight:400;color:#d4d4d8;letter-spacing:-.01em}
-  html[data-theme="light"] .top-bar input,html[data-theme="light"] .top-bar select{background:rgba(255,255,255,.7);border-color:var(--divider);color:var(--text-primary)}
-  html[data-theme="light"] .page-header h1{color:#374151}
-    .panel-header { padding: 16px 0 8px; display: flex; justify-content: space-between; align-items: center; }
-    .panel-header h1 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 900; margin: 0; }
-    .wl-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
-    .wl-table th { text-align: center; padding: 8px 6px; border-bottom: 2px solid var(--divider); font-size: 0.6rem; font-weight: 700; color: var(--text-secondary); }
-    .wl-table td { padding: 8px 6px; border-bottom: 1px solid var(--divider); text-align: center; }
-    .wl-table tr:hover { background: var(--card-bg); }
-    .wl-table a { color: var(--accent); text-decoration: none; font-weight: 600; }
-    .tag-auto { background: #E8F5E9; color: #2E7D32; }
-    .tag-manual { background: #FFF3E0; color: #E65100; }
-    .tag-pending { background: #FFEBEE; color: #C62828; }
-    .modal { background: var(--card-bg); border-radius: 16px; padding: 24px; max-width: 450px; width: 90%; }
-    .modal h3 { font-family: var(--font-display); font-size: 0.9rem; margin: 0 0 12px; }
-    .modal label { display: block; font-size: 0.65rem; color: var(--text-secondary); margin: 8px 0 2px; }
-    .modal input, .modal textarea { width: 100%; padding: 6px 10px; border: 1px solid var(--divider); border-radius: 8px; font-size: 0.7rem; background: var(--bg); color: var(--text-primary); box-sizing: border-box; }
-    .modal textarea { min-height: 60px; resize: vertical; }
-    .modal-row { display: flex; gap: 8px; margin-top: 12px; }
+body{font-family:var(--font-body);background:var(--bg);color:var(--text-primary)}
+.page-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.page-header h1{font-family:var(--font-display);font-size:1.2rem;font-weight:400;color:var(--text-primary)}
+html[data-theme="light"] .page-header h1{color:#374151}
+
+.btn-primary{padding:6px 16px;background:var(--accent-subtle);color:var(--accent);border:1px solid var(--accent-border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .2s}
+.btn-primary:hover{background:rgba(245,158,11,.18)}
+.btn-danger{padding:4px 12px;background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);border-radius:8px;font-size:11px;cursor:pointer;transition:all .15s}
+.btn-danger:hover{background:rgba(239,68,68,.2)}
+.btn-buy{padding:4px 12px;background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:11px;text-decoration:none;font-weight:600;display:inline-block;transition:all .15s}
+.btn-buy:hover{background:rgba(239,68,68,.25)}
+
+.table-shell{background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-card)}
+.wl-table{width:100%;border-collapse:collapse;font-size:12px}
+.wl-table th{text-align:center;padding:9px 6px;border-bottom:1px solid var(--border);font-size:10px;font-weight:500;color:var(--muted);background:var(--card);backdrop-filter:blur(10px);text-transform:uppercase;letter-spacing:.04em}
+.wl-table td{padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.03);text-align:center;font-weight:300}
+.wl-table tr:hover{background:rgba(255,255,255,.02)}
+.wl-table a{color:var(--accent);text-decoration:none;font-weight:500}
+.wl-table a:hover{text-decoration:underline}
+
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:500}
+.tag-auto{background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+.tag-manual{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
+.tag-pending{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:450px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+.modal-box h3{font-family:var(--font-display);font-size:0.9rem;margin:0 0 8px;color:var(--text-primary)}
+.modal-box label{display:block;font-size:0.65rem;color:var(--muted);margin:8px 0 2px}
+.modal-box input,.modal-box textarea{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.7rem;background:rgba(26,26,31,.4);color:var(--text-primary);box-sizing:border-box;outline:none}
+.modal-box textarea{min-height:60px;resize:vertical}
+.modal-row{display:flex;gap:8px;margin-top:12px}
+.modal-row .btn-cancel{background:transparent;border:1px solid var(--border);padding:6px 16px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:12px}
+
+.loading{text-align:center;padding:60px;color:var(--muted);font-family:var(--font-display)}
+
+html[data-theme="light"] .table-shell{background:rgba(255,255,255,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(0,0,0,.06)}
+html[data-theme="light"] .wl-table th{background:rgba(255,255,255,.9);color:#6b7280;border-bottom:1px solid rgba(0,0,0,.06)}
+html[data-theme="light"] .wl-table td{border-bottom:1px solid rgba(0,0,0,.03)}
+html[data-theme="light"] .wl-table tr:hover{background:rgba(0,0,0,.02)}
+html[data-theme="light"] .wl-table a{color:#d97706}
+html[data-theme="light"] .modal-box{background:rgba(255,255,255,.95)}
+html[data-theme="light"] .modal-box input,.modal-box textarea{background:rgba(255,255,255,.7);border-color:var(--divider)}
 </style>
 </head>
 <body>
 <canvas id="bg-canvas"></canvas>
-<script>(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();
-</script>
+<script>(function(){var c=document.getElementById("bg-canvas"),w=c.width=window.innerWidth,h=c.height=window.innerHeight;var ctx=c.getContext("2d"),N=60;var p=[];for(var i=0;i<N;i++)p.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});function draw(){ctx.clearRect(0,0,w,h);for(var i=0;i<N;i++){var P=p[i];P.x+=P.vx;P.y+=P.vy;if(P.x<0)P.x=w;if(P.x>w)P.x=0;if(P.y<0)P.y=h;if(P.y>h)P.y=0;ctx.beginPath();ctx.arc(P.x,P.y,P.r,0,Math.PI*2);ctx.fillStyle="rgba(245,158,11,"+P.o+")";ctx.fill()}for(var i=0;i<N;i++){for(var j=i+1;j<N;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<100){ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.strokeStyle="rgba(245,158,11,"+((100-dist)/100*.06)+")";ctx.stroke()}}}requestAnimationFrame(draw)}draw();window.addEventListener("resize",function(){w=c.width=window.innerWidth;h=c.height=window.innerHeight})})();</script>
 <div class="app-container">
 
-  <nav class="top-nav" id="top-nav"></nav>
+<nav id="top-nav"></nav>
+<script src="../shared/js/nav.js"></script>
+<script>Nav.init({brandIcon:'🦊',brandText:'知行',currentPage:'watchlist'})</script>
 
-    <div class="panel-header">
-      <h1>⭐ 自选池</h1>
-      <button class="btn-run" onclick="showManualForm()" style="width:auto;font-size:0.7rem;padding:4px 14px;">+ 手动添加</button>
+<div class="page-header">
+  <h1>⭐ 自选池</h1>
+  <button class="btn-primary" onclick="showManualForm()">+ 手动添加</button>
+</div>
+
+<div class="table-shell" id="table-wrap">
+  <div class="loading">加载中...</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="manual-modal">
+  <div class="modal-box">
+    <h3>⚡ 手动添加自选</h3>
+    <p style="font-size:0.6rem;color:var(--muted);margin:0 0 8px;">该股未通过观察池自动筛选，将触发异步评估。评估完成前不可买入。</p>
+    <label>代码</label><input type="text" id="man-code" placeholder="股票如 600519 / 指数如 000300">
+    <label>添加理由</label><textarea id="man-reason" placeholder="为什么手动添加这只股票？"></textarea>
+    <div class="modal-row">
+      <button class="btn-primary" onclick="submitManual()">确认添加</button>
+      <button class="btn-cancel" onclick="document.getElementById('manual-modal').classList.remove('show')">取消</button>
     </div>
-
-    <div id="table-wrap"><div class="loading">加载中...</div></div>
   </div>
+</div>
 
-  <!-- 手动添加弹窗 -->
-  <div class="modal-overlay" id="manual-modal">
-    <div class="modal">
-      <h3>⚡ 手动添加自选</h3>
-      <p style="font-size:0.6rem;color:var(--muted);margin:0 0 8px;">该股未通过观察池自动筛选，将触发异步评估。评估完成前不可买入。</p>
-      <label>代码</label><input type="text" id="man-code" placeholder="股票如 600519 / 指数如 000300">
-      <label>添加理由</label><textarea id="man-reason" placeholder="为什么手动添加这只股票？"></textarea>
-      <div class="modal-row">
-        <button class="btn-run" onclick="submitManual()">确认添加</button>
-        <button onclick="document.getElementById('manual-modal').style.display='none'" style="background:var(--divider);border:none;padding:6px 16px;border-radius:8px;cursor:pointer;">取消</button>
-      </div>
-    </div>
-  </div>
+<script>
+async function load() {
+  try {
+    var resp = await fetch('/api/discipline/watchlist');
+    var data = await resp.json();
+    render(data.items || []);
+  } catch(e) { document.getElementById('table-wrap').innerHTML = '<div class="loading">加载失败</div>'; }
+}
 
-  <script src="../shared/js/nav.js"></script>
-  <script>
-    Nav.init({ brandIcon: '🦊', brandText: '知行', currentPage: 'discipline' });
+function render(items) {
+  if (!items.length) {
+    document.getElementById('table-wrap').innerHTML = '<div class="loading">自选池为空<br><span style="font-size:0.6rem;">从观察池中确认加入，或手动添加</span></div>';
+    return;
+  }
+  var html = '<table class="wl-table"><thead><tr><th>代码</th><th>名称</th><th>来源</th><th>评估</th><th>添加时间</th><th>备注</th><th>操作</th></tr></thead><tbody>';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var srcTag = item.source === 'manual' ? '<span class="tag tag-manual">手动</span>' : '<span class="tag tag-auto">观察池</span>';
+    var stTag = item.review_status === 'pending_review' ? '<span class="tag tag-pending">评估中</span>' : '<span class="tag tag-auto">已评估</span>';
+    html += '<tr>';
+    html += '<td><a href="review.html?code=' + item.stock_code + '">' + item.stock_code + '</a></td>';
+    html += '<td>' + (item.stock_name || '') + '</td>';
+    html += '<td>' + srcTag + '</td><td>' + stTag + '</td>';
+    html += '<td>' + (item.added_at || '').slice(0, 10) + '</td>';
+    html += '<td>' + (item.manual_reason || (item.source === 'manual' ? '手动添加' : '')) + '</td>';
+    html += '<td><a href="trades.html" class="btn-buy">买入</a> <button class="btn-danger" onclick="removeFromWatchlist(\'' + item.stock_code + '\')">移除</button></td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('table-wrap').innerHTML = html;
+}
 
-    async function load() {
-      try {
-        const resp = await fetch('/api/discipline/watchlist');
-        const data = await resp.json();
-        render(data.items || []);
-      } catch (e) {
-        document.getElementById('table-wrap').innerHTML = '<div class="loading">加载失败</div>';
-      }
-    }
+function showManualForm() { document.getElementById('manual-modal').classList.add('show'); }
 
-    function render(items) {
-      if (!items.length) {
-        document.getElementById('table-wrap').innerHTML = '<div class="loading" style="padding:60px;">自选池为空<br><span style="font-size:0.6rem;">从观察池中确认加入，或手动添加</span></div>';
-        return;
-      }
+async function submitManual() {
+  var body = { stock_code: document.getElementById('man-code').value.trim(), manual_reason: document.getElementById('man-reason').value.trim() };
+  var resp = await fetch('/api/discipline/watchlist/manual', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+  var data = await resp.json();
+  if (data.added) { document.getElementById('manual-modal').classList.remove('show'); load(); }
+  else { alert(data.error || '添加失败'); }
+}
 
-      let html = '<table class="wl-table"><thead><tr>';
-      html += '<th>代码</th><th>名称</th><th>来源</th><th>评估状态</th><th>添加时间</th><th>备注</th><th>操作</th>';
-      html += '</tr></thead><tbody>';
+async function removeFromWatchlist(code) {
+  if (!confirm('确认将 ' + code + ' 移出自选池？')) return;
+  var resp = await fetch('/api/discipline/watchlist/' + code, { method: 'DELETE' });
+  var data = await resp.json();
+  if (data.removed) { load(); } else { alert(data.error || '移除失败'); }
+}
 
-      for (const item of items) {
-        let sourceTag = '';
-        if (item.source === 'manual') {
-          sourceTag = '<span class="tag tag-manual">手动</span>';
-        } else {
-          sourceTag = '<span class="tag tag-auto">观察池</span>';
-        }
+load();
 
-        let statusTag = '';
-        if (item.review_status === 'pending_review') {
-          statusTag = '<span class="tag tag-pending">评估中</span>';
-        } else {
-          statusTag = '<span class="tag tag-auto">已评估</span>';
-        }
-
-        html += '<tr>';
-        html += `<td><a href="review.html?code=${item.stock_code}">${item.stock_code}</a></td>`;
-        html += `<td>${item.stock_name || ''}</td>`;
-        html += `<td>${sourceTag}</td>`;
-        html += `<td>${statusTag}</td>`;
-        html += `<td>${(item.added_at || '').slice(0, 10)}</td>`;
-        html += `<td>${item.manual_reason || (item.source === 'manual' ? '手动添加' : '')}</td>`;
-        html += `<td style="display:flex;gap:4px;justify-content:center;">`;
-        html += `<a href="trades.html" style="font-size:0.65rem;padding:3px 10px;background:#FE2C55;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;line-height:1.4;">买入</a>`;
-        html += `<button class="btn-run" onclick="removeFromWatchlist('${item.stock_code}')" style="font-size:0.65rem;padding:3px 10px;width:auto;line-height:1.4;border-radius:6px;">移除</button>`;
-        html += `</td>`;
-        html += '</tr>';
-      }
-      html += '</tbody></table>';
-      document.getElementById('table-wrap').innerHTML = html;
-    }
-
-    function showManualForm() {
-      document.getElementById('manual-modal').style.display = 'flex';
-    }
-
-    async function submitManual() {
-      const body = {
-        stock_code: document.getElementById('man-code').value.trim(),
-        manual_reason: document.getElementById('man-reason').value.trim(),
-      };
-      const resp = await fetch('/api/discipline/watchlist/manual', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const data = await resp.json();
-      if (data.added) {
-        document.getElementById('manual-modal').style.display = 'none';
-        document.getElementById('man-code').value = '';
-        document.getElementById('man-reason').value = '';
-        load();
-      } else {
-        alert(data.error || '添加失败');
-      }
-    }
-
-    async function removeFromWatchlist(code) {
-      if (!confirm(`确认将 ${code} 移出自选池？`)) return;
-      const resp = await fetch('/api/discipline/watchlist/' + code, { method: 'DELETE' });
-      const data = await resp.json();
-      if (data.removed) { load(); } else { alert(data.error || '移除失败'); }
-    }
-
-    load();
-  
 function toggleTheme(){var h=document.documentElement,n=h.dataset.theme==='dark'?'light':'dark';h.dataset.theme=n;localStorage.setItem('theme',n)}
 (function(){var s=localStorage.getItem('theme')||'dark';document.documentElement.dataset.theme=s})();
 </script>
